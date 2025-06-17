@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,7 +73,7 @@ const Index = () => {
               <img 
                 src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
                 alt="Runners Home Exchange" 
-                className="h-32 w-auto object-contain"
+                className="h-40 w-auto object-contain"
               />
             </div>
             <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 mb-6 animate-fade-in">

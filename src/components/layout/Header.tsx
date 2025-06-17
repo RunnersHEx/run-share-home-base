@@ -15,7 +15,7 @@ const Header = () => {
             <img 
               src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
               alt="Runners Home Exchange" 
-              className="h-10 w-auto"
+              className="h-12 w-auto"
             />
           </div>
 

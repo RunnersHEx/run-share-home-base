@@ -11,7 +11,7 @@ const Footer = () => {
             <img 
               src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
               alt="Runners Home Exchange" 
-              className="h-12 w-auto mb-4 brightness-0 invert"
+              className="h-16 w-auto mb-4 brightness-0 invert"
             />
             <p className="text-gray-300 mb-4 max-w-md">
               La plataforma que conecta corredores locales con viajeros, 
