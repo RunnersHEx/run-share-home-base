@@ -55,8 +55,8 @@ const Index = () => {
   const raceModalities = ["Asfalto/Ruta", "Trail/Montaña"];
   
   const raceDistances = [
-    "Maratón", "Media Maratón", "20k", "de 20k a 15k", "15k", 
-    "10K", "de 10k a 5k", "5K", "Trail"
+    "Ultra", "Maratón", "Media Maratón", "20k", "de 20k a 15k", "15k", 
+    "10K", "de 10k a 5k", "5K"
   ];
 
   const featuredRaces = [
