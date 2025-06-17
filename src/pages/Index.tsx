@@ -6,7 +6,7 @@ import { MapPin, Users, Trophy, Heart, Search, Calendar, MessageCircle, Star } f
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import AuthModal from "@/components/auth/AuthModal";
+import AuthModalIntegrated from "@/components/auth/AuthModalIntegrated";
 
 const Index = () => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -17,6 +17,10 @@ const Index = () => {
   const openAuthModal = (mode: "login" | "register") => {
     setAuthMode(mode);
     setAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setAuthModalOpen(false);
   };
 
   const handleRaceModalityChange = (modality: string, checked: boolean) => {
@@ -447,9 +451,9 @@ const Index = () => {
         </div>
       </section>
 
-      <AuthModal 
+      <AuthModalIntegrated 
         isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        onClose={closeAuthModal}
         mode={authMode}
         onModeChange={setAuthMode}
       />
