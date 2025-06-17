@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -289,7 +288,10 @@ const AuthModal = ({ isOpen, onClose, mode, onModeChange }: AuthModalProps) => {
                   <div className="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-runner-blue-500 transition-colors"
                        onClick={() => handleInputChange("isHost", !formData.isHost)}>
                     <div className="flex items-center space-x-2 mb-2">
-                      <Checkbox checked={formData.isHost} readOnly />
+                      <Checkbox 
+                        checked={formData.isHost} 
+                        onCheckedChange={(checked) => handleInputChange("isHost", checked)}
+                      />
                       <Label className="font-semibold text-runner-blue-700">Quiero ser Host</Label>
                     </div>
                     <p className="text-sm text-gray-600">
@@ -300,7 +302,10 @@ const AuthModal = ({ isOpen, onClose, mode, onModeChange }: AuthModalProps) => {
                   <div className="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-runner-orange-500 transition-colors"
                        onClick={() => handleInputChange("isGuest", !formData.isGuest)}>
                     <div className="flex items-center space-x-2 mb-2">
-                      <Checkbox checked={formData.isGuest} readOnly />
+                      <Checkbox 
+                        checked={formData.isGuest} 
+                        onCheckedChange={(checked) => handleInputChange("isGuest", checked)}
+                      />
                       <Label className="font-semibold text-runner-orange-700">Quiero ser Guest</Label>
                     </div>
                     <p className="text-sm text-gray-600">
