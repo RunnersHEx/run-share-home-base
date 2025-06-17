@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,7 +70,7 @@ const Index = () => {
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex justify-center mb-8">
               <img 
-                src="/lovable-uploads/a989eba0-bb19-4efd-bcfc-3c1f8870d2cb.png" 
+                src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
                 alt="Runners Home Exchange" 
                 className="h-32 w-auto object-contain"
               />
