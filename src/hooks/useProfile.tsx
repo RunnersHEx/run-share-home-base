@@ -47,7 +47,35 @@ export const useProfile = () => {
         .single();
 
       if (error) throw error;
-      setProfile(data);
+      
+      // Ensure all required fields are present
+      const profileData: Profile = {
+        id: data.id,
+        first_name: data.first_name || null,
+        last_name: data.last_name || null,
+        phone: data.phone || null,
+        birth_date: data.birth_date || null,
+        bio: data.bio || null,
+        running_experience: data.running_experience || null,
+        preferred_distances: data.preferred_distances || [],
+        running_modalities: data.running_modalities || [],
+        personal_records: data.personal_records || {},
+        races_completed_this_year: data.races_completed_this_year || 0,
+        emergency_contact_name: data.emergency_contact_name || null,
+        emergency_contact_phone: data.emergency_contact_phone || null,
+        is_host: data.is_host || false,
+        is_guest: data.is_guest || false,
+        verification_status: data.verification_status || 'pending',
+        verification_documents: data.verification_documents || [],
+        total_host_experiences: data.total_host_experiences || 0,
+        total_guest_experiences: data.total_guest_experiences || 0,
+        average_rating: data.average_rating || 0,
+        badges: data.badges || [],
+        points_balance: data.points_balance || 0,
+        profile_image_url: data.profile_image_url || null
+      };
+      
+      setProfile(profileData);
 
       // Calculate progress
       const { data: progressData, error: progressError } = await supabase
