@@ -83,7 +83,7 @@ const Header = () => {
                   }`}
                 >
                   <MapPin className="w-4 h-4" />
-                  <span>Mis Propiedades</span>
+                  <span>Mi Propiedad</span>
                 </Link>
 
                 <Link
