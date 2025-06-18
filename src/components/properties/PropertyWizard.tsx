@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -10,11 +11,12 @@ import RulesStep from "./wizard/RulesStep";
 import PhotosStep from "./wizard/PhotosStep";
 import { useProperties } from "@/hooks/useProperties";
 import { toast } from "sonner";
-import { PropertyFormData } from "@/types/property";
+import { PropertyFormData, Property } from "@/types/property";
 
 interface PropertyWizardProps {
   onClose: () => void;
   propertyId?: string;
+  initialData?: Property;
 }
 
 interface PhotoPreview {
@@ -33,27 +35,41 @@ const STEPS = [
   { id: 5, title: "Fotos", description: "Imágenes de tu propiedad" }
 ];
 
-const PropertyWizard = ({ onClose, propertyId }: PropertyWizardProps) => {
-  const { createProperty, uploadPropertyImage } = useProperties();
+const PropertyWizard = ({ onClose, propertyId, initialData }: PropertyWizardProps) => {
+  const { createProperty, updateProperty, uploadPropertyImage } = useProperties();
   const [currentStep, setCurrentStep] = useState(1);
   const [photos, setPhotos] = useState<PhotoPreview[]>([]);
   const [formData, setFormData] = useState<PropertyFormData>({
-    title: "",
-    description: "",
-    provinces: [],
-    locality: "",
-    full_address: "",
-    bedrooms: 1,
-    beds: 1,
-    bathrooms: 1,
-    max_guests: 2,
-    amenities: [],
-    house_rules: "",
-    check_in_instructions: "",
-    runner_instructions: "",
-    cancellation_policy: "flexible"
+    title: initialData?.title || "",
+    description: initialData?.description || "",
+    provinces: initialData?.provinces || [],
+    locality: initialData?.locality || "",
+    full_address: initialData?.full_address || "",
+    bedrooms: initialData?.bedrooms || 1,
+    beds: initialData?.beds || 1,
+    bathrooms: initialData?.bathrooms || 1,
+    max_guests: initialData?.max_guests || 2,
+    amenities: initialData?.amenities || [],
+    house_rules: initialData?.house_rules || "",
+    check_in_instructions: initialData?.check_in_instructions || "",
+    runner_instructions: initialData?.runner_instructions || "",
+    cancellation_policy: initialData?.cancellation_policy || "flexible"
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load existing images when editing
+  useEffect(() => {
+    if (initialData?.images) {
+      const existingPhotos: PhotoPreview[] = initialData.images.map((img, index) => ({
+        id: img.id,
+        file: new File([], `existing-${img.id}`), // Placeholder file for existing images
+        url: img.image_url,
+        caption: img.caption || "",
+        isMain: img.is_main
+      }));
+      setPhotos(existingPhotos);
+    }
+  }, [initialData]);
 
   const progress = (currentStep / STEPS.length) * 100;
 
@@ -76,20 +92,33 @@ const PropertyWizard = ({ onClose, propertyId }: PropertyWizardProps) => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Create property with is_active: true by default
-      const result = await createProperty({ ...formData, is_active: true });
-      if (result) {
-        // Upload photos if any
-        if (photos.length > 0) {
-          for (const photo of photos) {
-            await uploadPropertyImage(result.id, photo.file, photo.caption, photo.isMain);
+      let propertyResult;
+      
+      if (propertyId && initialData) {
+        // Update existing property
+        const success = await updateProperty(propertyId, formData);
+        if (success) {
+          propertyResult = { id: propertyId };
+        }
+      } else {
+        // Create new property
+        propertyResult = await createProperty({ ...formData, is_active: true });
+      }
+
+      if (propertyResult) {
+        // Upload new photos (those with actual File objects)
+        const newPhotos = photos.filter(photo => photo.file.size > 0);
+        if (newPhotos.length > 0) {
+          for (const photo of newPhotos) {
+            await uploadPropertyImage(propertyResult.id, photo.file, photo.caption, photo.isMain);
           }
         }
-        toast.success("¡Propiedad creada exitosamente!");
+        
+        toast.success(propertyId ? "¡Propiedad actualizada exitosamente!" : "¡Propiedad creada exitosamente!");
         onClose();
       }
     } catch (error) {
-      toast.error("Error al crear la propiedad");
+      toast.error(propertyId ? "Error al actualizar la propiedad" : "Error al crear la propiedad");
     } finally {
       setIsSubmitting(false);
     }
@@ -201,7 +230,7 @@ const PropertyWizard = ({ onClose, propertyId }: PropertyWizardProps) => {
               disabled={isSubmitting}
               className="bg-runner-blue-600 hover:bg-runner-blue-700"
             >
-              {isSubmitting ? "Creando..." : "Crear Propiedad"}
+              {isSubmitting ? (propertyId ? "Actualizando..." : "Creando...") : (propertyId ? "Actualizar Propiedad" : "Crear Propiedad")}
             </Button>
           ) : (
             <Button

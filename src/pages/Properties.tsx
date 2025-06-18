@@ -5,14 +5,14 @@ import { Navigate } from "react-router-dom";
 import { useProperties } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Plus, Home, MapPin, Users, Star, TrendingUp, Calendar } from "lucide-react";
 import PropertyWizard from "@/components/properties/PropertyWizard";
+import PropertyEditButton from "@/components/properties/PropertyEditButton";
 import AvailabilityCalendar from "@/components/availability/AvailabilityCalendar";
 
 const Properties = () => {
   const { user, loading: authLoading } = useAuth();
-  const { properties, loading } = useProperties();
+  const { properties, loading, refetchProperties } = useProperties();
   const [showWizard, setShowWizard] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
 
@@ -26,7 +26,6 @@ const Properties = () => {
     return <Navigate to="/" replace />;
   }
 
-  // All properties are active by default - no filtering needed
   const totalProperties = properties.length;
   const totalBookings = properties.reduce((sum, p) => sum + p.total_bookings, 0);
   const totalPoints = properties.reduce((sum, p) => sum + p.points_earned, 0);
@@ -146,6 +145,7 @@ const Properties = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {properties.map((property) => {
+              console.log('Property images:', property.images); // Debug log
               const mainImage = property.images?.find(img => img.is_main)?.image_url || 
                               property.images?.[0]?.image_url;
               
@@ -157,17 +157,16 @@ const Properties = () => {
                         src={mainImage} 
                         alt={property.title}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.log('Image failed to load:', mainImage);
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Home className="h-12 w-12 text-gray-400" />
                       </div>
                     )}
-                    <div className="absolute top-4 right-4">
-                      <Badge variant="default">
-                        Activa
-                      </Badge>
-                    </div>
                   </div>
                   
                   <CardHeader className="pb-3">
@@ -199,6 +198,10 @@ const Properties = () => {
                     </div>
 
                     <div className="flex gap-2">
+                      <PropertyEditButton 
+                        property={property} 
+                        onPropertyUpdated={refetchProperties}
+                      />
                       <Button 
                         variant="outline" 
                         size="sm" 
