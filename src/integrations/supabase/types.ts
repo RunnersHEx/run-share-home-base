@@ -291,6 +291,136 @@ export type Database = {
           },
         ]
       }
+      race_images: {
+        Row: {
+          caption: string | null
+          category: string
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          race_id: string
+        }
+        Insert: {
+          caption?: string | null
+          category: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url: string
+          race_id: string
+        }
+        Update: {
+          caption?: string | null
+          category?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          race_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "race_images_race_id_fkey"
+            columns: ["race_id"]
+            isOneToOne: false
+            referencedRelation: "races"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      races: {
+        Row: {
+          average_rating: number | null
+          created_at: string
+          description: string | null
+          distance_from_property: number | null
+          distances: Json
+          has_wave_starts: boolean
+          highlights: string | null
+          host_id: string
+          id: string
+          is_active: boolean
+          local_tips: string | null
+          max_guests: number
+          modalities: Json
+          name: string
+          official_website: string | null
+          points_cost: number
+          property_id: string
+          race_date: string
+          registration_cost: number | null
+          registration_deadline: string | null
+          start_location: string | null
+          terrain_profile: Json
+          total_bookings: number
+          updated_at: string
+          weather_notes: string | null
+        }
+        Insert: {
+          average_rating?: number | null
+          created_at?: string
+          description?: string | null
+          distance_from_property?: number | null
+          distances?: Json
+          has_wave_starts?: boolean
+          highlights?: string | null
+          host_id: string
+          id?: string
+          is_active?: boolean
+          local_tips?: string | null
+          max_guests?: number
+          modalities?: Json
+          name: string
+          official_website?: string | null
+          points_cost?: number
+          property_id: string
+          race_date: string
+          registration_cost?: number | null
+          registration_deadline?: string | null
+          start_location?: string | null
+          terrain_profile?: Json
+          total_bookings?: number
+          updated_at?: string
+          weather_notes?: string | null
+        }
+        Update: {
+          average_rating?: number | null
+          created_at?: string
+          description?: string | null
+          distance_from_property?: number | null
+          distances?: Json
+          has_wave_starts?: boolean
+          highlights?: string | null
+          host_id?: string
+          id?: string
+          is_active?: boolean
+          local_tips?: string | null
+          max_guests?: number
+          modalities?: Json
+          name?: string
+          official_website?: string | null
+          points_cost?: number
+          property_id?: string
+          race_date?: string
+          registration_cost?: number | null
+          registration_deadline?: string | null
+          start_location?: string | null
+          terrain_profile?: Json
+          total_bookings?: number
+          updated_at?: string
+          weather_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "races_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           comment: string | null
