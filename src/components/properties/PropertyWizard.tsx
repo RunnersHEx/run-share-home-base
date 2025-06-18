@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,11 +116,11 @@ const PropertyWizard = ({ onClose, propertyId }: PropertyWizardProps) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b">
+      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              {propertyId ? "Editar Propiedad" : "Agregar Nueva Propiedad"}
+              {propertyId ? "Editar Propiedad" : "Agregar Propiedad"}
             </h2>
             <p className="text-gray-600 mt-1">
               {STEPS[currentStep - 1].description}
@@ -130,7 +131,7 @@ const PropertyWizard = ({ onClose, propertyId }: PropertyWizardProps) => {
           </Button>
         </div>
 
-        <div className="p-6 border-b">
+        <div className="p-6 border-b flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-medium text-gray-600">
               Paso {currentStep} de {STEPS.length}
@@ -161,11 +162,11 @@ const PropertyWizard = ({ onClose, propertyId }: PropertyWizardProps) => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 min-h-0">
           {renderCurrentStep()}
         </div>
 
-        <div className="flex items-center justify-between p-6 border-t">
+        <div className="flex items-center justify-between p-6 border-t flex-shrink-0">
           <Button
             variant="outline"
             onClick={prevStep}
