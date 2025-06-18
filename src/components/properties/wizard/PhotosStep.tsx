@@ -126,7 +126,7 @@ const PhotosStep = ({ formData, updateFormData }: PhotosStepProps) => {
               O haz clic para seleccionar archivos (máximo 20 fotos)
             </p>
             <p className="text-sm text-runner-blue-600 font-medium mb-4">
-              Opcional. Pero RECUERDA, si subes fotos de tus espacios tendrás más posibilidades de atraer a runners a tu casa
+              Opcional. Pero RECUERDA, sube fotos de tus espacios y atrae a más runners a tu casa
             </p>
             <Button
               variant="outline"
