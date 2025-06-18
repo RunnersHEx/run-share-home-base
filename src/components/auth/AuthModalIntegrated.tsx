@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { User, Mail, Lock, Calendar, MapPin, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,6 +32,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     dateOfBirth: "",
     bio: "",
     runningExperience: "",
+    raceModality: "",
     preferredRaceTypes: [] as string[],
     emergencyContactName: "",
     emergencyContactPhone: "",
@@ -272,9 +274,30 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Tipos de carrera preferidos (selecciona varios)</Label>
+                  <Label>Modalidad de carreras preferidas</Label>
+                  <RadioGroup 
+                    value={formData.raceModality} 
+                    onValueChange={(value) => handleInputChange("raceModality", value)}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="ruta-asfalto" id="ruta-asfalto" />
+                      <Label htmlFor="ruta-asfalto">Ruta/Asfalto</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="trail-montana" id="trail-montana" />
+                      <Label htmlFor="trail-montana">Trail/Montaña</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="ambos" id="ambos" />
+                      <Label htmlFor="ambos">Ambos</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Distancias que más te gusta correr (selecciona varias)</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    {["5K", "10K", "Media Maratón", "Maratón", "Trail", "Ultra", "Triatlón"].map((type) => (
+                    {["5K", "10K", "Media Maratón", "Maratón", "Ultra"].map((type) => (
                       <div key={type} className="flex items-center space-x-2">
                         <Checkbox 
                           id={type}
@@ -316,7 +339,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
                       <Label className="font-semibold text-blue-700">Quiero ser Host</Label>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Ofrecer mi casa y conocimiento local a corredores que visiten mi zona
+                      Ofrecer mi casa, carreras cercanas y conocimiento local a corredores que quieran venir a participar en ellas y visitar la zona
                     </p>
                   </div>
                   
@@ -330,7 +353,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
                       <Label className="font-semibold text-orange-700">Quiero ser Guest</Label>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Buscar alojamiento y experiencia local cuando viaje a otras carreras
+                      Buscar carreras que me atraigan, alojamiento cercano y experiencia local
                     </p>
                   </div>
                 </div>
