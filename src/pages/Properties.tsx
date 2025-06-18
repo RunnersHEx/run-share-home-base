@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
@@ -61,7 +62,7 @@ const Properties = () => {
                 variant="outline" 
                 onClick={() => setSelectedPropertyId(null)}
               >
-                ← Volver a Propiedades
+                ← Volver a Mi Propiedad
               </Button>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
@@ -90,51 +91,29 @@ const Properties = () => {
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Mis Propiedades</h1>
-              <p className="text-gray-600 mt-2">Gestiona tus alojamientos y maximiza tus intercambios</p>
+              <h1 className="text-3xl font-bold text-gray-900">Mi Propiedad</h1>
+              <p className="text-gray-600 mt-2">Gestiona tu alojamiento y maximiza tus hospedajes</p>
             </div>
-            <Button 
-              onClick={() => setShowWizard(true)}
-              className="bg-runner-blue-600 hover:bg-runner-blue-700 text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar Nueva Propiedad
-            </Button>
+            {totalProperties === 0 && (
+              <Button 
+                onClick={() => setShowWizard(true)}
+                className="bg-runner-blue-600 hover:bg-runner-blue-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Agregar Propiedad
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Home className="h-8 w-8 text-runner-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Propiedades</p>
-                  <p className="text-2xl font-bold">{totalProperties}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Eye className="h-8 w-8 text-runner-green-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Propiedades Activas</p>
-                  <p className="text-2xl font-bold">{activeProperties}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+        {/* Stats Cards - Solo mostramos Total hospedajes y Puntos Ganados */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-runner-orange-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Intercambios</p>
+                  <p className="text-sm font-medium text-gray-600">Total Hospedajes</p>
                   <p className="text-2xl font-bold">{totalBookings}</p>
                 </div>
               </div>
@@ -154,14 +133,16 @@ const Properties = () => {
           </Card>
         </div>
 
-        {/* Filter Tabs */}
-        <Tabs value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)} className="mb-6">
-          <TabsList>
-            <TabsTrigger value="all">Todas ({totalProperties})</TabsTrigger>
-            <TabsTrigger value="active">Activas ({activeProperties})</TabsTrigger>
-            <TabsTrigger value="inactive">Inactivas ({totalProperties - activeProperties})</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* Filter Tabs - Solo si ya tiene propiedad */}
+        {totalProperties > 0 && (
+          <Tabs value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)} className="mb-6">
+            <TabsList>
+              <TabsTrigger value="all">Todas ({totalProperties})</TabsTrigger>
+              <TabsTrigger value="active">Activas ({activeProperties})</TabsTrigger>
+              <TabsTrigger value="inactive">Inactivas ({totalProperties - activeProperties})</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
 
         {/* Properties Grid */}
         {loading ? (
@@ -172,7 +153,7 @@ const Properties = () => {
           <Card className="p-12 text-center">
             <Home className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {totalProperties === 0 ? "¡Agrega tu primera propiedad!" : "No hay propiedades que mostrar"}
+              {totalProperties === 0 ? "¡Agrega tu propiedad!" : "No hay propiedades que mostrar"}
             </h3>
             <p className="text-gray-600 mb-6">
               {totalProperties === 0 
@@ -185,7 +166,7 @@ const Properties = () => {
                 className="bg-runner-blue-600 hover:bg-runner-blue-700 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Agregar Primera Propiedad
+                Agregar Propiedad
               </Button>
             )}
           </Card>
@@ -240,7 +221,7 @@ const Properties = () => {
                         </span>
                       </div>
                       <div className="text-sm text-gray-600">
-                        {property.total_bookings} intercambios
+                        {property.total_bookings} hospedajes
                       </div>
                     </div>
 
