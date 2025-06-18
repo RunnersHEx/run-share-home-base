@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MapPin } from "lucide-react";
-import { PropertyFormData } from "../PropertyWizard";
+import { PropertyFormData } from "@/types/property";
 
 interface LocationStepProps {
   formData: PropertyFormData;

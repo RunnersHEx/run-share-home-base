@@ -1,10 +1,9 @@
-
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageSquare, Clock, User, RotateCcw } from "lucide-react";
-import { PropertyFormData } from "../PropertyWizard";
+import { PropertyFormData } from "@/types/property";
 
 interface RulesStepProps {
   formData: PropertyFormData;

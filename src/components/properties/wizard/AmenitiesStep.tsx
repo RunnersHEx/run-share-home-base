@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Wifi, Thermometer, Wind, ChefHat, Shirt, Car, Mountain, Shield, Coffee, Dumbbell } from "lucide-react";
-import { PropertyFormData } from "../PropertyWizard";
+import { PropertyFormData } from "@/types/property";
 
 interface AmenitiesStepProps {
   formData: PropertyFormData;
