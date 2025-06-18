@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +22,7 @@ const AMENITY_CATEGORIES = {
       { id: "heating", name: "Calefacción", icon: <Thermometer className="h-4 w-4" /> },
       { id: "air_conditioning", name: "Aire acondicionado", icon: <Wind className="h-4 w-4" /> },
       { id: "kitchen", name: "Cocina", icon: <ChefHat className="h-4 w-4" /> },
-      { id: "laundry", name: "Lavandería", icon: <Shirt className="h-4 w-4" /> }
+      { id: "laundry", name: "Lavadora", icon: <Shirt className="h-4 w-4" /> }
     ]
   },
   runners: {
@@ -29,7 +30,9 @@ const AMENITY_CATEGORIES = {
     icon: <Dumbbell className="h-5 w-5" />,
     items: [
       { id: "early_breakfast", name: "Desayuno temprano", icon: <Coffee className="h-4 w-4" /> },
-      { id: "stretching_area", name: "Área estiramiento", icon: <Dumbbell className="h-4 w-4" /> }
+      { id: "stretching_mat", name: "Esterilla para estiramiento", icon: <Dumbbell className="h-4 w-4" /> },
+      { id: "foam_roller", name: "Roller Foam", icon: <Dumbbell className="h-4 w-4" /> },
+      { id: "massage_gun", name: "Pistola de masaje", icon: <Dumbbell className="h-4 w-4" /> }
     ]
   },
   comfort: {
@@ -45,7 +48,7 @@ const AMENITY_CATEGORIES = {
     title: "Ubicación",
     icon: <Mountain className="h-5 w-5" />,
     items: [
-      { id: "near_transport", name: "Cerca transporte", icon: <Car className="h-4 w-4" /> },
+      { id: "near_transport", name: "Cerca de transporte público", icon: <Car className="h-4 w-4" /> },
       { id: "near_parks", name: "Cerca parques/campo/montaña", icon: <Mountain className="h-4 w-4" /> },
       { id: "safe_running", name: "Zona segura para correr", icon: <Shield className="h-4 w-4" /> }
     ]
@@ -67,7 +70,7 @@ const AmenitiesStep = ({ formData, updateFormData }: AmenitiesStepProps) => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Amenities y Comodidades</CardTitle>
+          <CardTitle>Servicios y Comodidades</CardTitle>
         </CardHeader>
         <CardContent className="space-y-8">
           {Object.entries(AMENITY_CATEGORIES).map(([categoryKey, category]) => (

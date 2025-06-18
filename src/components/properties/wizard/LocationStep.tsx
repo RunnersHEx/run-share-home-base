@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -74,23 +75,23 @@ const LocationStep = ({ formData, updateFormData }: LocationStepProps) => {
           </div>
 
           <div>
-            <Label htmlFor="full_address">Dirección Completa *</Label>
+            <Label htmlFor="full_address">Calle sin número *</Label>
             <Input
               id="full_address"
               value={formData.full_address}
               onChange={(e) => updateFormData({ full_address: e.target.value })}
-              placeholder="Calle, número, código postal..."
+              placeholder="Ej: Calle Gran Vía, Avenida de la Constitución..."
               className="mt-2"
             />
             <p className="text-sm text-gray-600 mt-1">
-              Esta información solo se compartirá con guests confirmados por seguridad
+              La información completa de la dirección se la proporcionará el Host al Guest una vez hecho Match. El Host acepta la solicitud del Guest
             </p>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 className="font-medium text-blue-900 mb-2">📍 Confirmación de Ubicación</h4>
             <p className="text-sm text-blue-800">
-              Una vez que completes la dirección, te mostraremos un mapa para que confirmes la ubicación exacta. 
+              Una vez que indiques la calle, te mostraremos un mapa para que confirmes la ubicación exacta. 
               Esto ayuda a los runners a encontrar las mejores rutas cercanas.
             </p>
           </div>

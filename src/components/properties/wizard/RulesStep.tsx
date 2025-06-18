@@ -1,8 +1,10 @@
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, Clock, User, RotateCcw } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MessageSquare, RotateCcw } from "lucide-react";
 import { PropertyFormData } from "@/types/property";
 
 interface RulesStepProps {
@@ -10,7 +12,67 @@ interface RulesStepProps {
   updateFormData: (updates: Partial<PropertyFormData>) => void;
 }
 
+const BASIC_RULES = [
+  { id: "no_smoking", label: "No fumar" },
+  { id: "no_pets", label: "No mascotas" },
+  { id: "no_parties", label: "No fiestas" },
+  { id: "quiet_after_2330", label: "Silencio a partir de las 23:30h" },
+  { id: "no_services_without_permission", label: "No usar ningún servicio de la casa sin permiso previo" }
+];
+
 const RulesStep = ({ formData, updateFormData }: RulesStepProps) => {
+  const handleBasicRuleChange = (ruleId: string, checked: boolean) => {
+    const currentRules = formData.house_rules || "";
+    const rule = BASIC_RULES.find(r => r.id === ruleId);
+    
+    if (!rule) return;
+    
+    let updatedRules = currentRules;
+    
+    if (checked) {
+      // Add rule if not already present
+      if (!currentRules.includes(rule.label)) {
+        updatedRules = currentRules ? `${currentRules}, ${rule.label}` : rule.label;
+      }
+    } else {
+      // Remove rule
+      updatedRules = currentRules
+        .split(', ')
+        .filter(r => r !== rule.label)
+        .join(', ');
+    }
+    
+    updateFormData({ house_rules: updatedRules });
+  };
+
+  const isRuleSelected = (ruleId: string) => {
+    const rule = BASIC_RULES.find(r => r.id === ruleId);
+    return rule ? (formData.house_rules || "").includes(rule.label) : false;
+  };
+
+  const getAdditionalRules = () => {
+    const currentRules = formData.house_rules || "";
+    const basicRuleLabels = BASIC_RULES.map(r => r.label);
+    
+    return currentRules
+      .split(', ')
+      .filter(rule => rule.trim() && !basicRuleLabels.includes(rule.trim()))
+      .join(', ');
+  };
+
+  const handleAdditionalRulesChange = (additionalRules: string) => {
+    const selectedBasicRules = BASIC_RULES
+      .filter(rule => isRuleSelected(rule.id))
+      .map(rule => rule.label);
+    
+    const allRules = [...selectedBasicRules];
+    if (additionalRules.trim()) {
+      allRules.push(additionalRules.trim());
+    }
+    
+    updateFormData({ house_rules: allRules.join(', ') });
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -22,57 +84,37 @@ const RulesStep = ({ formData, updateFormData }: RulesStepProps) => {
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <Label htmlFor="house_rules" className="flex items-center">
+            <Label className="flex items-center mb-4">
               <MessageSquare className="h-4 w-4 mr-2" />
               Reglas de la Casa
             </Label>
-            <Textarea
-              id="house_rules"
-              value={formData.house_rules}
-              onChange={(e) => updateFormData({ house_rules: e.target.value })}
-              placeholder="Ej: No fumar, no mascotas, silencio después de las 22:00h..."
-              rows={4}
-              className="mt-2"
-            />
-            <p className="text-sm text-gray-600 mt-1">
-              Establece reglas claras para que tus guests sepan qué esperar
-            </p>
-          </div>
+            
+            <div className="space-y-3 mb-4">
+              {BASIC_RULES.map((rule) => (
+                <div key={rule.id} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={rule.id}
+                    checked={isRuleSelected(rule.id)}
+                    onCheckedChange={(checked) => handleBasicRuleChange(rule.id, checked as boolean)}
+                  />
+                  <Label htmlFor={rule.id} className="font-normal cursor-pointer">
+                    {rule.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
 
-          <div>
-            <Label htmlFor="check_in_instructions" className="flex items-center">
-              <Clock className="h-4 w-4 mr-2" />
-              Instrucciones de Check-in
+            <Label htmlFor="additional_rules" className="text-sm text-gray-600 mb-2 block">
+              Si deseas agregar alguna regla de la casa más, escríbela aquí
             </Label>
             <Textarea
-              id="check_in_instructions"
-              value={formData.check_in_instructions}
-              onChange={(e) => updateFormData({ check_in_instructions: e.target.value })}
-              placeholder="Ej: Las llaves están en el buzón, el código es 1234..."
+              id="additional_rules"
+              value={getAdditionalRules()}
+              onChange={(e) => handleAdditionalRulesChange(e.target.value)}
+              placeholder="Reglas adicionales..."
               rows={3}
               className="mt-2"
             />
-            <p className="text-sm text-gray-600 mt-1">
-              Recuerda que una vez hagas Match con el Guest, hablarán sobre ello a través del canal interno
-            </p>
-          </div>
-
-          <div>
-            <Label htmlFor="runner_instructions" className="flex items-center">
-              <User className="h-4 w-4 mr-2" />
-              Instrucciones Especiales para Runners
-            </Label>
-            <Textarea
-              id="runner_instructions"
-              value={formData.runner_instructions}
-              onChange={(e) => updateFormData({ runner_instructions: e.target.value })}
-              placeholder="Ej: Mejores rutas para correr, horarios recomendados, dónde guardar material deportivo..."
-              rows={4}
-              className="mt-2"
-            />
-            <p className="text-sm text-gray-600 mt-1">
-              Comparte tu conocimiento local sobre las mejores rutas y consejos para correr en tu área
-            </p>
           </div>
 
           <div>
