@@ -11,16 +11,31 @@ interface RoleSelectionFormProps {
 }
 
 const RoleSelectionForm = ({ formData, onInputChange }: RoleSelectionFormProps) => {
+  const handleHostChange = (checked: boolean | string) => {
+    onInputChange("isHost", !!checked);
+  };
+
+  const handleGuestChange = (checked: boolean | string) => {
+    onInputChange("isGuest", !!checked);
+  };
+
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">¿Cómo quieres usar la plataforma?</h3>
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">¿Cómo quieres usar la plataforma?</h3>
+        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-800 font-medium">
+            💡 Recomendación: Activa ambos roles para poder desempeñar tanto como Host como Guest y aprovechar al máximo la plataforma.
+          </p>
+        </div>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 transition-colors"
-             onClick={() => onInputChange("isHost", !formData.isHost)}>
+        <div className="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-colors">
           <div className="flex items-center space-x-2 mb-2">
             <Checkbox 
               checked={formData.isHost} 
-              onCheckedChange={(checked) => onInputChange("isHost", checked)}
+              onCheckedChange={handleHostChange}
             />
             <Label className="font-semibold text-blue-700">Quiero ser Host</Label>
           </div>
@@ -29,12 +44,11 @@ const RoleSelectionForm = ({ formData, onInputChange }: RoleSelectionFormProps) 
           </p>
         </div>
         
-        <div className="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-orange-500 transition-colors"
-             onClick={() => onInputChange("isGuest", !formData.isGuest)}>
+        <div className="border-2 border-gray-200 rounded-lg p-4 hover:border-orange-500 transition-colors">
           <div className="flex items-center space-x-2 mb-2">
             <Checkbox 
               checked={formData.isGuest} 
-              onCheckedChange={(checked) => onInputChange("isGuest", checked)}
+              onCheckedChange={handleGuestChange}
             />
             <Label className="font-semibold text-orange-700">Quiero ser Guest</Label>
           </div>
