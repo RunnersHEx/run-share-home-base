@@ -134,6 +134,125 @@ export type Database = {
         }
         Relationships: []
       }
+      properties: {
+        Row: {
+          amenities: string[]
+          average_rating: number | null
+          bathrooms: number
+          bedrooms: number
+          beds: number
+          cancellation_policy: string | null
+          check_in_instructions: string | null
+          created_at: string
+          description: string | null
+          full_address: string
+          house_rules: string | null
+          id: string
+          is_active: boolean
+          latitude: number | null
+          locality: string
+          longitude: number | null
+          max_guests: number
+          owner_id: string
+          points_earned: number
+          provinces: string[]
+          runner_instructions: string | null
+          title: string
+          total_bookings: number
+          updated_at: string
+        }
+        Insert: {
+          amenities?: string[]
+          average_rating?: number | null
+          bathrooms?: number
+          bedrooms?: number
+          beds?: number
+          cancellation_policy?: string | null
+          check_in_instructions?: string | null
+          created_at?: string
+          description?: string | null
+          full_address: string
+          house_rules?: string | null
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          locality: string
+          longitude?: number | null
+          max_guests?: number
+          owner_id: string
+          points_earned?: number
+          provinces?: string[]
+          runner_instructions?: string | null
+          title: string
+          total_bookings?: number
+          updated_at?: string
+        }
+        Update: {
+          amenities?: string[]
+          average_rating?: number | null
+          bathrooms?: number
+          bedrooms?: number
+          beds?: number
+          cancellation_policy?: string | null
+          check_in_instructions?: string | null
+          created_at?: string
+          description?: string | null
+          full_address?: string
+          house_rules?: string | null
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          locality?: string
+          longitude?: number | null
+          max_guests?: number
+          owner_id?: string
+          points_earned?: number
+          provinces?: string[]
+          runner_instructions?: string | null
+          title?: string
+          total_bookings?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      property_images: {
+        Row: {
+          caption: string | null
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          is_main: boolean
+          property_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url: string
+          is_main?: boolean
+          property_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          is_main?: boolean
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_images_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           comment: string | null
