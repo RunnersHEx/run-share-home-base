@@ -25,7 +25,7 @@ const RoleSelectionForm = ({ formData, onInputChange }: RoleSelectionFormProps) 
         <h3 className="text-lg font-semibold text-gray-900">¿Cómo quieres usar la plataforma?</h3>
         <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-800 font-medium">
-            💡 Recomendación: Activa ambos roles para poder desempeñar tanto como Host como Guest y aprovechar al máximo la plataforma.
+            💡 Activa ambos roles para poder desempeñar tanto como Host como Guest y aprovechar al máximo la plataforma.
           </p>
         </div>
       </div>
