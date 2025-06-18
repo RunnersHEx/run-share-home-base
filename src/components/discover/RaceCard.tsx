@@ -4,6 +4,32 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MapPin, Calendar, Star, Clock, Trophy, Heart } from "lucide-react";
 
+// Move utility functions outside component to prevent re-creation on each render
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+};
+
+const getModalityBadgeColor = (modality: string) => {
+  return modality === 'road' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800';
+};
+
+const getDistanceBadgeColor = (distance: string) => {
+  const colors = {
+    'ultra': 'bg-red-100 text-red-800',
+    'marathon': 'bg-orange-100 text-orange-800',
+    'half_marathon': 'bg-yellow-100 text-yellow-800',
+    '20k': 'bg-green-100 text-green-800',
+    '15k': 'bg-blue-100 text-blue-800',
+    '10k': 'bg-indigo-100 text-indigo-800',
+    '5k': 'bg-purple-100 text-purple-800'
+  };
+  return colors[distance as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+};
+
 interface RaceCardProps {
   race: {
     id: string;
@@ -32,31 +58,6 @@ interface RaceCardProps {
 }
 
 export const RaceCard = ({ race, isSaved, onSave, onViewDetails }: RaceCardProps) => {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
-  const getModalityBadgeColor = (modality: string) => {
-    return modality === 'road' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800';
-  };
-
-  const getDistanceBadgeColor = (distance: string) => {
-    const colors = {
-      'ultra': 'bg-red-100 text-red-800',
-      'marathon': 'bg-orange-100 text-orange-800',
-      'half_marathon': 'bg-yellow-100 text-yellow-800',
-      '20k': 'bg-green-100 text-green-800',
-      '15k': 'bg-blue-100 text-blue-800',
-      '10k': 'bg-indigo-100 text-indigo-800',
-      '5k': 'bg-purple-100 text-purple-800'
-    };
-    return colors[distance as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  };
-
   return (
     <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden">
       <div className="relative">
