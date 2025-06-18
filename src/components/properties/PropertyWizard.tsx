@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,17 +17,26 @@ interface PropertyWizardProps {
   propertyId?: string;
 }
 
+interface PhotoPreview {
+  id: string;
+  file: File;
+  url: string;
+  caption: string;
+  isMain: boolean;
+}
+
 const STEPS = [
   { id: 1, title: "Información Básica", description: "Título y descripción de tu propiedad" },
   { id: 2, title: "Ubicación", description: "Dónde se encuentra tu propiedad" },
-  { id: 3, title: "Amenities", description: "Comodidades que ofreces" },
+  { id: 3, title: "Servicios", description: "Comodidades que ofreces" },
   { id: 4, title: "Reglas y Configuración", description: "Reglas e instrucciones especiales" },
   { id: 5, title: "Fotos", description: "Imágenes de tu propiedad" }
 ];
 
 const PropertyWizard = ({ onClose, propertyId }: PropertyWizardProps) => {
-  const { createProperty } = useProperties();
+  const { createProperty, uploadPropertyImage } = useProperties();
   const [currentStep, setCurrentStep] = useState(1);
+  const [photos, setPhotos] = useState<PhotoPreview[]>([]);
   const [formData, setFormData] = useState<PropertyFormData>({
     title: "",
     description: "",
@@ -68,8 +76,15 @@ const PropertyWizard = ({ onClose, propertyId }: PropertyWizardProps) => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const result = await createProperty(formData);
+      // Create property with is_active: true by default
+      const result = await createProperty({ ...formData, is_active: true });
       if (result) {
+        // Upload photos if any
+        if (photos.length > 0) {
+          for (const photo of photos) {
+            await uploadPropertyImage(result.id, photo.file, photo.caption, photo.isMain);
+          }
+        }
         toast.success("¡Propiedad creada exitosamente!");
         onClose();
       }
@@ -91,7 +106,7 @@ const PropertyWizard = ({ onClose, propertyId }: PropertyWizardProps) => {
       case 4:
         return <RulesStep formData={formData} updateFormData={updateFormData} />;
       case 5:
-        return <PhotosStep formData={formData} updateFormData={updateFormData} />;
+        return <PhotosStep formData={formData} updateFormData={updateFormData} photos={photos} setPhotos={setPhotos} />;
       default:
         return null;
     }

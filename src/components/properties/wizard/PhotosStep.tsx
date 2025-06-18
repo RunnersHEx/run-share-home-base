@@ -1,16 +1,11 @@
 
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, Image, X, Star, Camera } from "lucide-react";
 import { PropertyFormData } from "@/types/property";
-
-interface PhotosStepProps {
-  formData: PropertyFormData;
-  updateFormData: (updates: Partial<PropertyFormData>) => void;
-}
 
 interface PhotoPreview {
   id: string;
@@ -20,8 +15,14 @@ interface PhotoPreview {
   isMain: boolean;
 }
 
-const PhotosStep = ({ formData, updateFormData }: PhotosStepProps) => {
-  const [photos, setPhotos] = useState<PhotoPreview[]>([]);
+interface PhotosStepProps {
+  formData: PropertyFormData;
+  updateFormData: (updates: Partial<PropertyFormData>) => void;
+  photos: PhotoPreview[];
+  setPhotos: (photos: PhotoPreview[]) => void;
+}
+
+const PhotosStep = ({ formData, updateFormData, photos, setPhotos }: PhotosStepProps) => {
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,7 +44,7 @@ const PhotosStep = ({ formData, updateFormData }: PhotosStepProps) => {
       }
     });
 
-    setPhotos(prev => [...prev, ...newPhotos]);
+    setPhotos([...photos, ...newPhotos]);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -63,38 +64,27 @@ const PhotosStep = ({ formData, updateFormData }: PhotosStepProps) => {
   };
 
   const removePhoto = (id: string) => {
-    setPhotos(prev => {
-      const updated = prev.filter(photo => photo.id !== id);
-      
-      // If we removed the main photo, make the first remaining photo main
-      if (updated.length > 0 && !updated.some(p => p.isMain)) {
-        updated[0].isMain = true;
-      }
-      
-      return updated;
-    });
+    const updated = photos.filter(photo => photo.id !== id);
+    
+    // If we removed the main photo, make the first remaining photo main
+    if (updated.length > 0 && !updated.some(p => p.isMain)) {
+      updated[0].isMain = true;
+    }
+    
+    setPhotos(updated);
   };
 
   const setMainPhoto = (id: string) => {
-    setPhotos(prev => prev.map(photo => ({
+    setPhotos(photos.map(photo => ({
       ...photo,
       isMain: photo.id === id
     })));
   };
 
   const updateCaption = (id: string, caption: string) => {
-    setPhotos(prev => prev.map(photo => 
+    setPhotos(photos.map(photo => 
       photo.id === id ? { ...photo, caption } : photo
     ));
-  };
-
-  const movePhoto = (fromIndex: number, toIndex: number) => {
-    setPhotos(prev => {
-      const updated = [...prev];
-      const [movedItem] = updated.splice(fromIndex, 1);
-      updated.splice(toIndex, 0, movedItem);
-      return updated;
-    });
   };
 
   return (

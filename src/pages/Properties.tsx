@@ -6,16 +6,14 @@ import { useProperties } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Home, MapPin, Users, Star, TrendingUp, Eye, EyeOff, Calendar } from "lucide-react";
+import { Plus, Home, MapPin, Users, Star, TrendingUp, Calendar } from "lucide-react";
 import PropertyWizard from "@/components/properties/PropertyWizard";
 import AvailabilityCalendar from "@/components/availability/AvailabilityCalendar";
 
 const Properties = () => {
   const { user, loading: authLoading } = useAuth();
-  const { properties, loading, togglePropertyStatus } = useProperties();
+  const { properties, loading } = useProperties();
   const [showWizard, setShowWizard] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
 
   if (authLoading) {
@@ -28,20 +26,10 @@ const Properties = () => {
     return <Navigate to="/" replace />;
   }
 
-  const filteredProperties = properties.filter(property => {
-    if (filterStatus === 'active') return property.is_active;
-    if (filterStatus === 'inactive') return !property.is_active;
-    return true;
-  });
-
+  // All properties are active by default - no filtering needed
   const totalProperties = properties.length;
-  const activeProperties = properties.filter(p => p.is_active).length;
   const totalBookings = properties.reduce((sum, p) => sum + p.total_bookings, 0);
   const totalPoints = properties.reduce((sum, p) => sum + p.points_earned, 0);
-
-  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
-    await togglePropertyStatus(id, !currentStatus);
-  };
 
   const handleManageAvailability = (propertyId: string) => {
     setSelectedPropertyId(propertyId);
@@ -106,7 +94,7 @@ const Properties = () => {
           </div>
         </div>
 
-        {/* Stats Cards - Solo mostramos Total hospedajes y Puntos Ganados */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
@@ -133,46 +121,31 @@ const Properties = () => {
           </Card>
         </div>
 
-        {/* Filter Tabs - Solo si ya tiene propiedad */}
-        {totalProperties > 0 && (
-          <Tabs value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)} className="mb-6">
-            <TabsList>
-              <TabsTrigger value="all">Todas ({totalProperties})</TabsTrigger>
-              <TabsTrigger value="active">Activas ({activeProperties})</TabsTrigger>
-              <TabsTrigger value="inactive">Inactivas ({totalProperties - activeProperties})</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        )}
-
         {/* Properties Grid */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-runner-blue-600"></div>
           </div>
-        ) : filteredProperties.length === 0 ? (
+        ) : properties.length === 0 ? (
           <Card className="p-12 text-center">
             <Home className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {totalProperties === 0 ? "¡Agrega tu propiedad!" : "No hay propiedades que mostrar"}
+              ¡Agrega tu propiedad!
             </h3>
             <p className="text-gray-600 mb-6">
-              {totalProperties === 0 
-                ? "Comienza a compartir tu espacio con runners de todo el mundo" 
-                : "Intenta cambiar los filtros para ver más propiedades"}
+              Comienza a compartir tu espacio con runners de todo el mundo
             </p>
-            {totalProperties === 0 && (
-              <Button 
-                onClick={() => setShowWizard(true)}
-                className="bg-runner-blue-600 hover:bg-runner-blue-700 text-white"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar Propiedad
-              </Button>
-            )}
+            <Button 
+              onClick={() => setShowWizard(true)}
+              className="bg-runner-blue-600 hover:bg-runner-blue-700 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Agregar Propiedad
+            </Button>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProperties.map((property) => {
+            {properties.map((property) => {
               const mainImage = property.images?.find(img => img.is_main)?.image_url || 
                               property.images?.[0]?.image_url;
               
@@ -191,8 +164,8 @@ const Properties = () => {
                       </div>
                     )}
                     <div className="absolute top-4 right-4">
-                      <Badge variant={property.is_active ? "default" : "secondary"}>
-                        {property.is_active ? "Activa" : "Inactiva"}
+                      <Badge variant="default">
+                        Activa
                       </Badge>
                     </div>
                   </div>
@@ -226,24 +199,6 @@ const Properties = () => {
                     </div>
 
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleStatus(property.id, property.is_active)}
-                        className="flex-1"
-                      >
-                        {property.is_active ? (
-                          <>
-                            <EyeOff className="h-4 w-4 mr-1" />
-                            Desactivar
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="h-4 w-4 mr-1" />
-                            Activar
-                          </>
-                        )}
-                      </Button>
                       <Button 
                         variant="outline" 
                         size="sm" 
