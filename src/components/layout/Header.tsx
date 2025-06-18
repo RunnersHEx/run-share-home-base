@@ -6,7 +6,7 @@ import AuthModalIntegrated from "@/components/auth/AuthModalIntegrated";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Home, Trophy, MapPin } from "lucide-react";
+import { LogOut, User, Home, Trophy, MapPin, Search } from "lucide-react";
 
 const Header = () => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -58,6 +58,18 @@ const Header = () => {
             >
               <Home className="w-4 h-4" />
               <span>Inicio</span>
+            </Link>
+
+            <Link
+              to="/discover"
+              className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive("/discover")
+                  ? "bg-[#1E40AF] text-white"
+                  : "text-gray-700 hover:text-[#1E40AF] hover:bg-gray-100"
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              <span>Descubrir Carreras</span>
             </Link>
 
             {user && (
