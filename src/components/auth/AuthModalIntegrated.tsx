@@ -2,16 +2,17 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { User, Mail, Lock, Calendar, MapPin, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import LoginForm from "@/components/auth/forms/LoginForm";
+import BasicInfoForm from "@/components/auth/forms/BasicInfoForm";
+import RunnerProfileForm from "@/components/auth/forms/RunnerProfileForm";
+import RoleSelectionForm from "@/components/auth/forms/RoleSelectionForm";
+import EmergencyContactForm from "@/components/auth/forms/EmergencyContactForm";
 
 interface AuthModalIntegratedProps {
   isOpen: boolean;
@@ -113,283 +114,44 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
           </TabsList>
 
           <TabsContent value="login" className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="tu@email.com"
-                    className="pl-10"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Tu contraseña"
-                    className="pl-10"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange("password", e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
-                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
-              </Button>
-
-              <div className="text-center">
-                <Button 
-                  type="button"
-                  variant="link" 
-                  className="text-blue-600"
-                  onClick={handlePasswordReset}
-                >
-                  ¿Olvidaste tu contraseña?
-                </Button>
-              </div>
-            </form>
+            <LoginForm
+              formData={formData}
+              onInputChange={handleInputChange}
+              onSubmit={handleSubmit}
+              onPasswordReset={handlePasswordReset}
+              isLoading={isLoading}
+            />
           </TabsContent>
 
           <TabsContent value="register" className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Información Básica</h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">Nombre</Label>
-                    <Input
-                      id="firstName"
-                      placeholder="Nombre"
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange("firstName", e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Apellidos</Label>
-                    <Input
-                      id="lastName"
-                      placeholder="Apellidos"
-                      value={formData.lastName}
-                      onChange={(e) => handleInputChange("lastName", e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email-register">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="email-register"
-                      type="email"
-                      placeholder="tu@email.com"
-                      className="pl-10"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password-register">Contraseña</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="password-register"
-                      type="password"
-                      placeholder="Mínimo 8 caracteres"
-                      className="pl-10"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Teléfono</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+34 123 456 789"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dateOfBirth">Fecha de Nacimiento</Label>
-                    <Input
-                      id="dateOfBirth"
-                      type="date"
-                      value={formData.dateOfBirth}
-                      onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
+              <BasicInfoForm
+                formData={formData}
+                onInputChange={handleInputChange}
+              />
 
               <Separator />
 
-              {/* Running Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <Trophy className="mr-2 h-5 w-5 text-orange-500" />
-                  Perfil Runner
-                </h3>
-
-                <div className="space-y-2">
-                  <Label htmlFor="runningExperience">Años de experiencia corriendo</Label>
-                  <Select onValueChange={(value) => handleInputChange("runningExperience", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona tu experiencia" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0-1">Menos de 1 año</SelectItem>
-                      <SelectItem value="1-3">1-3 años</SelectItem>
-                      <SelectItem value="3-5">3-5 años</SelectItem>
-                      <SelectItem value="5-10">5-10 años</SelectItem>
-                      <SelectItem value="10+">Más de 10 años</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Modalidad de carreras preferidas</Label>
-                  <RadioGroup 
-                    value={formData.raceModality} 
-                    onValueChange={(value) => handleInputChange("raceModality", value)}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="ruta-asfalto" id="ruta-asfalto" />
-                      <Label htmlFor="ruta-asfalto">Ruta/Asfalto</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="trail-montana" id="trail-montana" />
-                      <Label htmlFor="trail-montana">Trail/Montaña</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="ambos" id="ambos" />
-                      <Label htmlFor="ambos">Ambos</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Distancias que más te gusta correr (selecciona varias)</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {["5K", "10K", "Media Maratón", "Maratón", "Ultra"].map((type) => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={type}
-                          checked={formData.preferredRaceTypes.includes(type)}
-                          onCheckedChange={() => handleRaceTypeToggle(type)}
-                        />
-                        <Label htmlFor={type} className="text-sm">{type}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Cuéntanos sobre ti</Label>
-                  <textarea
-                    id="bio"
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Háblanos de tu experiencia corriendo, motivaciones, logros..."
-                    value={formData.bio}
-                    onChange={(e) => handleInputChange("bio", e.target.value)}
-                  />
-                </div>
-              </div>
+              <RunnerProfileForm
+                formData={formData}
+                onInputChange={handleInputChange}
+                onRaceTypeToggle={handleRaceTypeToggle}
+              />
 
               <Separator />
 
-              {/* Role Selection */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">¿Cómo quieres usar la plataforma?</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 transition-colors"
-                       onClick={() => handleInputChange("isHost", !formData.isHost)}>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Checkbox 
-                        checked={formData.isHost} 
-                        onCheckedChange={(checked) => handleInputChange("isHost", checked)}
-                      />
-                      <Label className="font-semibold text-blue-700">Quiero ser Host</Label>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      Ofrecer mi casa, carreras cercanas y conocimiento local a corredores que quieran venir a participar en ellas y visitar la zona
-                    </p>
-                  </div>
-                  
-                  <div className="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-orange-500 transition-colors"
-                       onClick={() => handleInputChange("isGuest", !formData.isGuest)}>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Checkbox 
-                        checked={formData.isGuest} 
-                        onCheckedChange={(checked) => handleInputChange("isGuest", checked)}
-                      />
-                      <Label className="font-semibold text-orange-700">Quiero ser Guest</Label>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      Buscar carreras que me atraigan, alojamiento cercano y experiencia local
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <RoleSelectionForm
+                formData={formData}
+                onInputChange={handleInputChange}
+              />
 
               <Separator />
 
-              {/* Emergency Contact */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Contacto de Emergencia</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="emergencyContactName">Nombre</Label>
-                    <Input
-                      id="emergencyContactName"
-                      placeholder="Nombre del contacto"
-                      value={formData.emergencyContactName}
-                      onChange={(e) => handleInputChange("emergencyContactName", e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="emergencyContactPhone">Teléfono</Label>
-                    <Input
-                      id="emergencyContactPhone"
-                      type="tel"
-                      placeholder="+34 123 456 789"
-                      value={formData.emergencyContactPhone}
-                      onChange={(e) => handleInputChange("emergencyContactPhone", e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
+              <EmergencyContactForm
+                formData={formData}
+                onInputChange={handleInputChange}
+              />
 
-              {/* Terms and Conditions */}
               <div className="flex items-start space-x-2">
                 <Checkbox 
                   id="terms"
