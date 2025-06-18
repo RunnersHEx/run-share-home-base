@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +34,24 @@ export const useProfile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+
+  const calculateProgress = (profileData: Profile) => {
+    let completed = 0;
+    const totalFields = 10;
+
+    if (profileData.first_name) completed++;
+    if (profileData.last_name) completed++;
+    if (profileData.phone) completed++;
+    if (profileData.bio) completed++;
+    if (profileData.running_experience) completed++;
+    if (profileData.preferred_distances && profileData.preferred_distances.length > 0) completed++;
+    if (profileData.emergency_contact_name) completed++;
+    if (profileData.emergency_contact_phone) completed++;
+    if (profileData.is_host || profileData.is_guest) completed++;
+    if (profileData.profile_image_url) completed++;
+
+    return Math.round((completed / totalFields) * 100);
+  };
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -80,13 +97,9 @@ export const useProfile = () => {
       
       setProfile(profileData);
 
-      // Calculate progress
-      const { data: progressData, error: progressError } = await supabase
-        .rpc('calculate_profile_progress', { user_id: user.id });
-
-      if (!progressError) {
-        setProgress(progressData || 0);
-      }
+      // Calculate progress using frontend logic
+      const calculatedProgress = calculateProgress(profileData);
+      setProgress(calculatedProgress);
     } catch (error) {
       console.error('Error fetching profile:', error);
       toast.error('Error al cargar el perfil');
@@ -108,12 +121,11 @@ export const useProfile = () => {
 
       setProfile(prev => prev ? { ...prev, ...updates } : null);
       
-      // Recalculate progress
-      const { data: progressData } = await supabase
-        .rpc('calculate_profile_progress', { user_id: user.id });
-      
-      if (progressData) {
-        setProgress(progressData);
+      // Recalculate progress using frontend logic
+      if (profile) {
+        const updatedProfile = { ...profile, ...updates };
+        const calculatedProgress = calculateProgress(updatedProfile);
+        setProgress(calculatedProgress);
       }
 
       toast.success('Perfil actualizado correctamente');
