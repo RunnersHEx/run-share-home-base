@@ -1,145 +1,197 @@
 
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { MapPin, Euro, Trophy, Users, Globe, Calculator } from "lucide-react";
 import { RaceFormData } from "@/types/race";
-import { Calculator, Euro, MapPin, Clock } from "lucide-react";
 
 interface LogisticsStepProps {
   formData: Partial<RaceFormData>;
   onUpdate: (data: Partial<RaceFormData>) => void;
+  onNext: () => void;
+  onPrev: () => void;
 }
 
-export const LogisticsStep = ({ formData, onUpdate }: LogisticsStepProps) => {
-  const suggestPointsCost = () => {
-    const baseCost = formData.registration_cost || 0;
-    const suggested = Math.max(10, Math.round(baseCost * 0.3));
-    onUpdate({ points_cost: suggested });
+const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProps) => {
+  // Calculate suggested points based on registration cost
+  const getSuggestedPoints = (registrationCost?: number) => {
+    if (!registrationCost) return 50;
+    // Simple formula: 1 euro = 2 points approximately
+    return Math.max(50, Math.round(registrationCost * 2));
+  };
+
+  const canProceed = () => {
+    return formData.points_cost && 
+           formData.points_cost > 0 && 
+           formData.max_guests && 
+           formData.max_guests > 0;
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Logística y Costos</h3>
-        <p className="text-gray-600 mb-6">
-          Define los aspectos logísticos y económicos de la carrera
-        </p>
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-gray-900">Logística y Costos</h2>
+        <p className="text-gray-600 mt-2">Define los aspectos prácticos y económicos</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <Label htmlFor="distance_from_property" className="flex items-center space-x-2">
-            <MapPin className="w-4 h-4" />
-            <span>Distancia desde Propiedad (km)</span>
-          </Label>
-          <Input
-            id="distance_from_property"
-            type="number"
-            step="0.1"
-            min="0"
-            placeholder="5.2"
-            value={formData.distance_from_property || ''}
-            onChange={(e) => onUpdate({ distance_from_property: parseFloat(e.target.value) || undefined })}
-            className="mt-1"
-          />
-          <p className="text-sm text-gray-500 mt-1">
-            Distancia en kilómetros desde tu propiedad hasta el punto de salida
-          </p>
-        </div>
-
-        <div>
-          <Label htmlFor="official_website">Sitio Web Oficial</Label>
-          <Input
-            id="official_website"
-            type="url"
-            placeholder="https://www.maratonpicos.com"
-            value={formData.official_website || ''}
-            onChange={(e) => onUpdate({ official_website: e.target.value })}
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="registration_cost" className="flex items-center space-x-2">
-            <Euro className="w-4 h-4" />
-            <span>Costo Inscripción (€)</span>
-          </Label>
-          <Input
-            id="registration_cost"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="45.00"
-            value={formData.registration_cost || ''}
-            onChange={(e) => onUpdate({ registration_cost: parseFloat(e.target.value) || undefined })}
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="points_cost" className="flex items-center space-x-2">
-            <Calculator className="w-4 h-4" />
-            <span>Costo en Puntos para Guests *</span>
-          </Label>
-          <div className="flex space-x-2 mt-1">
-            <Input
-              id="points_cost"
+      {/* Distancia y Ubicación */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MapPin className="w-5 h-5" />
+            <span>Ubicación y Distancia</span>
+          </CardTitle>
+          <CardDescription>Información sobre la proximidad a tu propiedad</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="distance_from_property">Distancia desde tu propiedad (km)</Label>
+            <input
+              id="distance_from_property"
               type="number"
+              step="0.1"
               min="0"
-              placeholder="15"
-              value={formData.points_cost || ''}
-              onChange={(e) => onUpdate({ points_cost: parseInt(e.target.value) || 0 })}
+              value={formData.distance_from_property || ''}
+              onChange={(e) => onUpdate({ distance_from_property: parseFloat(e.target.value) || 0 })}
+              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Ej: 2.5"
             />
-            <button
-              type="button"
-              onClick={suggestPointsCost}
-              className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded border"
-              disabled={!formData.registration_cost}
-            >
-              Sugerir
-            </button>
+            <p className="text-sm text-gray-500 mt-1">
+              ¿A qué distancia está la salida de la carrera desde tu alojamiento?
+            </p>
           </div>
-          <p className="text-sm text-gray-500 mt-1">
-            Puntos que los guests pagarán por la experiencia completa
-          </p>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div>
-          <Label htmlFor="max_guests">Máximo Guests que Puedes Alojar *</Label>
-          <Input
-            id="max_guests"
-            type="number"
-            min="1"
-            max="20"
-            placeholder="4"
-            value={formData.max_guests || ''}
-            onChange={(e) => onUpdate({ max_guests: parseInt(e.target.value) || 1 })}
-            className="mt-1"
-          />
-        </div>
+      {/* Información Oficial */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Globe className="w-5 h-5" />
+            <span>Información Oficial</span>
+          </CardTitle>
+          <CardDescription>Enlaces y costos oficiales de la carrera</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="official_website">Sitio web oficial de la carrera</Label>
+            <input
+              id="official_website"
+              type="url"
+              value={formData.official_website || ''}
+              onChange={(e) => onUpdate({ official_website: e.target.value })}
+              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="https://ejemplo-carrera.com"
+            />
+          </div>
 
-        <div>
-          <Label htmlFor="start_time" className="flex items-center space-x-2">
-            <Clock className="w-4 h-4" />
-            <span>Horario Aproximado de Salida</span>
-          </Label>
-          <Input
-            id="start_time"
-            type="time"
-            value={formData.start_time || ''}
-            onChange={(e) => onUpdate({ start_time: e.target.value })}
-            className="mt-1"
-          />
-        </div>
-      </div>
+          <div>
+            <Label htmlFor="registration_cost">Costo de inscripción (€)</Label>
+            <div className="relative">
+              <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                id="registration_cost"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.registration_cost || ''}
+                onChange={(e) => onUpdate({ registration_cost: parseFloat(e.target.value) || 0 })}
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="25.00"
+              />
+            </div>
+            <p className="text-sm text-gray-500 mt-1">
+              Precio oficial de inscripción a la carrera
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-2">💡 Consejos para Definir Precios</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Los puntos deben reflejar el valor de tu experiencia local</li>
-          <li>• Considera incluir: alojamiento + conocimiento local + acompañamiento</li>
-          <li>• Precio sugerido: 20-40% del costo de inscripción</li>
-        </ul>
+      {/* Sistema de Puntos */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Trophy className="w-5 h-5" />
+            <span>Costo en Puntos</span>
+          </CardTitle>
+          <CardDescription>Define cuántos puntos costará esta experiencia</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="points_cost">Puntos requeridos para reservar</Label>
+            <div className="flex space-x-3">
+              <input
+                id="points_cost"
+                type="number"
+                min="1"
+                value={formData.points_cost || ''}
+                onChange={(e) => onUpdate({ points_cost: parseInt(e.target.value) || 0 })}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="100"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onUpdate({ points_cost: getSuggestedPoints(formData.registration_cost) })}
+                className="flex items-center space-x-1"
+              >
+                <Calculator className="w-4 h-4" />
+                <span>Sugerir</span>
+              </Button>
+            </div>
+            {formData.registration_cost && (
+              <p className="text-sm text-blue-600 mt-1">
+                Sugerencia basada en costo de inscripción: {getSuggestedPoints(formData.registration_cost)} puntos
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Capacidad */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Users className="w-5 h-5" />
+            <span>Capacidad de Alojamiento</span>
+          </CardTitle>
+          <CardDescription>¿Cuántos runners puedes alojar para esta carrera?</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div>
+            <Label htmlFor="max_guests">Máximo número de guests</Label>
+            <input
+              id="max_guests"
+              type="number"
+              min="1"
+              max="20"
+              value={formData.max_guests || ''}
+              onChange={(e) => onUpdate({ max_guests: parseInt(e.target.value) || 1 })}
+              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="2"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Considera la capacidad de tu propiedad y tu disponibilidad como anfitrión
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between pt-6">
+        <Button variant="outline" onClick={onPrev}>
+          Anterior
+        </Button>
+        <Button 
+          onClick={onNext} 
+          disabled={!canProceed()}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          Continuar
+        </Button>
       </div>
     </div>
   );
 };
+
+export default LogisticsStep;

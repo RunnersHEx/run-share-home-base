@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { AuthModalIntegrated } from "@/components/auth/AuthModalIntegrated";
+import AuthModalIntegrated from "@/components/auth/AuthModalIntegrated";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -10,6 +10,7 @@ import { LogOut, User, Home, Trophy, MapPin } from "lucide-react";
 
 const Header = () => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("register");
   const { user, signOut } = useAuth();
   const location = useLocation();
 
@@ -20,6 +21,15 @@ const Header = () => {
       return `${user.user_metadata.first_name.charAt(0)}${user.user_metadata.last_name.charAt(0)}`;
     }
     return user?.email?.charAt(0).toUpperCase() || "U";
+  };
+
+  const openAuthModal = (mode: "login" | "register") => {
+    setAuthMode(mode);
+    setAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setAuthModalOpen(false);
   };
 
   return (
@@ -107,7 +117,7 @@ const Header = () => {
               </DropdownMenu>
             ) : (
               <Button 
-                onClick={() => setAuthModalOpen(true)}
+                onClick={() => openAuthModal("login")}
                 className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
               >
                 Iniciar Sesión
@@ -118,8 +128,10 @@ const Header = () => {
       </div>
 
       <AuthModalIntegrated 
-        isOpen={authModalOpen} 
-        onClose={() => setAuthModalOpen(false)} 
+        isOpen={authModalOpen}
+        onClose={closeAuthModal}
+        mode={authMode}
+        onModeChange={setAuthMode}
       />
     </header>
   );
