@@ -48,31 +48,34 @@ export const useProfile = () => {
 
       if (error) throw error;
       
-      // Ensure all required fields are present
+      // Cast the data to include our extended fields
+      const extendedData = data as any;
+      
+      // Ensure all required fields are present with proper defaults
       const profileData: Profile = {
-        id: data.id,
-        first_name: data.first_name || null,
-        last_name: data.last_name || null,
-        phone: data.phone || null,
-        birth_date: data.birth_date || null,
-        bio: data.bio || null,
-        running_experience: data.running_experience || null,
-        preferred_distances: data.preferred_distances || [],
-        running_modalities: data.running_modalities || [],
-        personal_records: data.personal_records || {},
-        races_completed_this_year: data.races_completed_this_year || 0,
-        emergency_contact_name: data.emergency_contact_name || null,
-        emergency_contact_phone: data.emergency_contact_phone || null,
-        is_host: data.is_host || false,
-        is_guest: data.is_guest || false,
-        verification_status: data.verification_status || 'pending',
-        verification_documents: data.verification_documents || [],
-        total_host_experiences: data.total_host_experiences || 0,
-        total_guest_experiences: data.total_guest_experiences || 0,
-        average_rating: data.average_rating || 0,
-        badges: data.badges || [],
-        points_balance: data.points_balance || 0,
-        profile_image_url: data.profile_image_url || null
+        id: extendedData.id,
+        first_name: extendedData.first_name || null,
+        last_name: extendedData.last_name || null,
+        phone: extendedData.phone || null,
+        birth_date: extendedData.birth_date || null,
+        bio: extendedData.bio || null,
+        running_experience: extendedData.running_experience || null,
+        preferred_distances: extendedData.preferred_distances || [],
+        running_modalities: extendedData.running_modalities || [],
+        personal_records: extendedData.personal_records || {},
+        races_completed_this_year: extendedData.races_completed_this_year || 0,
+        emergency_contact_name: extendedData.emergency_contact_name || null,
+        emergency_contact_phone: extendedData.emergency_contact_phone || null,
+        is_host: extendedData.is_host || false,
+        is_guest: extendedData.is_guest || false,
+        verification_status: extendedData.verification_status || 'pending',
+        verification_documents: extendedData.verification_documents || [],
+        total_host_experiences: extendedData.total_host_experiences || 0,
+        total_guest_experiences: extendedData.total_guest_experiences || 0,
+        average_rating: extendedData.average_rating || 0,
+        badges: extendedData.badges || [],
+        points_balance: extendedData.points_balance || 0,
+        profile_image_url: extendedData.profile_image_url || null
       };
       
       setProfile(profileData);
@@ -98,7 +101,7 @@ export const useProfile = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(updates as any)
         .eq('id', user.id);
 
       if (error) throw error;
