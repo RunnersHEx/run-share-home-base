@@ -17,7 +17,12 @@ export class AvailabilityService {
       .order('date', { ascending: true });
 
     if (error) throw error;
-    return data || [];
+    
+    // Type cast the data to ensure proper typing
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as 'available' | 'blocked' | 'reserved'
+    }));
   }
 
   static async updateAvailability(
