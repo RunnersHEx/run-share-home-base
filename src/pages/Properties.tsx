@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
@@ -7,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Home, MapPin, Users, Star, TrendingUp, Eye, EyeOff } from "lucide-react";
+import { Plus, Home, MapPin, Users, Star, TrendingUp, Eye, EyeOff, Calendar } from "lucide-react";
 import PropertyWizard from "@/components/properties/PropertyWizard";
+import AvailabilityCalendar from "@/components/availability/AvailabilityCalendar";
 
 const Properties = () => {
   const { user, loading: authLoading } = useAuth();
   const { properties, loading, togglePropertyStatus } = useProperties();
   const [showWizard, setShowWizard] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
 
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center">
@@ -41,8 +42,46 @@ const Properties = () => {
     await togglePropertyStatus(id, !currentStatus);
   };
 
+  const handleManageAvailability = (propertyId: string) => {
+    setSelectedPropertyId(propertyId);
+  };
+
   if (showWizard) {
     return <PropertyWizard onClose={() => setShowWizard(false)} />;
+  }
+
+  if (selectedPropertyId) {
+    const selectedProperty = properties.find(p => p.id === selectedPropertyId);
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="mb-8">
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setSelectedPropertyId(null)}
+              >
+                ← Volver a Propiedades
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Calendario de Disponibilidad
+                </h1>
+                <p className="text-gray-600 mt-2">
+                  {selectedProperty?.title}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <AvailabilityCalendar 
+            propertyId={selectedPropertyId} 
+            isOwner={true}
+            className="max-w-4xl"
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -224,8 +263,14 @@ const Properties = () => {
                           </>
                         )}
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        Editar
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleManageAvailability(property.id)}
+                        className="flex-1"
+                      >
+                        <Calendar className="h-4 w-4 mr-1" />
+                        Calendario
                       </Button>
                     </div>
                   </CardContent>
