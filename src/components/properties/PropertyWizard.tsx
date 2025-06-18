@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,29 +10,11 @@ import RulesStep from "./wizard/RulesStep";
 import PhotosStep from "./wizard/PhotosStep";
 import { useProperties } from "@/hooks/useProperties";
 import { toast } from "sonner";
+import { PropertyFormData } from "@/types/property";
 
 interface PropertyWizardProps {
   onClose: () => void;
   propertyId?: string;
-}
-
-export interface PropertyFormData {
-  title: string;
-  description: string;
-  provinces: string[];
-  locality: string;
-  full_address: string;
-  latitude?: number;
-  longitude?: number;
-  bedrooms: number;
-  beds: number;
-  bathrooms: number;
-  max_guests: number;
-  amenities: string[];
-  house_rules: string;
-  check_in_instructions: string;
-  runner_instructions: string;
-  cancellation_policy: string;
 }
 
 const STEPS = [
@@ -122,11 +103,11 @@ const PropertyWizard = ({ onClose, propertyId }: PropertyWizardProps) => {
       case 2:
         return formData.provinces.length > 0 && formData.locality.trim() !== "" && formData.full_address.trim() !== "";
       case 3:
-        return true; // Amenities are optional
+        return true;
       case 4:
-        return true; // Rules are optional
+        return true;
       case 5:
-        return true; // Photos will be handled separately
+        return true;
       default:
         return false;
     }
