@@ -1,63 +1,26 @@
 
-import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
-import { Textarea } from "@/components/ui/textarea";
-import { useProfile } from "@/hooks/useProfile";
+import { useRunnerForm } from "@/hooks/useRunnerForm";
 import { Save, Trophy } from "lucide-react";
+import RunnerExperienceSection from "./runner/RunnerExperienceSection";
+import RunnerModalitiesSection from "./runner/RunnerModalitiesSection";
+import RunnerDistancesSection from "./runner/RunnerDistancesSection";
+import RunnerBioSection from "./runner/RunnerBioSection";
+import RunnerPersonalRecordsSection from "./runner/RunnerPersonalRecordsSection";
+import RunnerRacesSection from "./runner/RunnerRacesSection";
 
 const RunnerInfoSection = () => {
-  const { profile, updateProfile } = useProfile();
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    running_experience: '0-1',
-    running_modalities: [] as string[],
-    preferred_distances: [] as string[],
-    bio: '',
-    personal_records: {} as Record<string, string>,
-    races_completed_this_year: 0,
-  });
-
-  // Update form data when profile changes
-  useEffect(() => {
-    if (profile) {
-      setFormData({
-        running_experience: profile.running_experience || '0-1',
-        running_modalities: profile.running_modalities || [],
-        preferred_distances: profile.preferred_distances || [],
-        bio: profile.bio || '',
-        personal_records: profile.personal_records || {},
-        races_completed_this_year: profile.races_completed_this_year || 0,
-      });
-    }
-  }, [profile]);
-
-  const experienceOptions = [
-    { value: '0-1', label: 'Menos de 1 año' },
-    { value: '1-3', label: '1-3 años' },
-    { value: '3-5', label: '3-5 años' },
-    { value: '5-10', label: '5-10 años' },
-    { value: '10+', label: 'Más de 10 años' },
-  ];
-
-  const modalityOptions = [
-    { value: 'ruta-asfalto', label: 'Ruta/Asfalto' },
-    { value: 'trail-montana', label: 'Trail/Montaña' },
-  ];
-
-  const distanceOptions = [
-    { value: '5k', label: '5K' },
-    { value: '10k', label: '10K' },
-    { value: '21k', label: 'Media Maratón (21K)' },
-    { value: '42k', label: 'Maratón (42K)' },
-    { value: 'ultra', label: 'Ultra (>42K)' },
-  ];
+  const {
+    profile,
+    formData,
+    setFormData,
+    isEditing,
+    setIsEditing,
+    isSaving,
+    handleSave,
+    handleCancel
+  } = useRunnerForm();
 
   const handleModalityChange = (modality: string, checked: boolean) => {
     const currentModalities = formData.running_modalities || [];
@@ -99,48 +62,6 @@ const RunnerInfoSection = () => {
     }));
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    const success = await updateProfile(formData);
-    if (success) {
-      setIsEditing(false);
-    }
-    setIsSaving(false);
-  };
-
-  const handleCancel = () => {
-    if (profile) {
-      setFormData({
-        running_experience: profile.running_experience || '0-1',
-        running_modalities: profile.running_modalities || [],
-        preferred_distances: profile.preferred_distances || [],
-        bio: profile.bio || '',
-        personal_records: profile.personal_records || {},
-        races_completed_this_year: profile.races_completed_this_year || 0,
-      });
-    }
-    setIsEditing(false);
-  };
-
-  const getExperienceYears = () => {
-    const exp = formData.running_experience;
-    if (exp === '0-1') return [1];
-    if (exp === '1-3') return [2];
-    if (exp === '3-5') return [4];
-    if (exp === '5-10') return [7];
-    if (exp === '10+') return [15];
-    return [1];
-  };
-
-  const setExperienceFromSlider = (value: number[]) => {
-    const years = value[0];
-    if (years <= 1) setFormData(prev => ({ ...prev, running_experience: '0-1' }));
-    else if (years <= 3) setFormData(prev => ({ ...prev, running_experience: '1-3' }));
-    else if (years <= 5) setFormData(prev => ({ ...prev, running_experience: '3-5' }));
-    else if (years <= 10) setFormData(prev => ({ ...prev, running_experience: '5-10' }));
-    else setFormData(prev => ({ ...prev, running_experience: '10+' }));
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -167,7 +88,6 @@ const RunnerInfoSection = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Mensaje de ayuda cuando no está editando */}
         {!isEditing && (
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
             <p className="text-sm text-orange-700">
@@ -176,120 +96,44 @@ const RunnerInfoSection = () => {
           </div>
         )}
 
-        {/* Experiencia */}
-        <div className="space-y-4">
-          <Label>Años de experiencia corriendo</Label>
-          <div className="px-3">
-            <Slider
-              value={getExperienceYears()}
-              onValueChange={setExperienceFromSlider}
-              max={30}
-              min={0}
-              step={1}
-              disabled={!isEditing}
-              className="w-full"
-            />
-            <div className="flex justify-between text-sm text-gray-500 mt-2">
-              <span>0 años</span>
-              <span className="font-medium text-blue-600">
-                {experienceOptions.find(opt => opt.value === formData.running_experience)?.label}
-              </span>
-              <span>30+ años</span>
-            </div>
-          </div>
-        </div>
+        <RunnerExperienceSection
+          experience={formData.running_experience}
+          isEditing={isEditing}
+          onExperienceChange={(experience) => setFormData(prev => ({ ...prev, running_experience: experience }))}
+        />
 
-        {/* Modalidades */}
-        <div className="space-y-3">
-          <Label>Modalidad de carreras preferidas</Label>
-          <div className="space-y-2">
-            {modalityOptions.map((modality) => (
-              <div key={modality.value} className="flex items-center space-x-2">
-                <Checkbox
-                  id={modality.value}
-                  checked={formData.running_modalities?.includes(modality.value) || false}
-                  onCheckedChange={(checked) => handleModalityChange(modality.value, checked as boolean)}
-                  disabled={!isEditing}
-                />
-                <Label htmlFor={modality.value}>{modality.label}</Label>
-              </div>
-            ))}
-          </div>
-        </div>
+        <RunnerModalitiesSection
+          modalities={formData.running_modalities}
+          isEditing={isEditing}
+          onModalityChange={handleModalityChange}
+        />
 
-        {/* Distancias preferidas */}
-        <div className="space-y-3">
-          <Label>Distancias que más te gusta correr</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {distanceOptions.map((distance) => (
-              <div key={distance.value} className="flex items-center space-x-2">
-                <Checkbox
-                  id={distance.value}
-                  checked={formData.preferred_distances?.includes(distance.value) || false}
-                  onCheckedChange={(checked) => handleDistanceChange(distance.value, checked as boolean)}
-                  disabled={!isEditing}
-                />
-                <Label htmlFor={distance.value} className="text-sm">{distance.label}</Label>
-              </div>
-            ))}
-          </div>
-        </div>
+        <RunnerDistancesSection
+          distances={formData.preferred_distances}
+          isEditing={isEditing}
+          onDistanceChange={handleDistanceChange}
+        />
 
-        {/* Bio */}
-        <div className="space-y-2">
-          <Label>Cuéntanos sobre ti como corredor</Label>
-          <Textarea
-            placeholder={isEditing ? "Háblanos de tu pasión por el running, objetivos, experiencias..." : ""}
-            value={isEditing ? formData.bio : (profile?.bio || "No especificado")}
-            onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-            disabled={!isEditing}
-            className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-            maxLength={500}
-            rows={4}
-          />
-          {isEditing && (
-            <div className="text-right text-sm text-gray-500">
-              {formData.bio.length}/500 caracteres
-            </div>
-          )}
-        </div>
+        <RunnerBioSection
+          bio={formData.bio}
+          isEditing={isEditing}
+          profileBio={profile?.bio}
+          onBioChange={(bio) => setFormData(prev => ({ ...prev, bio }))}
+        />
 
-        {/* Marcas personales */}
-        <div className="space-y-4">
-          <Label>Mejores marcas personales (opcional)</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {['5k', '10k', '21k', '42k'].map((distance) => (
-              <div key={distance} className="space-y-2">
-                <Label htmlFor={`pr-${distance}`}>
-                  {distance === '21k' ? 'Media Maratón' : distance === '42k' ? 'Maratón' : distance.toUpperCase()}
-                </Label>
-                <Input
-                  id={`pr-${distance}`}
-                  placeholder={isEditing ? "ej: 22:30" : ""}
-                  value={isEditing ? (formData.personal_records[distance] || '') : (profile?.personal_records?.[distance] || "No especificado")}
-                  onChange={(e) => handlePersonalRecordChange(distance, e.target.value)}
-                  disabled={!isEditing}
-                  className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        <RunnerPersonalRecordsSection
+          personalRecords={formData.personal_records}
+          isEditing={isEditing}
+          profileRecords={profile?.personal_records}
+          onRecordChange={handlePersonalRecordChange}
+        />
 
-        {/* Carreras completadas */}
-        <div className="space-y-2">
-          <Label htmlFor="races_completed">Carreras completadas este año</Label>
-          <Input
-            id="races_completed"
-            type="number"
-            min="0"
-            value={isEditing ? formData.races_completed_this_year : (profile?.races_completed_this_year || 0)}
-            onChange={(e) => setFormData(prev => ({ ...prev, races_completed_this_year: parseInt(e.target.value) || 0 }))}
-            disabled={!isEditing}
-            className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-            placeholder={isEditing ? "Número de carreras" : ""}
-          />
-        </div>
+        <RunnerRacesSection
+          racesCompleted={formData.races_completed_this_year}
+          isEditing={isEditing}
+          profileRaces={profile?.races_completed_this_year}
+          onRacesChange={(races) => setFormData(prev => ({ ...prev, races_completed_this_year: races }))}
+        />
       </CardContent>
     </Card>
   );
