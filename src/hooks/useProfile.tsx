@@ -120,9 +120,44 @@ export const useProfile = () => {
 
     try {
       console.log('Updating profile with:', updates);
+      
+      // Clean up the updates object to only include fields that exist in the database
+      const cleanUpdates: any = {};
+      
+      // Map frontend field names to database field names
+      Object.keys(updates).forEach(key => {
+        const value = updates[key as keyof Profile];
+        switch (key) {
+          case 'running_experience':
+          case 'preferred_distances':
+          case 'running_modalities':
+          case 'personal_records':
+          case 'races_completed_this_year':
+          case 'bio':
+          case 'is_host':
+          case 'is_guest':
+          case 'verification_status':
+          case 'verification_documents':
+          case 'profile_image_url':
+          case 'first_name':
+          case 'last_name':
+          case 'phone':
+          case 'birth_date':
+          case 'emergency_contact_name':
+          case 'emergency_contact_phone':
+            cleanUpdates[key] = value;
+            break;
+          default:
+            // Skip unknown fields
+            console.log('Skipping unknown field:', key);
+        }
+      });
+
+      console.log('Clean updates to send:', cleanUpdates);
+
       const { error } = await supabase
         .from('profiles')
-        .update(updates as any)
+        .update(cleanUpdates)
         .eq('id', user.id);
 
       if (error) {
@@ -130,6 +165,7 @@ export const useProfile = () => {
         throw error;
       }
 
+      // Update local state
       setProfile(prev => prev ? { ...prev, ...updates } : null);
       
       // Recalculate progress using frontend logic

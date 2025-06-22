@@ -16,10 +16,10 @@ const RunnerPersonalRecordsSection = ({
   onRecordChange 
 }: RunnerPersonalRecordsSectionProps) => {
   const distances = [
-    { key: '5k', label: '5K' },
-    { key: '10k', label: '10K' },
-    { key: '21k', label: 'Media Maratón' },
-    { key: '42k', label: 'Maratón' }
+    { key: '5k', label: '5K', example: 'Ej: 00:23:00' },
+    { key: '10k', label: '10K', example: 'Ej: 00:58:24' },
+    { key: '21k', label: 'Media Maratón', example: 'Ej: 01:33:56' },
+    { key: '42k', label: 'Maratón', example: 'Ej: 03:33:12' }
   ];
 
   return (
@@ -31,7 +31,7 @@ const RunnerPersonalRecordsSection = ({
             <Label htmlFor={`pr-${distance.key}`}>{distance.label}</Label>
             <Input
               id={`pr-${distance.key}`}
-              placeholder={isEditing ? "ej: 22:30" : ""}
+              placeholder={isEditing ? distance.example : ""}
               value={isEditing ? (personalRecords[distance.key] || '') : (profileRecords?.[distance.key] || "No especificado")}
               onChange={(e) => onRecordChange(distance.key, e.target.value)}
               disabled={!isEditing}
