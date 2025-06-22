@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +22,20 @@ const RunnerInfoSection = () => {
     personal_records: profile?.personal_records || {},
     races_completed_this_year: profile?.races_completed_this_year || 0,
   });
+
+  // Update form data when profile changes
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        running_experience: profile.running_experience || '0-1',
+        running_modalities: profile.running_modalities || [],
+        preferred_distances: profile.preferred_distances || [],
+        bio: profile.bio || '',
+        personal_records: profile.personal_records || {},
+        races_completed_this_year: profile.races_completed_this_year || 0,
+      });
+    }
+  }, [profile]);
 
   const experienceOptions = [
     { value: '0-1', label: 'Menos de 1 año' },
@@ -151,6 +164,15 @@ const RunnerInfoSection = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Mensaje de ayuda cuando no está editando */}
+        {!isEditing && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <p className="text-sm text-orange-700">
+              🏃‍♂️ Haz clic en "Editar" para completar tu perfil runner
+            </p>
+          </div>
+        )}
+
         {/* Experiencia */}
         <div className="space-y-4">
           <Label>Años de experiencia corriendo</Label>
@@ -214,16 +236,19 @@ const RunnerInfoSection = () => {
         <div className="space-y-2">
           <Label>Cuéntanos sobre ti como corredor</Label>
           <Textarea
-            placeholder="Háblanos de tu pasión por el running, objetivos, experiencias..."
-            value={formData.bio}
+            placeholder={isEditing ? "Háblanos de tu pasión por el running, objetivos, experiencias..." : ""}
+            value={isEditing ? formData.bio : (profile?.bio || "No especificado")}
             onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
             disabled={!isEditing}
+            className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
             maxLength={500}
             rows={4}
           />
-          <div className="text-right text-sm text-gray-500">
-            {formData.bio.length}/500 caracteres
-          </div>
+          {isEditing && (
+            <div className="text-right text-sm text-gray-500">
+              {formData.bio.length}/500 caracteres
+            </div>
+          )}
         </div>
 
         {/* Marcas personales */}
@@ -237,10 +262,11 @@ const RunnerInfoSection = () => {
                 </Label>
                 <Input
                   id={`pr-${distance}`}
-                  placeholder="ej: 22:30"
-                  value={formData.personal_records[distance] || ''}
+                  placeholder={isEditing ? "ej: 22:30" : ""}
+                  value={isEditing ? (formData.personal_records[distance] || '') : (profile?.personal_records?.[distance] || "No especificado")}
                   onChange={(e) => handlePersonalRecordChange(distance, e.target.value)}
                   disabled={!isEditing}
+                  className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
                 />
               </div>
             ))}
@@ -254,9 +280,11 @@ const RunnerInfoSection = () => {
             id="races_completed"
             type="number"
             min="0"
-            value={formData.races_completed_this_year}
+            value={isEditing ? formData.races_completed_this_year : (profile?.races_completed_this_year || 0)}
             onChange={(e) => setFormData(prev => ({ ...prev, races_completed_this_year: parseInt(e.target.value) || 0 }))}
             disabled={!isEditing}
+            className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
+            placeholder={isEditing ? "Número de carreras" : ""}
           />
         </div>
       </CardContent>
