@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { useProfile } from "@/hooks/useProfile";
-import { Camera, Save } from "lucide-react";
+import { Camera, Save, Edit, X } from "lucide-react";
 import { toast } from "sonner";
 
 const PersonalInfoSection = () => {
@@ -71,14 +72,23 @@ const PersonalInfoSection = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          Información Personal
+          <div className="flex items-center space-x-3">
+            Información Personal
+            {isEditing && (
+              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                Modo Edición
+              </Badge>
+            )}
+          </div>
           {!isEditing ? (
             <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+              <Edit className="h-4 w-4 mr-2" />
               Editar
             </Button>
           ) : (
             <div className="space-x-2">
               <Button onClick={handleCancel} variant="outline" size="sm">
+                <X className="h-4 w-4 mr-2" />
                 Cancelar
               </Button>
               <Button onClick={handleSave} size="sm" disabled={isSaving}>
@@ -90,6 +100,15 @@ const PersonalInfoSection = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Mensaje de ayuda cuando no está editando */}
+        {!isEditing && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-700">
+              💡 Haz clic en "Editar" para modificar tu información personal
+            </p>
+          </div>
+        )}
+
         {/* Avatar */}
         <div className="flex items-center space-x-4">
           <div className="relative">
@@ -131,6 +150,8 @@ const PersonalInfoSection = () => {
               value={formData.first_name}
               onChange={(e) => handleInputChange('first_name', e.target.value)}
               disabled={!isEditing}
+              className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
+              placeholder={!isEditing ? "Haz clic en 'Editar' para modificar" : "Ingresa tu nombre"}
             />
           </div>
           <div className="space-y-2">
@@ -140,6 +161,8 @@ const PersonalInfoSection = () => {
               value={formData.last_name}
               onChange={(e) => handleInputChange('last_name', e.target.value)}
               disabled={!isEditing}
+              className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
+              placeholder={!isEditing ? "Haz clic en 'Editar' para modificar" : "Ingresa tus apellidos"}
             />
           </div>
           <div className="space-y-2">
@@ -150,6 +173,8 @@ const PersonalInfoSection = () => {
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
               disabled={!isEditing}
+              className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
+              placeholder={!isEditing ? "Haz clic en 'Editar' para modificar" : "Ingresa tu teléfono"}
             />
           </div>
           <div className="space-y-2">
@@ -160,6 +185,7 @@ const PersonalInfoSection = () => {
               value={formData.birth_date}
               onChange={(e) => handleInputChange('birth_date', e.target.value)}
               disabled={!isEditing}
+              className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
             />
           </div>
         </div>
@@ -175,6 +201,8 @@ const PersonalInfoSection = () => {
                 value={formData.emergency_contact_name}
                 onChange={(e) => handleInputChange('emergency_contact_name', e.target.value)}
                 disabled={!isEditing}
+                className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
+                placeholder={!isEditing ? "Haz clic en 'Editar' para modificar" : "Nombre del contacto de emergencia"}
               />
             </div>
             <div className="space-y-2">
@@ -185,6 +213,8 @@ const PersonalInfoSection = () => {
                 value={formData.emergency_contact_phone}
                 onChange={(e) => handleInputChange('emergency_contact_phone', e.target.value)}
                 disabled={!isEditing}
+                className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
+                placeholder={!isEditing ? "Haz clic en 'Editar' para modificar" : "Teléfono del contacto"}
               />
             </div>
           </div>
