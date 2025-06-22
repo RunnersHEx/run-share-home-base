@@ -4,14 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useProfile } from "@/hooks/useProfile";
-import { Trophy, User, Shield, Settings } from "lucide-react";
+import { Trophy, User, Shield, Settings, BarChart } from "lucide-react";
 
 interface ProfileLayoutProps {
   children: ReactNode;
   activeSection?: string;
+  onSectionChange?: (section: string) => void;
 }
 
-const ProfileLayout = ({ children, activeSection }: ProfileLayoutProps) => {
+const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayoutProps) => {
   const { progress } = useProfile();
 
   const sections = [
@@ -19,6 +20,7 @@ const ProfileLayout = ({ children, activeSection }: ProfileLayoutProps) => {
     { id: 'runner', label: 'Perfil Runner', icon: Trophy },
     { id: 'roles', label: 'Rol en la Plataforma', icon: Shield },
     { id: 'verification', label: 'Verificación', icon: Settings },
+    { id: 'stats', label: 'Estadísticas', icon: BarChart },
   ];
 
   return (
@@ -50,8 +52,9 @@ const ProfileLayout = ({ children, activeSection }: ProfileLayoutProps) => {
                 {sections.map((section) => {
                   const Icon = section.icon;
                   return (
-                    <div
+                    <button
                       key={section.id}
+                      onClick={() => onSectionChange?.(section.id)}
                       className={`w-full flex items-center space-x-3 px-3 py-2 text-left rounded-lg transition-colors ${
                         activeSection === section.id
                           ? 'bg-blue-100 text-blue-700'
@@ -60,7 +63,7 @@ const ProfileLayout = ({ children, activeSection }: ProfileLayoutProps) => {
                     >
                       <Icon className="h-5 w-5" />
                       <span className="font-medium">{section.label}</span>
-                    </div>
+                    </button>
                   );
                 })}
               </nav>

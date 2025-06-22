@@ -15,6 +15,10 @@ const Profile = () => {
   const { user, loading } = useAuth();
   const [activeSection, setActiveSection] = useState("personal");
 
+  const handleSectionChange = (section: string) => {
+    setActiveSection(section);
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">
       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -26,7 +30,7 @@ const Profile = () => {
   }
 
   return (
-    <ProfileLayout activeSection={activeSection}>
+    <ProfileLayout activeSection={activeSection} onSectionChange={handleSectionChange}>
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="personal" className="flex items-center space-x-2">
