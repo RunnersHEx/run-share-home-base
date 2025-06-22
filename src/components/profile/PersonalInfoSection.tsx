@@ -68,6 +68,20 @@ const PersonalInfoSection = () => {
     return `${first}${last}`.toUpperCase();
   };
 
+  // Update form data when profile changes
+  React.useEffect(() => {
+    if (profile) {
+      setFormData({
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        phone: profile.phone || '',
+        birth_date: profile.birth_date || '',
+        emergency_contact_name: profile.emergency_contact_name || '',
+        emergency_contact_phone: profile.emergency_contact_phone || '',
+      });
+    }
+  }, [profile]);
+
   return (
     <Card>
       <CardHeader>
@@ -147,22 +161,22 @@ const PersonalInfoSection = () => {
             <Label htmlFor="first_name">Nombre</Label>
             <Input
               id="first_name"
-              value={formData.first_name}
+              value={isEditing ? formData.first_name : (profile?.first_name || '')}
               onChange={(e) => handleInputChange('first_name', e.target.value)}
               disabled={!isEditing}
               className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-              placeholder={!isEditing ? "Haz clic en 'Editar' para modificar" : "Ingresa tu nombre"}
+              placeholder={isEditing ? "Ingresa tu nombre" : "No especificado"}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="last_name">Apellidos</Label>
             <Input
               id="last_name"
-              value={formData.last_name}
+              value={isEditing ? formData.last_name : (profile?.last_name || '')}
               onChange={(e) => handleInputChange('last_name', e.target.value)}
               disabled={!isEditing}
               className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-              placeholder={!isEditing ? "Haz clic en 'Editar' para modificar" : "Ingresa tus apellidos"}
+              placeholder={isEditing ? "Ingresa tus apellidos" : "No especificado"}
             />
           </div>
           <div className="space-y-2">
@@ -170,11 +184,11 @@ const PersonalInfoSection = () => {
             <Input
               id="phone"
               type="tel"
-              value={formData.phone}
+              value={isEditing ? formData.phone : (profile?.phone || '')}
               onChange={(e) => handleInputChange('phone', e.target.value)}
               disabled={!isEditing}
               className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-              placeholder={!isEditing ? "Haz clic en 'Editar' para modificar" : "Ingresa tu teléfono"}
+              placeholder={isEditing ? "Ingresa tu teléfono" : "No especificado"}
             />
           </div>
           <div className="space-y-2">
@@ -182,7 +196,7 @@ const PersonalInfoSection = () => {
             <Input
               id="birth_date"
               type="date"
-              value={formData.birth_date}
+              value={isEditing ? formData.birth_date : (profile?.birth_date || '')}
               onChange={(e) => handleInputChange('birth_date', e.target.value)}
               disabled={!isEditing}
               className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
@@ -198,11 +212,11 @@ const PersonalInfoSection = () => {
               <Label htmlFor="emergency_contact_name">Nombre del Contacto</Label>
               <Input
                 id="emergency_contact_name"
-                value={formData.emergency_contact_name}
+                value={isEditing ? formData.emergency_contact_name : (profile?.emergency_contact_name || '')}
                 onChange={(e) => handleInputChange('emergency_contact_name', e.target.value)}
                 disabled={!isEditing}
                 className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-                placeholder={!isEditing ? "Haz clic en 'Editar' para modificar" : "Nombre del contacto de emergencia"}
+                placeholder={isEditing ? "Nombre del contacto de emergencia" : "No especificado"}
               />
             </div>
             <div className="space-y-2">
@@ -210,11 +224,11 @@ const PersonalInfoSection = () => {
               <Input
                 id="emergency_contact_phone"
                 type="tel"
-                value={formData.emergency_contact_phone}
+                value={isEditing ? formData.emergency_contact_phone : (profile?.emergency_contact_phone || '')}
                 onChange={(e) => handleInputChange('emergency_contact_phone', e.target.value)}
                 disabled={!isEditing}
                 className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-                placeholder={!isEditing ? "Haz clic en 'Editar' para modificar" : "Teléfono del contacto"}
+                placeholder={isEditing ? "Teléfono del contacto" : "No especificado"}
               />
             </div>
           </div>
