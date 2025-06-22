@@ -208,6 +208,8 @@ export const useProfile = () => {
     loading,
     progress,
     updateProfile,
+    uploadAvatar,
+    uploadVerificationDoc,
     refetchProfile: fetchProfile
   };
 };
