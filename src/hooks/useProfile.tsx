@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,13 +58,19 @@ export const useProfile = () => {
     if (!user) return;
 
     try {
+      console.log('Fetching profile for user:', user.id);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
+      
+      console.log('Profile data fetched:', data);
       
       // Cast the data to include our extended fields
       const extendedData = data as any;
@@ -112,12 +119,16 @@ export const useProfile = () => {
     if (!user) return false;
 
     try {
+      console.log('Updating profile with:', updates);
       const { error } = await supabase
         .from('profiles')
         .update(updates as any)
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating profile:', error);
+        throw error;
+      }
 
       setProfile(prev => prev ? { ...prev, ...updates } : null);
       
@@ -197,8 +208,6 @@ export const useProfile = () => {
     loading,
     progress,
     updateProfile,
-    uploadAvatar,
-    uploadVerificationDoc,
     refetchProfile: fetchProfile
   };
 };

@@ -50,17 +50,17 @@ const ProfileLayout = ({ children, activeSection }: ProfileLayoutProps) => {
                 {sections.map((section) => {
                   const Icon = section.icon;
                   return (
-                    <button
+                    <div
                       key={section.id}
                       className={`w-full flex items-center space-x-3 px-3 py-2 text-left rounded-lg transition-colors ${
                         activeSection === section.id
                           ? 'bg-blue-100 text-blue-700'
-                          : 'hover:bg-gray-100'
+                          : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
                       <Icon className="h-5 w-5" />
                       <span className="font-medium">{section.label}</span>
-                    </button>
+                    </div>
                   );
                 })}
               </nav>

@@ -13,6 +13,7 @@ import { User, Trophy, Shield, CheckCircle, BarChart } from "lucide-react";
 
 const Profile = () => {
   const { user, loading } = useAuth();
+  const [activeSection, setActiveSection] = useState("personal");
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">
@@ -25,8 +26,8 @@ const Profile = () => {
   }
 
   return (
-    <ProfileLayout>
-      <Tabs defaultValue="personal" className="w-full">
+    <ProfileLayout activeSection={activeSection}>
+      <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="personal" className="flex items-center space-x-2">
             <User className="h-4 w-4" />

@@ -88,6 +88,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          average_rating: number | null
+          badges: string[] | null
           bio: string | null
           birth_date: string | null
           created_at: string | null
@@ -96,14 +98,26 @@ export type Database = {
           emergency_contact_phone: string | null
           first_name: string | null
           id: string
+          is_guest: boolean | null
+          is_host: boolean | null
           last_name: string | null
+          personal_records: Json | null
           phone: string | null
+          points_balance: number | null
           preferred_distances: string[] | null
           profile_image_url: string | null
+          races_completed_this_year: number | null
           running_experience: string | null
+          running_modalities: string[] | null
+          total_guest_experiences: number | null
+          total_host_experiences: number | null
           updated_at: string | null
+          verification_documents: string[] | null
+          verification_status: string | null
         }
         Insert: {
+          average_rating?: number | null
+          badges?: string[] | null
           bio?: string | null
           birth_date?: string | null
           created_at?: string | null
@@ -112,14 +126,26 @@ export type Database = {
           emergency_contact_phone?: string | null
           first_name?: string | null
           id: string
+          is_guest?: boolean | null
+          is_host?: boolean | null
           last_name?: string | null
+          personal_records?: Json | null
           phone?: string | null
+          points_balance?: number | null
           preferred_distances?: string[] | null
           profile_image_url?: string | null
+          races_completed_this_year?: number | null
           running_experience?: string | null
+          running_modalities?: string[] | null
+          total_guest_experiences?: number | null
+          total_host_experiences?: number | null
           updated_at?: string | null
+          verification_documents?: string[] | null
+          verification_status?: string | null
         }
         Update: {
+          average_rating?: number | null
+          badges?: string[] | null
           bio?: string | null
           birth_date?: string | null
           created_at?: string | null
@@ -128,12 +154,22 @@ export type Database = {
           emergency_contact_phone?: string | null
           first_name?: string | null
           id?: string
+          is_guest?: boolean | null
+          is_host?: boolean | null
           last_name?: string | null
+          personal_records?: Json | null
           phone?: string | null
+          points_balance?: number | null
           preferred_distances?: string[] | null
           profile_image_url?: string | null
+          races_completed_this_year?: number | null
           running_experience?: string | null
+          running_modalities?: string[] | null
+          total_guest_experiences?: number | null
+          total_host_experiences?: number | null
           updated_at?: string | null
+          verification_documents?: string[] | null
+          verification_status?: string | null
         }
         Relationships: []
       }
