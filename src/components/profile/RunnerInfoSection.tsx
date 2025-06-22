@@ -8,7 +8,6 @@ import RunnerModalitiesSection from "./runner/RunnerModalitiesSection";
 import RunnerDistancesSection from "./runner/RunnerDistancesSection";
 import RunnerBioSection from "./runner/RunnerBioSection";
 import RunnerPersonalRecordsSection from "./runner/RunnerPersonalRecordsSection";
-import RunnerRacesSection from "./runner/RunnerRacesSection";
 
 const RunnerInfoSection = () => {
   const {
@@ -68,7 +67,7 @@ const RunnerInfoSection = () => {
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Trophy className="h-5 w-5 text-orange-500" />
-            <span>Información de Corredor</span>
+            <span>Información del Corredor</span>
           </div>
           {!isEditing ? (
             <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
@@ -126,13 +125,6 @@ const RunnerInfoSection = () => {
           isEditing={isEditing}
           profileRecords={profile?.personal_records}
           onRecordChange={handlePersonalRecordChange}
-        />
-
-        <RunnerRacesSection
-          racesCompleted={formData.races_completed_this_year}
-          isEditing={isEditing}
-          profileRaces={profile?.races_completed_this_year}
-          onRacesChange={(races) => setFormData(prev => ({ ...prev, races_completed_this_year: races }))}
         />
       </CardContent>
     </Card>

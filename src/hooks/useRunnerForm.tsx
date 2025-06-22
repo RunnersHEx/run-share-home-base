@@ -13,7 +13,6 @@ export const useRunnerForm = () => {
     preferred_distances: [] as string[],
     bio: '',
     personal_records: {} as Record<string, string>,
-    races_completed_this_year: 0,
   });
 
   useEffect(() => {
@@ -24,7 +23,6 @@ export const useRunnerForm = () => {
         preferred_distances: profile.preferred_distances || [],
         bio: profile.bio || '',
         personal_records: profile.personal_records || {},
-        races_completed_this_year: profile.races_completed_this_year || 0,
       });
     }
   }, [profile]);
@@ -47,7 +45,6 @@ export const useRunnerForm = () => {
         preferred_distances: profile.preferred_distances || [],
         bio: profile.bio || '',
         personal_records: profile.personal_records || {},
-        races_completed_this_year: profile.races_completed_this_year || 0,
       });
     }
     setIsEditing(false);
