@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,12 +16,12 @@ const RunnerInfoSection = () => {
   const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState({
-    running_experience: profile?.running_experience || '0-1',
-    running_modalities: profile?.running_modalities || [],
-    preferred_distances: profile?.preferred_distances || [],
-    bio: profile?.bio || '',
-    personal_records: profile?.personal_records || {},
-    races_completed_this_year: profile?.races_completed_this_year || 0,
+    running_experience: '0-1',
+    running_modalities: [] as string[],
+    preferred_distances: [] as string[],
+    bio: '',
+    personal_records: {} as Record<string, string>,
+    races_completed_this_year: 0,
   });
 
   // Update form data when profile changes
@@ -108,14 +109,16 @@ const RunnerInfoSection = () => {
   };
 
   const handleCancel = () => {
-    setFormData({
-      running_experience: profile?.running_experience || '0-1',
-      running_modalities: profile?.running_modalities || [],
-      preferred_distances: profile?.preferred_distances || [],
-      bio: profile?.bio || '',
-      personal_records: profile?.personal_records || {},
-      races_completed_this_year: profile?.races_completed_this_year || 0,
-    });
+    if (profile) {
+      setFormData({
+        running_experience: profile.running_experience || '0-1',
+        running_modalities: profile.running_modalities || [],
+        preferred_distances: profile.preferred_distances || [],
+        bio: profile.bio || '',
+        personal_records: profile.personal_records || {},
+        races_completed_this_year: profile.races_completed_this_year || 0,
+      });
+    }
     setIsEditing(false);
   };
 
