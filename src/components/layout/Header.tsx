@@ -1,147 +1,198 @@
-
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import AuthModalIntegrated from "@/components/auth/AuthModalIntegrated";
+import { Menu, X, User, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Home, Trophy, MapPin, Search } from "lucide-react";
+import AuthModalIntegrated from "@/components/auth/AuthModalIntegrated";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 const Header = () => {
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("register");
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
-  const isActive = (path: string) => location.pathname === path;
-
-  const getInitials = (user: any) => {
-    if (user?.user_metadata?.first_name && user?.user_metadata?.last_name) {
-      return `${user.user_metadata.first_name.charAt(0)}${user.user_metadata.last_name.charAt(0)}`;
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
     }
-    return user?.email?.charAt(0).toUpperCase() || "U";
   };
 
-  const openAuthModal = (mode: "login" | "register") => {
+  const handleAuthClick = (mode: "login" | "register") => {
     setAuthMode(mode);
     setAuthModalOpen(true);
   };
 
-  const closeAuthModal = () => {
-    setAuthModalOpen(false);
-  };
+  const menuItems = [
+    { name: "Inicio", path: "/" },
+    { name: "Descubrir Carreras", path: "/discover" },
+    { name: "Mis Propiedades", path: "/properties", requiresAuth: true },
+    { name: "Mis Carreras", path: "/races", requiresAuth: true },
+    { name: "Admin", path: "/admin", requiresAuth: true }, // Nueva ruta de admin
+  ];
 
   return (
-    <header className="bg-white shadow-sm border-b">
+    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-[#1E40AF] text-white p-2 rounded-lg">
-              <Trophy className="w-6 h-6" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">
-              Runners Home Exchange
-            </span>
-          </Link>
-
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link
-              to="/"
-              className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive("/")
-                  ? "bg-[#1E40AF] text-white"
-                  : "text-gray-700 hover:text-[#1E40AF] hover:bg-gray-100"
-              }`}
-            >
-              <Home className="w-4 h-4" />
-              <span>Inicio</span>
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center space-x-2">
+              <img src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" alt="RunnersHEx" className="h-8 w-8" />
+              <span className="font-bold text-xl text-blue-600">RunnersHEx</span>
             </Link>
+          </div>
 
-            <Link
-              to="/discover"
-              className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive("/discover")
-                  ? "bg-[#1E40AF] text-white"
-                  : "text-gray-700 hover:text-[#1E40AF] hover:bg-gray-100"
-              }`}
-            >
-              <Search className="w-4 h-4" />
-              <span>Descubrir Carreras</span>
-            </Link>
-
-            {user && (
-              <>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex space-x-8">
+            {menuItems.map((item) => {
+              if (item.requiresAuth && !user) return null;
+              return (
                 <Link
-                  to="/properties"
-                  className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive("/properties")
-                      ? "bg-[#1E40AF] text-white"
-                      : "text-gray-700 hover:text-[#1E40AF] hover:bg-gray-100"
+                  key={item.name}
+                  to={item.path}
+                  className={`text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors ${
+                    location.pathname === item.path ? 'text-blue-600 border-b-2 border-blue-600' : ''
                   }`}
                 >
-                  <MapPin className="w-4 h-4" />
-                  <span>Mi Propiedad</span>
+                  {item.name}
                 </Link>
-
-                <Link
-                  to="/races"
-                  className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive("/races")
-                      ? "bg-[#1E40AF] text-white"
-                      : "text-gray-700 hover:text-[#1E40AF] hover:bg-gray-100"
-                  }`}
-                >
-                  <Trophy className="w-4 h-4" />
-                  <span>Mis Carreras</span>
-                </Link>
-              </>
-            )}
+              );
+            })}
           </nav>
 
-          {/* Auth Section */}
-          <div className="flex items-center space-x-4">
+          {/* Desktop Auth Section */}
+          <div className="hidden md:flex items-center space-x-4">
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-[#1E40AF] text-white text-sm">
-                        {getInitials(user)}
-                      </AvatarFallback>
-                    </Avatar>
+              <>
+                <NotificationBell />
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/profile")}
+                    className="flex items-center space-x-2"
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Perfil</span>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="flex items-center">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Mi Perfil</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={signOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Cerrar Sesión</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="flex items-center space-x-2 text-red-600 hover:text-red-700"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Salir</span>
+                  </Button>
+                </div>
+              </>
             ) : (
-              <Button 
-                onClick={() => openAuthModal("login")}
-                className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
-              >
-                Iniciar Sesión
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button variant="ghost" onClick={() => handleAuthClick("login")}>
+                  Iniciar Sesión
+                </Button>
+                <Button onClick={() => handleAuthClick("register")} className="bg-blue-600 hover:bg-blue-700">
+                  Registrarse
+                </Button>
+              </div>
             )}
           </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center space-x-2">
+            {user && <NotificationBell />}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="inline-flex items-center justify-center p-2"
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
+          </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 py-4">
+            <div className="space-y-2">
+              {menuItems.map((item) => {
+                if (item.requiresAuth && !user) return null;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className={`block px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      location.pathname === item.path 
+                        ? 'bg-blue-50 text-blue-600' 
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                );
+              })}
+              
+              {user ? (
+                <div className="border-t border-gray-200 pt-4 space-y-2">
+                  <Link
+                    to="/profile"
+                    className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Perfil</span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md w-full text-left"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Salir</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="border-t border-gray-200 pt-4 space-y-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      handleAuthClick("login");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start"
+                  >
+                    Iniciar Sesión
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      handleAuthClick("register");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    Registrarse
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      <AuthModalIntegrated 
+      {/* Auth Modal */}
+      <AuthModalIntegrated
         isOpen={authModalOpen}
-        onClose={closeAuthModal}
+        onClose={() => setAuthModalOpen(false)}
         mode={authMode}
         onModeChange={setAuthMode}
       />
