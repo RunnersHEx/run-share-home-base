@@ -9,6 +9,8 @@ import HowItWorksSection from "@/components/home/HowItWorksSection";
 import CTASection from "@/components/home/CTASection";
 
 const Index = () => {
+  console.log("Index component is rendering");
+  
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("register");
 
@@ -20,6 +22,8 @@ const Index = () => {
   const closeAuthModal = () => {
     setAuthModalOpen(false);
   };
+
+  console.log("Index component rendering complete");
 
   return (
     <div className="min-h-screen">
