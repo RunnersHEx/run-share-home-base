@@ -1,7 +1,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Shield, AlertCircle } from "lucide-react";
+import { Shield, AlertCircle, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface VerificationRequiredModalProps {
@@ -67,20 +67,13 @@ const VerificationRequiredModal = ({ isOpen, onClose }: VerificationRequiredModa
             </ul>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <div className="flex justify-center pt-4">
             <Button 
               onClick={handleVerifyIdentity}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-blue-600 hover:bg-blue-700"
             >
               <Shield className="h-4 w-4 mr-2" />
               Verificar Identidad
-            </Button>
-            <Button 
-              onClick={onClose}
-              variant="outline"
-              className="flex-1"
-            >
-              Recordármelo después
             </Button>
           </div>
         </div>

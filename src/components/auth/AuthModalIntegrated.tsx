@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, Mail, AlertTriangle } from "lucide-react";
 import LoginForm from "./forms/LoginForm";
 import BasicInfoForm from "./forms/BasicInfoForm";
 import RunnerProfileForm from "./forms/RunnerProfileForm";
@@ -25,6 +25,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   const [registrationData, setRegistrationData] = useState<any>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
 
   const handleLogin = async (data: { email: string; password: string }) => {
     setIsLoading(true);
@@ -37,7 +38,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       if (error.message?.includes("Invalid login credentials")) {
         toast.error("Credenciales incorrectas. Verifica tu email y contraseña.");
       } else if (error.message?.includes("Email not confirmed")) {
-        toast.error("Por favor, confirma tu email antes de iniciar sesión.");
+        toast.error("Por favor, confirma tu email antes de iniciar sesión. Revisa tu bandeja de entrada y correos no deseados.");
       } else {
         toast.error("Error al iniciar sesión. Inténtalo de nuevo.");
       }
@@ -61,10 +62,10 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     setIsLoading(true);
     try {
       await signUp(finalData.email, finalData.password, finalData);
-      toast.success("¡Cuenta creada exitosamente! Revisa tu email para confirmar tu cuenta.");
-      onClose();
-      // Mostrar modal de verificación después del registro exitoso
-      setShowVerificationModal(true);
+      
+      // Mostrar mensaje de confirmación de email
+      setShowEmailConfirmation(true);
+      
       // Reset state
       setRegistrationStep(1);
       setRegistrationData({});
@@ -80,6 +81,15 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleEmailConfirmed = () => {
+    setShowEmailConfirmation(false);
+    onClose();
+    // Mostrar modal de verificación después de cerrar el de confirmación
+    setTimeout(() => {
+      setShowVerificationModal(true);
+    }, 500);
   };
 
   const handleBackStep = () => {
@@ -135,7 +145,75 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     // Reset state when closing
     setRegistrationStep(1);
     setRegistrationData({});
+    setShowEmailConfirmation(false);
   };
+
+  // Modal de confirmación de email
+  if (showEmailConfirmation) {
+    return (
+      <Dialog open={true} onOpenChange={handleCloseModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <div className="flex items-center justify-between p-0 mb-6">
+            <div className="flex items-center space-x-2">
+              <img src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" alt="RunnersHEx" className="h-8 w-8" />
+              <span className="font-bold text-xl text-gray-900">RunnersHEx</span>
+            </div>
+            <Button variant="ghost" size="icon" onClick={handleCloseModal}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="space-y-6 text-center">
+            <div className="flex justify-center">
+              <Mail className="h-16 w-16 text-blue-600" />
+            </div>
+            
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Cuenta Creada Exitosamente!</h2>
+              <p className="text-gray-600">Para completar tu registro, confirma tu email</p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <Mail className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div className="text-left">
+                  <p className="text-sm text-blue-800 font-medium mb-2">
+                    Revisa tu bandeja de entrada para confirmar tu email y activar tu cuenta.
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    <strong>Emisor:</strong> noreply@mail.app.supabase.io
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                <div className="text-left">
+                  <p className="text-sm text-yellow-800 font-medium mb-1">
+                    ¿No encuentras el email?
+                  </p>
+                  <ul className="text-xs text-yellow-700 space-y-1">
+                    <li>• Revisa tu carpeta de <strong>Correos No Deseados/Spam</strong></li>
+                    <li>• Busca el remitente: <strong>noreply@mail.app.supabase.io</strong></li>
+                    <li>• El email puede tardar unos minutos en llegar</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Button 
+              onClick={handleEmailConfirmed}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              Entendido
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <>
