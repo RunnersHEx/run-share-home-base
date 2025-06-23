@@ -45,7 +45,7 @@ const StatsSection = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Estadísticas y Logros</CardTitle>
+        <CardTitle>Logros y Estadísticas</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Estadísticas principales */}

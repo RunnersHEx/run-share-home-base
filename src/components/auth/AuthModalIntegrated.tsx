@@ -37,8 +37,8 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     preferredRaceTypes: [] as string[],
     emergencyContactName: "",
     emergencyContactPhone: "",
-    isHost: false,
-    isGuest: false,
+    isHost: true, // Siempre true por defecto
+    isGuest: true, // Siempre true por defecto
     agreeToTerms: false
   });
 
@@ -65,12 +65,15 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
           toast.error("Debes aceptar los términos y condiciones");
           return;
         }
-        if (!formData.isHost && !formData.isGuest) {
-          toast.error("Debes seleccionar al menos un rol (Host o Guest)");
-          return;
-        }
         
-        await signUp(formData.email, formData.password, formData);
+        // Asegurar que ambos roles están activos
+        const registrationData = {
+          ...formData,
+          isHost: true,
+          isGuest: true
+        };
+        
+        await signUp(formData.email, formData.password, registrationData);
         toast.success("¡Cuenta creada exitosamente! Te hemos enviado un email de verificación.");
       } else {
         await signIn(formData.email, formData.password);

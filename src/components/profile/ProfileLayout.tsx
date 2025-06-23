@@ -20,7 +20,7 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
     { id: 'runner', label: 'Perfil Runner', icon: Trophy },
     { id: 'roles', label: 'Rol en la Plataforma', icon: Shield },
     { id: 'verification', label: 'Verificación', icon: Settings },
-    { id: 'stats', label: 'Estadísticas', icon: BarChart },
+    { id: 'stats', label: 'Logros y Estadísticas', icon: BarChart },
   ];
 
   return (
