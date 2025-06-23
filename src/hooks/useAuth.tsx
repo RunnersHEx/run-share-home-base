@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,8 +41,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signUp = async (email: string, password: string, userData: any) => {
-    // Usar la URL de producción de Lovable en lugar de localhost
-    const redirectUrl = `https://lovable.dev/projects/d42674f5-3efc-4948-acf7-42f593bd898b`;
+    // Usar la URL correcta de la aplicación Lovable
+    const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
       email,
