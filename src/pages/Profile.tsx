@@ -8,6 +8,7 @@ import RunnerInfoSection from "@/components/profile/RunnerInfoSection";
 import RoleSection from "@/components/profile/RoleSection";
 import VerificationSection from "@/components/profile/VerificationSection";
 import StatsSection from "@/components/profile/StatsSection";
+import DeleteAccountSection from "@/components/profile/DeleteAccountSection";
 
 const Profile = () => {
   const { user, loading } = useAuth();
@@ -39,6 +40,8 @@ const Profile = () => {
         return <VerificationSection />;
       case "stats":
         return <StatsSection />;
+      case "delete-account":
+        return <DeleteAccountSection />;
       default:
         return <PersonalInfoSection />;
     }

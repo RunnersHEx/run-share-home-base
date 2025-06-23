@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useProfile } from "@/hooks/useProfile";
-import { Trophy, User, Shield, Settings, BarChart } from "lucide-react";
+import { Trophy, User, Shield, Settings, BarChart, Trash } from "lucide-react";
 
 interface ProfileLayoutProps {
   children: ReactNode;
@@ -21,6 +21,7 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
     { id: 'roles', label: 'Rol en la Plataforma', icon: Shield },
     { id: 'verification', label: 'Verificación', icon: Settings },
     { id: 'stats', label: 'Logros y Estadísticas', icon: BarChart },
+    { id: 'delete-account', label: 'Eliminar mi cuenta', icon: Trash },
   ];
 
   return (
@@ -51,14 +52,19 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
               <nav className="space-y-2">
                 {sections.map((section) => {
                   const Icon = section.icon;
+                  const isDeleteSection = section.id === 'delete-account';
                   return (
                     <button
                       key={section.id}
                       onClick={() => onSectionChange?.(section.id)}
                       className={`w-full flex items-center space-x-3 px-3 py-2 text-left rounded-lg transition-colors ${
                         activeSection === section.id
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-600 hover:bg-gray-100'
+                          ? isDeleteSection 
+                            ? 'bg-red-100 text-red-700' 
+                            : 'bg-blue-100 text-blue-700'
+                          : isDeleteSection
+                            ? 'text-red-600 hover:bg-red-50'
+                            : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
                       <Icon className="h-5 w-5" />
