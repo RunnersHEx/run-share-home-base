@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProfile } from "@/hooks/useProfile";
-import { Shield, Upload, CheckCircle, AlertCircle, FileText } from "lucide-react";
+import { Shield, Upload, CheckCircle, AlertCircle, FileText, Camera } from "lucide-react";
 import { toast } from "sonner";
 
 const VerificationSection = () => {
@@ -114,6 +114,50 @@ const VerificationSection = () => {
                 <div className="mt-2 flex items-center text-green-600 text-sm">
                   <CheckCircle className="h-4 w-4 mr-1" />
                   Documento subido
+                </div>
+              )}
+            </div>
+
+            {/* Selfie con ID */}
+            <div className="border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <Camera className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="font-medium">Selfie con tu rostro bien visible y Documento de Identidad</p>
+                    <p className="text-sm text-gray-600">
+                      Con buena iluminación. Puedes ocultar información no esencial como el número de serie o tu firma
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => triggerFileUpload('selfie_with_id')}
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingDoc === 'selfie_with_id'}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {uploadingDoc === 'selfie_with_id' ? 'Subiendo...' : 'Subir'}
+                </Button>
+              </div>
+              
+              {/* Imagen de ejemplo */}
+              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm font-medium text-blue-800 mb-2">Ejemplo de cómo hacer la foto:</p>
+                <img 
+                  src="/lovable-uploads/1918d362-5172-4a88-afac-e81d1926b766.png" 
+                  alt="Ejemplo de selfie con documento de identidad"
+                  className="w-full max-w-md mx-auto rounded-lg border-2 border-blue-200"
+                />
+                <p className="text-xs text-blue-700 mt-2 text-center">
+                  Asegúrate de que tu rostro y el documento sean claramente visibles
+                </p>
+              </div>
+
+              {uploadedDocs.some(doc => doc.includes('selfie_with_id')) && (
+                <div className="mt-2 flex items-center text-green-600 text-sm">
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Selfie con ID subido
                 </div>
               )}
             </div>
