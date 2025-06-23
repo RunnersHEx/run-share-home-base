@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 interface BasicInfoFormProps {
   onSubmit: (data: any) => void;
@@ -17,16 +17,43 @@ const BasicInfoForm = ({ onSubmit, initialData, isLoading }: BasicInfoFormProps)
     lastName: initialData.lastName || "",
     email: initialData.email || "",
     password: initialData.password || "",
+    confirmPassword: initialData.confirmPassword || "",
     phone: initialData.phone || "",
     dateOfBirth: initialData.dateOfBirth || ""
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Limpiar error cuando el usuario empiece a escribir
+    if (field === "password" || field === "confirmPassword") {
+      setPasswordError("");
+    }
+  };
+
+  const validatePasswords = () => {
+    if (formData.password !== formData.confirmPassword) {
+      setPasswordError("Las contraseñas no coinciden");
+      return false;
+    }
+    if (formData.password.length < 6) {
+      setPasswordError("La contraseña debe tener al menos 6 caracteres");
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validatePasswords()) {
+      return;
+    }
+    
     onSubmit(formData);
   };
 
@@ -79,14 +106,47 @@ const BasicInfoForm = ({ onSubmit, initialData, isLoading }: BasicInfoFormProps)
           <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           <Input
             id="password-register"
-            type="password"
-            placeholder="Mínimo 8 caracteres"
-            className="pl-10"
+            type={showPassword ? "text" : "password"}
+            placeholder="Mínimo 6 caracteres"
+            className="pl-10 pr-10"
             value={formData.password}
             onChange={(e) => handleInputChange("password", e.target.value)}
             required
           />
+          <button
+            type="button"
+            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            id="confirm-password"
+            type={showConfirmPassword ? "text" : "password"}
+            placeholder="Repite tu contraseña"
+            className="pl-10 pr-10"
+            value={formData.confirmPassword}
+            onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+          >
+            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
+        {passwordError && (
+          <p className="text-sm text-red-600 mt-1">{passwordError}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
