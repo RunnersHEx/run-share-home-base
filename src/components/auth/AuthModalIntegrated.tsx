@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -65,20 +66,36 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   const handleFinalRegistration = async (finalData: any) => {
     setIsLoading(true);
     try {
-      await signUp(finalData.email, finalData.password, finalData);
+      const { error } = await signUp(finalData.email, finalData.password, finalData);
       
-      // Mostrar solo mensaje de confirmación de email (NO el modal de verificación)
-      setShowEmailConfirmation(true);
+      if (error) {
+        // Si hay error, lanzarlo para que sea manejado en el catch
+        throw error;
+      }
       
-      // Reset state
+      // Si no hay error, el registro fue exitoso
+      // Como ya no requerimos confirmación de email, cerramos el modal y mostramos mensaje de éxito
+      toast.success("¡Cuenta creada exitosamente! Ya puedes empezar a usar la plataforma.");
+      
+      // Reset state y cerrar modal
       setRegistrationStep(1);
       setRegistrationData({});
+      onClose();
+      
+      // Mostrar modal de verificación después del registro exitoso
+      setTimeout(() => {
+        setShowVerificationModal(true);
+      }, 500);
+      
     } catch (error: any) {
       console.error("Error during registration:", error);
       if (error.message?.includes("User already registered")) {
         toast.error("Este email ya está registrado. Intenta iniciar sesión.");
       } else if (error.message?.includes("Password should be")) {
         toast.error("La contraseña debe tener al menos 6 caracteres.");
+      } else if (error.message?.includes("Email not confirmed")) {
+        // Si aún requiere confirmación de email, mostrar el modal
+        setShowEmailConfirmation(true);
       } else {
         toast.error("Error al crear la cuenta. Inténtalo de nuevo.");
       }
@@ -90,7 +107,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   const handleEmailConfirmed = () => {
     setShowEmailConfirmation(false);
     onClose();
-    // NO mostrar modal de verificación aquí - solo después del login
   };
 
   const handleBackStep = () => {
@@ -149,7 +165,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     setShowEmailConfirmation(false);
   };
 
-  // Modal de confirmación de email
+  // Modal de confirmación de email (solo se muestra si hay error específico de confirmación)
   if (showEmailConfirmation) {
     return (
       <Dialog open={true} onOpenChange={handleCloseModal}>
