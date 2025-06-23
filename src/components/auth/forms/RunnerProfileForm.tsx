@@ -1,24 +1,47 @@
 
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trophy } from "lucide-react";
+import { Trophy, ArrowLeft } from "lucide-react";
 
 interface RunnerProfileFormProps {
-  formData: {
-    runningExperience: string;
-    raceModality: string;
-    preferredRaceTypes: string[];
-    bio: string;
-  };
-  onInputChange: (field: string, value: any) => void;
-  onRaceTypeToggle: (raceType: string) => void;
+  onSubmit: (data: any) => void;
+  onBack: () => void;
+  initialData: any;
+  isLoading: boolean;
 }
 
-const RunnerProfileForm = ({ formData, onInputChange, onRaceTypeToggle }: RunnerProfileFormProps) => {
+const RunnerProfileForm = ({ onSubmit, onBack, initialData, isLoading }: RunnerProfileFormProps) => {
+  const [formData, setFormData] = useState({
+    runningExperience: initialData.runningExperience || "",
+    raceModality: initialData.raceModality || "",
+    preferredRaceTypes: initialData.preferredRaceTypes || [],
+    bio: initialData.bio || ""
+  });
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleRaceTypeToggle = (raceType: string) => {
+    setFormData(prev => ({
+      ...prev,
+      preferredRaceTypes: prev.preferredRaceTypes.includes(raceType)
+        ? prev.preferredRaceTypes.filter(type => type !== raceType)
+        : [...prev.preferredRaceTypes, raceType]
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
   return (
-    <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900 flex items-center">
         <Trophy className="mr-2 h-5 w-5 text-orange-500" />
         Perfil Runner
@@ -26,7 +49,7 @@ const RunnerProfileForm = ({ formData, onInputChange, onRaceTypeToggle }: Runner
 
       <div className="space-y-2">
         <Label htmlFor="runningExperience">Años de experiencia corriendo</Label>
-        <Select onValueChange={(value) => onInputChange("runningExperience", value)}>
+        <Select onValueChange={(value) => handleInputChange("runningExperience", value)}>
           <SelectTrigger>
             <SelectValue placeholder="Selecciona tu experiencia" />
           </SelectTrigger>
@@ -44,7 +67,7 @@ const RunnerProfileForm = ({ formData, onInputChange, onRaceTypeToggle }: Runner
         <Label>Modalidad de carreras preferidas</Label>
         <RadioGroup 
           value={formData.raceModality} 
-          onValueChange={(value) => onInputChange("raceModality", value)}
+          onValueChange={(value) => handleInputChange("raceModality", value)}
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="ruta-asfalto" id="ruta-asfalto" />
@@ -69,7 +92,7 @@ const RunnerProfileForm = ({ formData, onInputChange, onRaceTypeToggle }: Runner
               <Checkbox 
                 id={type}
                 checked={formData.preferredRaceTypes.includes(type)}
-                onCheckedChange={() => onRaceTypeToggle(type)}
+                onCheckedChange={() => handleRaceTypeToggle(type)}
               />
               <Label htmlFor={type} className="text-sm">{type}</Label>
             </div>
@@ -85,10 +108,20 @@ const RunnerProfileForm = ({ formData, onInputChange, onRaceTypeToggle }: Runner
           className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           placeholder="Háblanos de tu experiencia corriendo, motivaciones, logros..."
           value={formData.bio}
-          onChange={(e) => onInputChange("bio", e.target.value)}
+          onChange={(e) => handleInputChange("bio", e.target.value)}
         />
       </div>
-    </div>
+
+      <div className="flex gap-3">
+        <Button type="button" variant="outline" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Atrás
+        </Button>
+        <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+          {isLoading ? "Guardando..." : "Continuar"}
+        </Button>
+      </div>
+    </form>
   );
 };
 

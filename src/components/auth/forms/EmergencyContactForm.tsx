@@ -1,18 +1,34 @@
 
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ArrowLeft } from "lucide-react";
 
 interface EmergencyContactFormProps {
-  formData: {
-    emergencyContactName: string;
-    emergencyContactPhone: string;
-  };
-  onInputChange: (field: string, value: any) => void;
+  onSubmit: (data: any) => void;
+  onBack: () => void;
+  initialData: any;
+  isLoading: boolean;
 }
 
-const EmergencyContactForm = ({ formData, onInputChange }: EmergencyContactFormProps) => {
+const EmergencyContactForm = ({ onSubmit, onBack, initialData, isLoading }: EmergencyContactFormProps) => {
+  const [formData, setFormData] = useState({
+    emergencyContactName: initialData.emergencyContactName || "",
+    emergencyContactPhone: initialData.emergencyContactPhone || ""
+  });
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
   return (
-    <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900">Contacto de Emergencia</h3>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -21,7 +37,7 @@ const EmergencyContactForm = ({ formData, onInputChange }: EmergencyContactFormP
             id="emergencyContactName"
             placeholder="Nombre del contacto"
             value={formData.emergencyContactName}
-            onChange={(e) => onInputChange("emergencyContactName", e.target.value)}
+            onChange={(e) => handleInputChange("emergencyContactName", e.target.value)}
             required
           />
         </div>
@@ -32,12 +48,22 @@ const EmergencyContactForm = ({ formData, onInputChange }: EmergencyContactFormP
             type="tel"
             placeholder="+34 123 456 789"
             value={formData.emergencyContactPhone}
-            onChange={(e) => onInputChange("emergencyContactPhone", e.target.value)}
+            onChange={(e) => handleInputChange("emergencyContactPhone", e.target.value)}
             required
           />
         </div>
       </div>
-    </div>
+
+      <div className="flex gap-3">
+        <Button type="button" variant="outline" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Atrás
+        </Button>
+        <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+          {isLoading ? "Guardando..." : "Continuar"}
+        </Button>
+      </div>
+    </form>
   );
 };
 

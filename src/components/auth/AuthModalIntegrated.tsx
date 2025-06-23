@@ -50,7 +50,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     const updatedData = { ...registrationData, ...stepData };
     setRegistrationData(updatedData);
 
-    if (registrationStep < 5) {
+    if (registrationStep < 4) {
       setRegistrationStep(registrationStep + 1);
     } else {
       handleFinalRegistration(updatedData);

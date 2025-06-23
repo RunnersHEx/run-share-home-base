@@ -1,23 +1,37 @@
 
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock } from "lucide-react";
 
 interface BasicInfoFormProps {
-  formData: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-    phone: string;
-    dateOfBirth: string;
-  };
-  onInputChange: (field: string, value: any) => void;
+  onSubmit: (data: any) => void;
+  initialData: any;
+  isLoading: boolean;
 }
 
-const BasicInfoForm = ({ formData, onInputChange }: BasicInfoFormProps) => {
+const BasicInfoForm = ({ onSubmit, initialData, isLoading }: BasicInfoFormProps) => {
+  const [formData, setFormData] = useState({
+    firstName: initialData.firstName || "",
+    lastName: initialData.lastName || "",
+    email: initialData.email || "",
+    password: initialData.password || "",
+    phone: initialData.phone || "",
+    dateOfBirth: initialData.dateOfBirth || ""
+  });
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
   return (
-    <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900">Información Básica</h3>
       
       <div className="grid grid-cols-2 gap-4">
@@ -27,7 +41,7 @@ const BasicInfoForm = ({ formData, onInputChange }: BasicInfoFormProps) => {
             id="firstName"
             placeholder="Nombre"
             value={formData.firstName}
-            onChange={(e) => onInputChange("firstName", e.target.value)}
+            onChange={(e) => handleInputChange("firstName", e.target.value)}
             required
           />
         </div>
@@ -37,7 +51,7 @@ const BasicInfoForm = ({ formData, onInputChange }: BasicInfoFormProps) => {
             id="lastName"
             placeholder="Apellidos"
             value={formData.lastName}
-            onChange={(e) => onInputChange("lastName", e.target.value)}
+            onChange={(e) => handleInputChange("lastName", e.target.value)}
             required
           />
         </div>
@@ -53,7 +67,7 @@ const BasicInfoForm = ({ formData, onInputChange }: BasicInfoFormProps) => {
             placeholder="tu@email.com"
             className="pl-10"
             value={formData.email}
-            onChange={(e) => onInputChange("email", e.target.value)}
+            onChange={(e) => handleInputChange("email", e.target.value)}
             required
           />
         </div>
@@ -69,7 +83,7 @@ const BasicInfoForm = ({ formData, onInputChange }: BasicInfoFormProps) => {
             placeholder="Mínimo 8 caracteres"
             className="pl-10"
             value={formData.password}
-            onChange={(e) => onInputChange("password", e.target.value)}
+            onChange={(e) => handleInputChange("password", e.target.value)}
             required
           />
         </div>
@@ -83,7 +97,7 @@ const BasicInfoForm = ({ formData, onInputChange }: BasicInfoFormProps) => {
             type="tel"
             placeholder="+34 123 456 789"
             value={formData.phone}
-            onChange={(e) => onInputChange("phone", e.target.value)}
+            onChange={(e) => handleInputChange("phone", e.target.value)}
           />
         </div>
         <div className="space-y-2">
@@ -92,12 +106,16 @@ const BasicInfoForm = ({ formData, onInputChange }: BasicInfoFormProps) => {
             id="dateOfBirth"
             type="date"
             value={formData.dateOfBirth}
-            onChange={(e) => onInputChange("dateOfBirth", e.target.value)}
+            onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
             required
           />
         </div>
       </div>
-    </div>
+
+      <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+        {isLoading ? "Creando cuenta..." : "Continuar"}
+      </Button>
+    </form>
   );
 };
 

@@ -6,19 +6,28 @@ import { Label } from "@/components/ui/label";
 import { Mail, Lock } from "lucide-react";
 
 interface LoginFormProps {
-  formData: {
-    email: string;
-    password: string;
-  };
-  onInputChange: (field: string, value: any) => void;
-  onSubmit: (e: React.FormEvent) => void;
-  onPasswordReset: () => void;
+  onSubmit: (data: { email: string; password: string }) => Promise<void>;
   isLoading: boolean;
 }
 
-const LoginForm = ({ formData, onInputChange, onSubmit, onPasswordReset, isLoading }: LoginFormProps) => {
+const LoginForm = ({ onSubmit, isLoading }: LoginFormProps) => {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onSubmit(formData);
+  };
+
+  const handlePasswordReset = () => {
+    // TODO: Implement password reset functionality
+    console.log("Password reset clicked");
+  };
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <div className="relative">
@@ -29,7 +38,7 @@ const LoginForm = ({ formData, onInputChange, onSubmit, onPasswordReset, isLoadi
             placeholder="tu@email.com"
             className="pl-10"
             value={formData.email}
-            onChange={(e) => onInputChange("email", e.target.value)}
+            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
             required
           />
         </div>
@@ -45,7 +54,7 @@ const LoginForm = ({ formData, onInputChange, onSubmit, onPasswordReset, isLoadi
             placeholder="Tu contraseña"
             className="pl-10"
             value={formData.password}
-            onChange={(e) => onInputChange("password", e.target.value)}
+            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
             required
           />
         </div>
@@ -60,7 +69,7 @@ const LoginForm = ({ formData, onInputChange, onSubmit, onPasswordReset, isLoadi
           type="button"
           variant="link" 
           className="text-blue-600"
-          onClick={onPasswordReset}
+          onClick={handlePasswordReset}
         >
           ¿Olvidaste tu contraseña?
         </Button>

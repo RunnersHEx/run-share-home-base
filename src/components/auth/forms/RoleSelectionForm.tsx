@@ -1,26 +1,30 @@
 
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowLeft } from "lucide-react";
 
 interface RoleSelectionFormProps {
-  formData: {
-    isHost: boolean;
-    isGuest: boolean;
-  };
-  onInputChange: (field: string, value: any) => void;
+  onSubmit: (data: any) => void;
+  onBack: () => void;
+  initialData: any;
+  isLoading: boolean;
 }
 
-const RoleSelectionForm = ({ formData, onInputChange }: RoleSelectionFormProps) => {
-  const handleHostChange = (checked: boolean | string) => {
-    onInputChange("isHost", !!checked);
-  };
+const RoleSelectionForm = ({ onSubmit, onBack, initialData, isLoading }: RoleSelectionFormProps) => {
+  const [formData, setFormData] = useState({
+    isHost: true, // Always true as it's mandatory
+    isGuest: true // Always true as it's mandatory
+  });
 
-  const handleGuestChange = (checked: boolean | string) => {
-    onInputChange("isGuest", !!checked);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
   };
 
   return (
-    <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900">¿Cómo quieres usar la plataforma?</h3>
         <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -35,7 +39,6 @@ const RoleSelectionForm = ({ formData, onInputChange }: RoleSelectionFormProps) 
           <div className="flex items-center space-x-2 mb-2">
             <Checkbox 
               checked={true} 
-              onCheckedChange={handleHostChange}
               disabled={true}
             />
             <Label className="font-semibold text-blue-700">Quiero ser Host</Label>
@@ -49,7 +52,6 @@ const RoleSelectionForm = ({ formData, onInputChange }: RoleSelectionFormProps) 
           <div className="flex items-center space-x-2 mb-2">
             <Checkbox 
               checked={true} 
-              onCheckedChange={handleGuestChange}
               disabled={true}
             />
             <Label className="font-semibold text-orange-700">Quiero ser Guest</Label>
@@ -59,7 +61,17 @@ const RoleSelectionForm = ({ formData, onInputChange }: RoleSelectionFormProps) 
           </p>
         </div>
       </div>
-    </div>
+
+      <div className="flex gap-3">
+        <Button type="button" variant="outline" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Atrás
+        </Button>
+        <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+          {isLoading ? "Creando cuenta..." : "Crear Cuenta"}
+        </Button>
+      </div>
+    </form>
   );
 };
 
