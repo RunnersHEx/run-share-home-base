@@ -1,7 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import ProfileLayout from "@/components/profile/ProfileLayout";
 import PersonalInfoSection from "@/components/profile/PersonalInfoSection";
 import RunnerInfoSection from "@/components/profile/RunnerInfoSection";
@@ -12,7 +12,15 @@ import DeleteAccountSection from "@/components/profile/DeleteAccountSection";
 
 const Profile = () => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   const [activeSection, setActiveSection] = useState("personal");
+
+  // Check if we need to navigate to a specific section (from verification modal)
+  useEffect(() => {
+    if (location.state?.activeSection) {
+      setActiveSection(location.state.activeSection);
+    }
+  }, [location.state]);
 
   const handleSectionChange = (section: string) => {
     setActiveSection(section);

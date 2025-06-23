@@ -40,25 +40,25 @@ const VerificationSection = () => {
         return {
           badge: <Badge className="bg-green-100 text-green-800">Verificado</Badge>,
           icon: <CheckCircle className="h-6 w-6 text-green-600" />,
-          message: "¡Tu perfil está verificado! Esto aumenta la confianza de otros usuarios."
+          message: "¡Tu perfil está verificado! Ahora puedes disfrutar de todas las funciones con total seguridad."
         };
       case 'pending':
         return {
           badge: <Badge variant="secondary">Pendiente</Badge>,
           icon: <AlertCircle className="h-6 w-6 text-yellow-600" />,
-          message: "Tu verificación está pendiente. Sube los documentos requeridos para acelerar el proceso."
+          message: "Tu verificación está pendiente. La verificación de identidad es OBLIGATORIA para garantizar la seguridad de toda la comunidad."
         };
       case 'rejected':
         return {
           badge: <Badge variant="destructive">Rechazado</Badge>,
           icon: <AlertCircle className="h-6 w-6 text-red-600" />,
-          message: "Tu verificación fue rechazada. Por favor, sube documentos nuevos."
+          message: "Tu verificación fue rechazada. Por favor, sube documentos nuevos. La verificación es obligatoria para usar la plataforma."
         };
       default:
         return {
           badge: <Badge variant="secondary">Sin verificar</Badge>,
           icon: <Shield className="h-6 w-6 text-gray-600" />,
-          message: "Verifica tu perfil para aumentar la confianza en la comunidad."
+          message: "La verificación de identidad es OBLIGATORIA para garantizar la seguridad y confianza en la comunidad."
         };
     }
   };
@@ -72,20 +72,21 @@ const VerificationSection = () => {
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             {verificationInfo.icon}
-            <span>Estado de Verificación</span>
+            <span>Verificación de Identidad</span>
+            <Badge variant="destructive" className="ml-2">OBLIGATORIO</Badge>
           </div>
           {verificationInfo.badge}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Estado actual */}
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-700">{verificationInfo.message}</p>
+        <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+          <p className="text-sm text-red-800 font-medium">{verificationInfo.message}</p>
         </div>
 
         {/* Documentos requeridos */}
         <div className="space-y-4">
-          <h4 className="font-semibold text-gray-900">Documentos de Verificación</h4>
+          <h4 className="font-semibold text-gray-900">Documentos de Verificación Obligatorios</h4>
           
           <div className="space-y-3">
             {/* ID Oficial */}
@@ -226,13 +227,18 @@ const VerificationSection = () => {
 
         {/* Proceso de verificación */}
         <div className="bg-blue-50 p-4 rounded-lg">
-          <h4 className="font-semibold text-blue-800 mb-2">Proceso de Verificación</h4>
+          <h4 className="font-semibold text-blue-800 mb-2">Proceso de Verificación Obligatorio</h4>
           <ul className="text-sm text-blue-700 space-y-1">
             <li>1. Sube los documentos requeridos</li>
             <li>2. Nuestro equipo los revisará en 24-48 horas</li>
             <li>3. Te notificaremos el resultado por email</li>
-            <li>4. Los usuarios verificados obtienen más visibilidad</li>
+            <li>4. Puedes usar la plataforma mientras esperas la verificación</li>
           </ul>
+          <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+            <p className="text-xs text-yellow-800">
+              <strong>Importante:</strong> Si hay algún problema con tu verificación, el perfil se bloqueará hasta solucionarlo.
+            </p>
+          </div>
         </div>
 
         <input
