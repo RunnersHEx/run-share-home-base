@@ -42,11 +42,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signUp = async (email: string, password: string, userData: any) => {
+    // Usar la URL de producción de Lovable en lugar de localhost
+    const redirectUrl = `https://lovable.dev/projects/d42674f5-3efc-4948-acf7-42f593bd898b`;
+    
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: redirectUrl,
         data: {
           first_name: userData.firstName,
           last_name: userData.lastName,

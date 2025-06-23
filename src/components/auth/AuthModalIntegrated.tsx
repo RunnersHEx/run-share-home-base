@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,11 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       await signIn(data.email, data.password);
       toast.success("¡Bienvenido de vuelta!");
       onClose();
+      
+      // Mostrar modal de verificación después del login exitoso
+      setTimeout(() => {
+        setShowVerificationModal(true);
+      }, 500);
     } catch (error: any) {
       console.error("Error during login:", error);
       if (error.message?.includes("Invalid login credentials")) {
@@ -63,7 +67,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     try {
       await signUp(finalData.email, finalData.password, finalData);
       
-      // Mostrar mensaje de confirmación de email
+      // Mostrar solo mensaje de confirmación de email (NO el modal de verificación)
       setShowEmailConfirmation(true);
       
       // Reset state
@@ -86,10 +90,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   const handleEmailConfirmed = () => {
     setShowEmailConfirmation(false);
     onClose();
-    // Mostrar modal de verificación después de cerrar el de confirmación
-    setTimeout(() => {
-      setShowVerificationModal(true);
-    }, 500);
+    // NO mostrar modal de verificación aquí - solo después del login
   };
 
   const handleBackStep = () => {
@@ -201,6 +202,12 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
                   </ul>
                 </div>
               </div>
+            </div>
+
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p className="text-sm text-green-800">
+                <strong>Próximo paso:</strong> Después de confirmar tu email, inicia sesión con tus credenciales para acceder a la plataforma.
+              </p>
             </div>
 
             <Button 
