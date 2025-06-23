@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,6 @@ const VerificationSection = () => {
           body: {
             user_id: profile?.id,
             user_name: `${profile?.first_name} ${profile?.last_name}`,
-            user_email: profile?.email || 'No disponible',
             documents_count: (profile?.verification_documents?.length || 0) + 1
           }
         });
