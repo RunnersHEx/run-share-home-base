@@ -25,11 +25,11 @@ interface VerificationRequest {
   submitted_at: string;
   reviewed_at: string | null;
   admin_notes: string | null;
-  profiles: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    verification_documents: string[];
+  user_profile?: {
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+    verification_documents: string[] | null;
   };
 }
 
@@ -41,21 +41,30 @@ const AdminVerificationPanel = () => {
 
   const fetchVerificationRequests = async () => {
     try {
-      const { data, error } = await supabase
+      // Primero obtenemos las verification requests
+      const { data: verificationData, error: verificationError } = await supabase
         .from('verification_requests')
-        .select(`
-          *,
-          profiles (
-            first_name,
-            last_name,
-            email,
-            verification_documents
-          )
-        `)
+        .select('*')
         .order('submitted_at', { ascending: false });
 
-      if (error) throw error;
-      setRequests(data || []);
+      if (verificationError) throw verificationError;
+
+      // Luego obtenemos los perfiles de los usuarios
+      const userIds = verificationData?.map(req => req.user_id) || [];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, verification_documents')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combinamos los datos
+      const requestsWithProfiles = verificationData?.map(request => ({
+        ...request,
+        user_profile: profilesData?.find(profile => profile.id === request.user_id)
+      })) || [];
+
+      setRequests(requestsWithProfiles);
     } catch (error) {
       console.error('Error fetching verification requests:', error);
       toast.error('Error al cargar solicitudes de verificación');
@@ -153,18 +162,18 @@ const AdminVerificationPanel = () => {
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4 text-gray-400" />
                         <span className="font-medium">
-                          {request.profiles.first_name} {request.profiles.last_name}
+                          {request.user_profile?.first_name || 'N/A'} {request.user_profile?.last_name || ''}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">
-                      {request.profiles.email}
+                      {request.user_profile?.email || 'No disponible'}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
                         <FileText className="h-4 w-4 text-gray-400" />
                         <span className="text-sm">
-                          {request.profiles.verification_documents?.length || 0} documentos
+                          {request.user_profile?.verification_documents?.length || 0} documentos
                         </span>
                       </div>
                     </TableCell>
