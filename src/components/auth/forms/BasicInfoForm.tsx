@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Check, X } from "lucide-react";
 
 interface BasicInfoFormProps {
   onSubmit: (data: any) => void;
@@ -35,15 +34,43 @@ const BasicInfoForm = ({ onSubmit, initialData, isLoading }: BasicInfoFormProps)
     }
   };
 
+  const getPasswordRequirements = () => {
+    const password = formData.password;
+    return {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+  };
+
   const validatePasswords = () => {
+    const requirements = getPasswordRequirements();
+    
+    // Verificar todos los requisitos de la contraseña
+    if (!requirements.length) {
+      setPasswordError("La contraseña debe tener al menos 8 caracteres");
+      return false;
+    }
+    if (!requirements.uppercase) {
+      setPasswordError("La contraseña debe tener al menos una mayúscula");
+      return false;
+    }
+    if (!requirements.number) {
+      setPasswordError("La contraseña debe tener al menos un número");
+      return false;
+    }
+    if (!requirements.special) {
+      setPasswordError("La contraseña debe tener al menos un carácter especial (!@#$%^&*(),.?\":{}|<>)");
+      return false;
+    }
+    
+    // Verificar que las contraseñas coincidan
     if (formData.password !== formData.confirmPassword) {
       setPasswordError("Las contraseñas no coinciden");
       return false;
     }
-    if (formData.password.length < 6) {
-      setPasswordError("La contraseña debe tener al menos 6 caracteres");
-      return false;
-    }
+    
     return true;
   };
 
@@ -56,6 +83,8 @@ const BasicInfoForm = ({ onSubmit, initialData, isLoading }: BasicInfoFormProps)
     
     onSubmit(formData);
   };
+
+  const requirements = getPasswordRequirements();
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -107,7 +136,7 @@ const BasicInfoForm = ({ onSubmit, initialData, isLoading }: BasicInfoFormProps)
           <Input
             id="password-register"
             type={showPassword ? "text" : "password"}
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Crea una contraseña segura"
             className="pl-10 pr-10"
             value={formData.password}
             onChange={(e) => handleInputChange("password", e.target.value)}
@@ -121,6 +150,28 @@ const BasicInfoForm = ({ onSubmit, initialData, isLoading }: BasicInfoFormProps)
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
+        
+        {/* Indicadores de requisitos de contraseña */}
+        {formData.password && (
+          <div className="mt-2 space-y-1">
+            <div className={`flex items-center text-xs ${requirements.length ? 'text-green-600' : 'text-gray-500'}`}>
+              {requirements.length ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
+              Al menos 8 caracteres
+            </div>
+            <div className={`flex items-center text-xs ${requirements.uppercase ? 'text-green-600' : 'text-gray-500'}`}>
+              {requirements.uppercase ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
+              Una letra mayúscula
+            </div>
+            <div className={`flex items-center text-xs ${requirements.number ? 'text-green-600' : 'text-gray-500'}`}>
+              {requirements.number ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
+              Un número
+            </div>
+            <div className={`flex items-center text-xs ${requirements.special ? 'text-green-600' : 'text-gray-500'}`}>
+              {requirements.special ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
+              Un carácter especial (!@#$%^&*(),.?":{}|&lt;&gt;)
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
