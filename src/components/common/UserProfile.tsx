@@ -1,5 +1,6 @@
 
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
@@ -10,10 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Settings, LogOut } from "lucide-react";
+import { User, Settings, LogOut, Home, Trophy, Building } from "lucide-react";
 
 const UserProfile = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) return null;
 
@@ -24,8 +26,17 @@ const UserProfile = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
+      navigate("/");
     } catch (error) {
       console.error('Error signing out:', error);
+    }
+  };
+
+  const handleNavigation = (path: string, section?: string) => {
+    if (section) {
+      navigate(path, { state: { activeSection: section } });
+    } else {
+      navigate(path);
     }
   };
 
@@ -53,13 +64,17 @@ const UserProfile = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleNavigation("/profile")}>
           <User className="mr-2 h-4 w-4" />
-          <span>Perfil</span>
+          <span>Mi Perfil</span>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>Configuración</span>
+        <DropdownMenuItem onClick={() => handleNavigation("/profile", "properties")}>
+          <Home className="mr-2 h-4 w-4" />
+          <span>Mis Propiedades</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleNavigation("/profile", "races")}>
+          <Trophy className="mr-2 h-4 w-4" />
+          <span>Mis Carreras</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>

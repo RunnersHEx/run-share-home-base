@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useProfile } from "@/hooks/useProfile";
-import { Trophy, User, Shield, Settings, BarChart, Trash } from "lucide-react";
+import { Trophy, User, Shield, Settings, BarChart, Trash, Home, Calendar } from "lucide-react";
 
 interface ProfileLayoutProps {
   children: ReactNode;
@@ -19,6 +19,8 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
     { id: 'personal', label: 'Información Personal', icon: User },
     { id: 'runner', label: 'Perfil Runner', icon: Trophy },
     { id: 'roles', label: 'Rol en la Plataforma', icon: Shield },
+    { id: 'properties', label: 'Mis Propiedades', icon: Home },
+    { id: 'races', label: 'Mis Carreras', icon: Calendar },
     { id: 'verification', label: 'Verificación', icon: Settings },
     { id: 'stats', label: 'Logros y Estadísticas', icon: BarChart },
     { id: 'delete-account', label: 'Eliminar mi cuenta', icon: Trash },

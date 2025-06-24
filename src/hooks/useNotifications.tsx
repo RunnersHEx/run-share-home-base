@@ -19,11 +19,15 @@ export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
-  const channelRef = useRef<any>(null);
-  const subscriptionActiveRef = useRef(false);
+  const initialized = useRef(false);
 
   const fetchNotifications = async () => {
-    if (!user) return;
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -32,13 +36,18 @@ export const useNotifications = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-
-      setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.read).length || 0);
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        setNotifications([]);
+        setUnreadCount(0);
+      } else {
+        setNotifications(data || []);
+        setUnreadCount(data?.filter(n => !n.read).length || 0);
+      }
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      toast.error('Error al cargar notificaciones');
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
@@ -87,6 +96,9 @@ export const useNotifications = () => {
   };
 
   useEffect(() => {
+    // Evitar múltiples inicializaciones
+    if (initialized.current) return;
+    
     if (!user) {
       setLoading(false);
       setNotifications([]);
@@ -94,28 +106,16 @@ export const useNotifications = () => {
       return;
     }
 
-    // Cleanup any existing subscription first
-    if (channelRef.current) {
-      console.log('Cleaning up existing channel before creating new one');
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-      subscriptionActiveRef.current = false;
-    }
-
-    // Fetch initial notifications
+    initialized.current = true;
+    
+    // Fetch inicial
     fetchNotifications();
 
-    // Only create subscription if none exists
-    if (!subscriptionActiveRef.current) {
+    // Solo crear suscripción si el usuario existe
+    const setupSubscription = () => {
       try {
-        const channelName = `notifications-${user.id}-${Math.random().toString(36).substr(2, 9)}`;
-        console.log('Creating new notification channel:', channelName);
-        
-        const channel = supabase.channel(channelName);
-        channelRef.current = channel;
-        subscriptionActiveRef.current = true;
-        
-        channel
+        const channel = supabase
+          .channel(`notifications-${user.id}`)
           .on(
             'postgres_changes',
             {
@@ -130,7 +130,7 @@ export const useNotifications = () => {
               setNotifications(prev => [newNotification, ...prev]);
               setUnreadCount(prev => prev + 1);
               
-              // Mostrar toast para notificaciones importantes
+              // Toast para notificaciones importantes
               if (newNotification.type === 'verification_update') {
                 toast.success(newNotification.title, {
                   description: newNotification.message
@@ -138,26 +138,22 @@ export const useNotifications = () => {
               }
             }
           )
-          .subscribe((status) => {
-            console.log('Subscription status:', status);
-            if (status === 'SUBSCRIBED') {
-              console.log('Successfully subscribed to notifications channel');
-            }
-          });
-      } catch (error) {
-        console.error('Error setting up notification subscription:', error);
-        subscriptionActiveRef.current = false;
-      }
-    }
+          .subscribe();
 
-    // Cleanup function
-    return () => {
-      if (channelRef.current) {
-        console.log('Cleaning up notification channel on unmount');
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-        subscriptionActiveRef.current = false;
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      } catch (error) {
+        console.error('Error setting up subscription:', error);
+        return () => {};
       }
+    };
+
+    const cleanup = setupSubscription();
+
+    return () => {
+      initialized.current = false;
+      cleanup();
     };
   }, [user?.id]);
 

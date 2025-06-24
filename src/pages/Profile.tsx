@@ -9,6 +9,8 @@ import RoleSection from "@/components/profile/RoleSection";
 import VerificationSection from "@/components/profile/VerificationSection";
 import StatsSection from "@/components/profile/StatsSection";
 import DeleteAccountSection from "@/components/profile/DeleteAccountSection";
+import PropertiesSection from "@/components/profile/PropertiesSection";
+import RacesSection from "@/components/profile/RacesSection";
 
 const Profile = () => {
   const { user, loading } = useAuth();
@@ -44,6 +46,10 @@ const Profile = () => {
         return <RunnerInfoSection />;
       case "roles":
         return <RoleSection />;
+      case "properties":
+        return <PropertiesSection />;
+      case "races":
+        return <RacesSection />;
       case "verification":
         return <VerificationSection />;
       case "stats":
