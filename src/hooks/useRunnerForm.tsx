@@ -1,63 +1,93 @@
 
-import { useState, useEffect } from "react";
-import { useProfile } from "@/hooks/useProfile";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+export interface RunnerFormData {
+  // Información básica
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  birthDate: string;
+  
+  // Información del corredor
+  bio: string;
+  runningExperience: string;
+  preferredDistances: string[];
+  runningModalities: string[];
+  personalRecords: Record<string, string>;
+  racesCompletedThisYear: number;
+  
+  // Contacto de emergencia
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  
+  // Roles
+  isHost: boolean;
+  isGuest: boolean;
+}
 
 export const useRunnerForm = () => {
-  const { profile, updateProfile } = useProfile();
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    running_experience: 'beginner',
-    running_modalities: [] as string[],
-    preferred_distances: [] as string[],
-    bio: '',
-    personal_records: {} as Record<string, string>,
-  });
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (profile) {
-      setFormData({
-        running_experience: profile.running_experience || 'beginner',
-        running_modalities: profile.running_modalities || [],
-        preferred_distances: profile.preferred_distances || [],
-        bio: profile.bio || '',
-        personal_records: profile.personal_records || {},
-      });
+  const saveRunnerProfile = async (formData: RunnerFormData) => {
+    if (!user) {
+      toast.error("No hay usuario autenticado");
+      return false;
     }
-  }, [profile]);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    console.log('Saving runner form data:', formData);
-    const success = await updateProfile(formData);
-    if (success) {
-      setIsEditing(false);
-    }
-    setIsSaving(false);
-  };
+    setLoading(true);
+    try {
+      console.log('Saving runner profile:', formData);
+      
+      // Preparar los datos para la base de datos
+      const profileData = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone: formData.phone,
+        birth_date: formData.birthDate,
+        bio: formData.bio,
+        running_experience: formData.runningExperience,
+        preferred_distances: formData.preferredDistances,
+        running_modalities: formData.runningModalities,
+        personal_records: formData.personalRecords,
+        races_completed_this_year: formData.racesCompletedThisYear,
+        emergency_contact_name: formData.emergencyContactName,
+        emergency_contact_phone: formData.emergencyContactPhone,
+        is_host: formData.isHost,
+        is_guest: formData.isGuest
+      };
 
-  const handleCancel = () => {
-    if (profile) {
-      setFormData({
-        running_experience: profile.running_experience || 'beginner',
-        running_modalities: profile.running_modalities || [],
-        preferred_distances: profile.preferred_distances || [],
-        bio: profile.bio || '',
-        personal_records: profile.personal_records || {},
-      });
+      // Usar upsert para crear o actualizar el perfil
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(
+          { id: user.id, ...profileData },
+          { onConflict: 'id' }
+        );
+
+      if (error) {
+        console.error('Error saving profile:', error);
+        throw error;
+      }
+
+      console.log('Profile saved successfully');
+      toast.success("Perfil guardado correctamente");
+      return true;
+    } catch (error) {
+      console.error('Error in saveRunnerProfile:', error);
+      toast.error("Error al guardar el perfil");
+      return false;
+    } finally {
+      setLoading(false);
     }
-    setIsEditing(false);
   };
 
   return {
-    profile,
-    formData,
-    setFormData,
-    isEditing,
-    setIsEditing,
-    isSaving,
-    handleSave,
-    handleCancel
+    saveRunnerProfile,
+    loading
   };
 };

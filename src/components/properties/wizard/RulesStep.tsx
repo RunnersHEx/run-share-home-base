@@ -1,158 +1,79 @@
 
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { MessageSquare, RotateCcw } from "lucide-react";
-import { PropertyFormData } from "@/types/property";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
 
 interface RulesStepProps {
-  formData: PropertyFormData;
-  updateFormData: (updates: Partial<PropertyFormData>) => void;
+  formData: any;
+  onUpdate: (data: any) => void;
+  onNext: () => void;
+  onPrev: () => void;
 }
 
-const BASIC_RULES = [
-  { id: "no_smoking", label: "No fumar" },
-  { id: "no_pets", label: "No mascotas" },
-  { id: "no_parties", label: "No fiestas" },
-  { id: "quiet_after_2330", label: "Silencio a partir de las 23:30h" },
-  { id: "no_services_without_permission", label: "No usar ningún servicio de la casa sin permiso previo" }
-];
-
-const RulesStep = ({ formData, updateFormData }: RulesStepProps) => {
-  const handleBasicRuleChange = (ruleId: string, checked: boolean) => {
-    const currentRules = formData.house_rules || "";
-    const rule = BASIC_RULES.find(r => r.id === ruleId);
-    
-    if (!rule) return;
-    
-    let updatedRules = currentRules;
-    
-    if (checked) {
-      // Add rule if not already present
-      if (!currentRules.includes(rule.label)) {
-        updatedRules = currentRules ? `${currentRules}, ${rule.label}` : rule.label;
-      }
-    } else {
-      // Remove rule
-      updatedRules = currentRules
-        .split(', ')
-        .filter(r => r !== rule.label)
-        .join(', ');
-    }
-    
-    updateFormData({ house_rules: updatedRules });
-  };
-
-  const isRuleSelected = (ruleId: string) => {
-    const rule = BASIC_RULES.find(r => r.id === ruleId);
-    return rule ? (formData.house_rules || "").includes(rule.label) : false;
-  };
-
-  const getAdditionalRules = () => {
-    const currentRules = formData.house_rules || "";
-    const basicRuleLabels = BASIC_RULES.map(r => r.label);
-    
-    return currentRules
-      .split(', ')
-      .filter(rule => rule.trim() && !basicRuleLabels.includes(rule.trim()))
-      .join(', ');
-  };
-
-  const handleAdditionalRulesChange = (additionalRules: string) => {
-    const selectedBasicRules = BASIC_RULES
-      .filter(rule => isRuleSelected(rule.id))
-      .map(rule => rule.label);
-    
-    const allRules = [...selectedBasicRules];
-    if (additionalRules.trim()) {
-      allRules.push(additionalRules.trim());
-    }
-    
-    updateFormData({ house_rules: allRules.join(', ') });
+const RulesStep = ({ formData, onUpdate, onNext, onPrev }: RulesStepProps) => {
+  const handleInputChange = (field: string, value: string) => {
+    onUpdate({ [field]: value });
   };
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <MessageSquare className="h-5 w-5 mr-2" />
-            Reglas y Configuración
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <Label className="flex items-center mb-4">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Reglas de la Casa
-            </Label>
-            
-            <div className="space-y-3 mb-4">
-              {BASIC_RULES.map((rule) => (
-                <div key={rule.id} className="flex items-center space-x-3">
-                  <Checkbox
-                    id={rule.id}
-                    checked={isRuleSelected(rule.id)}
-                    onCheckedChange={(checked) => handleBasicRuleChange(rule.id, checked as boolean)}
-                  />
-                  <Label htmlFor={rule.id} className="font-normal cursor-pointer">
-                    {rule.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
+      <div className="text-center mb-6">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <FileText className="h-8 w-8 text-blue-600" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Normas y Políticas</h2>
+        <p className="text-gray-600">
+          Establece las reglas de tu hogar para una convivencia perfecta.
+        </p>
+      </div>
 
-            <Label htmlFor="additional_rules" className="text-sm text-gray-600 mb-2 block">
-              Si deseas agregar alguna regla de la casa más, escríbela aquí
-            </Label>
+      <Card>
+        <CardContent className="p-6 space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="house_rules">Normas de la Casa</Label>
             <Textarea
-              id="additional_rules"
-              value={getAdditionalRules()}
-              onChange={(e) => handleAdditionalRulesChange(e.target.value)}
-              placeholder="Reglas adicionales..."
-              rows={3}
-              className="mt-2"
+              id="house_rules"
+              placeholder="Ej: No fumar, No mascotas, Silencio después de las 22:00h, etc."
+              value={formData.house_rules || ''}
+              onChange={(e) => handleInputChange('house_rules', e.target.value)}
+              rows={4}
             />
+            <p className="text-sm text-gray-500">
+              Define las normas básicas que deben seguir tus huéspedes
+            </p>
           </div>
 
-          <div>
-            <Label htmlFor="cancellation_policy" className="flex items-center">
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Política de Cancelación
-            </Label>
-            <Select 
-              value={formData.cancellation_policy} 
-              onValueChange={(value) => updateFormData({ cancellation_policy: value })}
-            >
-              <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Selecciona una política" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="flexible">
-                  <div className="py-2">
-                    <div className="font-medium">Flexible</div>
-                    <div className="text-sm text-gray-600">Cancelación gratuita hasta 24h antes</div>
-                  </div>
-                </SelectItem>
-                <SelectItem value="moderate">
-                  <div className="py-2">
-                    <div className="font-medium">Moderada</div>
-                    <div className="text-sm text-gray-600">Cancelación gratuita hasta 5 días antes</div>
-                  </div>
-                </SelectItem>
-                <SelectItem value="strict">
-                  <div className="py-2">
-                    <div className="font-medium">Estricta</div>
-                    <div className="text-sm text-gray-600">Sin reembolso por cancelación</div>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-2">
+            <Label htmlFor="check_in_instructions">Instrucciones de Check-in</Label>
+            <Textarea
+              id="check_in_instructions"
+              placeholder="Ej: Las llaves están en la caja fuerte del portal (código 1234), el timbre es el 2A..."
+              value={formData.check_in_instructions || ''}
+              onChange={(e) => handleInputChange('check_in_instructions', e.target.value)}
+              rows={4}
+            />
+            <p className="text-sm text-gray-500">
+              Explica cómo pueden acceder a tu propiedad
+            </p>
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onPrev}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Anterior
+        </Button>
+        <Button 
+          onClick={onNext}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          Continuar
+          <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
+      </div>
     </div>
   );
 };

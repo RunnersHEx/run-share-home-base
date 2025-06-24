@@ -1,83 +1,108 @@
 
-import { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useProfile } from "@/hooks/useProfile";
-import { Trophy, User, Shield, Settings, BarChart, Trash, Home, Calendar } from "lucide-react";
+import { 
+  User, 
+  Heart, 
+  UserCheck, 
+  Home,
+  Trophy,
+  Shield, 
+  BarChart3, 
+  Trash2
+} from "lucide-react";
 
 interface ProfileLayoutProps {
-  children: ReactNode;
-  activeSection?: string;
-  onSectionChange?: (section: string) => void;
+  children: React.ReactNode;
+  activeSection: string;
+  onSectionChange: (section: string) => void;
 }
 
 const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayoutProps) => {
-  const { progress } = useProfile();
+  const { profile, progress } = useProfile();
 
   const sections = [
-    { id: 'personal', label: 'Información Personal', icon: User },
-    { id: 'runner', label: 'Perfil Runner', icon: Trophy },
-    { id: 'roles', label: 'Rol en la Plataforma', icon: Shield },
-    { id: 'properties', label: 'Mis Propiedades', icon: Home },
-    { id: 'races', label: 'Mis Carreras', icon: Calendar },
-    { id: 'verification', label: 'Verificación', icon: Settings },
-    { id: 'stats', label: 'Logros y Estadísticas', icon: BarChart },
-    { id: 'delete-account', label: 'Eliminar mi cuenta', icon: Trash },
+    { id: "personal", label: "Información Personal", icon: User },
+    { id: "runner", label: "Perfil Runner", icon: Heart },
+    { id: "roles", label: "Roles", icon: UserCheck },
+    { id: "properties", label: "Mi Propiedad", icon: Home },
+    { id: "races", label: "Mis Carreras", icon: Trophy },
+    { id: "verification", label: "Verificación", icon: Shield },
+    { id: "stats", label: "Estadísticas", icon: BarChart3 },
+    { id: "delete-account", label: "Eliminar Cuenta", icon: Trash2 },
   ];
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Mi Perfil</h1>
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Completitud del Perfil</h3>
-              <Badge variant={progress === 100 ? "default" : "secondary"}>
-                {progress}% Completo
-              </Badge>
-            </div>
-            <Progress value={progress} className="h-3" />
-            <p className="text-sm text-gray-600 mt-2">
-              {progress === 100 
-                ? "¡Perfil completo! Ahora puedes disfrutar de todas las funciones."
-                : "Completa tu perfil para obtener más visibilidad y confianza en la comunidad."
-              }
-            </p>
-          </Card>
-        </div>
+  const getVerificationBadge = () => {
+    switch (profile?.verification_status) {
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-700 border-green-200">Verificado</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-100 text-red-700 border-red-200">Rechazado</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Pendiente</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-700 border-gray-200">Sin verificar</Badge>;
+    }
+  };
 
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="p-4">
+            <Card className="p-6 sticky top-8">
+              {/* Profile Header */}
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-3">
+                  {profile?.first_name?.charAt(0) || 'U'}{profile?.last_name?.charAt(0) || ''}
+                </div>
+                <h3 className="font-semibold text-lg">
+                  {profile?.first_name} {profile?.last_name}
+                </h3>
+                <p className="text-sm text-gray-600">{profile?.email}</p>
+                <div className="mt-2">
+                  {getVerificationBadge()}
+                </div>
+              </div>
+
+              {/* Progress */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Progreso del perfil</span>
+                  <span className="text-sm text-gray-600">{progress}%</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
+
+              {/* Navigation */}
               <nav className="space-y-2">
                 {sections.map((section) => {
                   const Icon = section.icon;
-                  const isDeleteSection = section.id === 'delete-account';
                   return (
-                    <button
+                    <Button
                       key={section.id}
-                      onClick={() => onSectionChange?.(section.id)}
-                      className={`w-full flex items-center space-x-3 px-3 py-2 text-left rounded-lg transition-colors ${
-                        activeSection === section.id
-                          ? isDeleteSection 
-                            ? 'bg-red-100 text-red-700' 
-                            : 'bg-blue-100 text-blue-700'
-                          : isDeleteSection
-                            ? 'text-red-600 hover:bg-red-50'
-                            : 'text-gray-600 hover:bg-gray-100'
+                      variant={activeSection === section.id ? "default" : "ghost"}
+                      className={`w-full justify-start ${
+                        activeSection === section.id 
+                          ? "bg-blue-600 text-white" 
+                          : "text-gray-700 hover:bg-gray-100"
                       }`}
+                      onClick={() => onSectionChange(section.id)}
                     >
-                      <Icon className="h-5 w-5" />
-                      <span className="font-medium">{section.label}</span>
-                    </button>
+                      <Icon className="h-4 w-4 mr-3" />
+                      {section.label}
+                    </Button>
                   );
                 })}
               </nav>
             </Card>
           </div>
 
+          {/* Main Content */}
           <div className="lg:col-span-3">
             {children}
           </div>

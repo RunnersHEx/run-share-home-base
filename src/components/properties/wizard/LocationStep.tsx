@@ -1,102 +1,111 @@
 
 import { useState } from "react";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { MapPin } from "lucide-react";
-import { PropertyFormData } from "@/types/property";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { MapPin, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface LocationStepProps {
-  formData: PropertyFormData;
-  updateFormData: (updates: Partial<PropertyFormData>) => void;
+  formData: any;
+  onUpdate: (data: any) => void;
+  onNext: () => void;
+  onPrev: () => void;
 }
 
-const SPANISH_PROVINCES = [
-  "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz", 
-  "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", 
-  "Ciudad Real", "Córdoba", "Cuenca", "Girona",  "Granada", "Guadalajara", 
-  "Gipuzkoa", "Huelva", "Huesca", "Jaén", "La Coruña", "La Rioja", "Las Palmas", 
-  "León", "Lleida", "Lugo", "Madrid", "Málaga", "Murcia", "Navarra", "Ourense", 
-  "Palencia", "Pontevedra", "Salamanca", "Santa Cruz de Tenerife", "Segovia", 
-  "Sevilla", "Soria", "Tarragona", "Teruel", "Toledo", "Valencia", "Valladolid", 
-  "Vizcaya", "Zamora", "Zaragoza"
-];
+const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps) => {
+  const handleInputChange = (field: string, value: string) => {
+    onUpdate({ [field]: value });
+  };
 
-const LocationStep = ({ formData, updateFormData }: LocationStepProps) => {
-  const handleProvinceChange = (province: string, checked: boolean) => {
-    const updatedProvinces = checked
-      ? [...formData.provinces, province]
-      : formData.provinces.filter(p => p !== province);
-    
-    updateFormData({ provinces: updatedProvinces });
+  const handleNext = () => {
+    if (!formData.full_address || !formData.locality) {
+      return;
+    }
+    onNext();
   };
 
   return (
     <div className="space-y-6">
+      <div className="text-center mb-6">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <MapPin className="h-8 w-8 text-blue-600" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Ubicación de tu Propiedad</h2>
+        <p className="text-gray-600">
+          Indica dónde se encuentra tu propiedad para que los runners puedan encontrarla fácilmente.
+        </p>
+      </div>
+
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <MapPin className="h-5 w-5 mr-2" />
-            Ubicación de tu Propiedad
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <Label>Provincias *</Label>
-            <p className="text-sm text-gray-600 mb-4">
-              Selecciona las provincias donde está ubicada tu propiedad (puedes seleccionar múltiples si está cerca de límites provinciales)
+        <CardContent className="p-6 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="full_address">Dirección Completa *</Label>
+            <Input
+              id="full_address"
+              placeholder="Calle Principal 123, Piso 2A"
+              value={formData.full_address || ''}
+              onChange={(e) => handleInputChange('full_address', e.target.value)}
+              required
+            />
+            <p className="text-sm text-gray-500">
+              Incluye calle, número, piso, puerta, etc.
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-60 overflow-y-auto border rounded-lg p-4">
-              {SPANISH_PROVINCES.map((province) => (
-                <div key={province} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={province}
-                    checked={formData.provinces.includes(province)}
-                    onCheckedChange={(checked) => handleProvinceChange(province, checked as boolean)}
-                  />
-                  <Label htmlFor={province} className="text-sm font-normal cursor-pointer">
-                    {province}
-                  </Label>
-                </div>
-              ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="locality">Ciudad/Localidad *</Label>
+              <Input
+                id="locality"
+                placeholder="Madrid"
+                value={formData.locality || ''}
+                onChange={(e) => handleInputChange('locality', e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="provinces">Provincia/Estado</Label>
+              <Input
+                id="provinces"
+                placeholder="Madrid"
+                value={formData.provinces?.[0] || ''}
+                onChange={(e) => handleInputChange('provinces', [e.target.value])}
+              />
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="locality">Ciudad/Localidad *</Label>
-            <Input
-              id="locality"
-              value={formData.locality}
-              onChange={(e) => updateFormData({ locality: e.target.value })}
-              placeholder="Ej: Madrid, Barcelona, Valencia..."
-              className="mt-2"
+          <div className="space-y-2">
+            <Label htmlFor="runner_instructions">Instrucciones para Runners</Label>
+            <Textarea
+              id="runner_instructions"
+              placeholder="Describe las mejores rutas cercanas, parques, senderos o cualquier información útil para correr en la zona..."
+              value={formData.runner_instructions || ''}
+              onChange={(e) => handleInputChange('runner_instructions', e.target.value)}
+              rows={4}
             />
-          </div>
-
-          <div>
-            <Label htmlFor="full_address">Calle sin número *</Label>
-            <Input
-              id="full_address"
-              value={formData.full_address}
-              onChange={(e) => updateFormData({ full_address: e.target.value })}
-              placeholder="Ej: Calle Gran Vía, Avenida de la Constitución..."
-              className="mt-2"
-            />
-            <p className="text-sm text-gray-600 mt-1">
-              La información completa de la dirección se la proporcionará el Host al Guest una vez hecho Match. El Host acepta la solicitud del Guest
-            </p>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-medium text-blue-900 mb-2">📍 Confirmación de Ubicación</h4>
-            <p className="text-sm text-blue-800">
-              Una vez que indiques la calle, te mostraremos un mapa para que confirmes la ubicación exacta. 
-              Esto ayuda a los runners a encontrar las mejores rutas cercanas.
+            <p className="text-sm text-gray-500">
+              Comparte tu conocimiento local sobre las mejores zonas para correr
             </p>
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onPrev}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Anterior
+        </Button>
+        <Button 
+          onClick={handleNext}
+          disabled={!formData.full_address || !formData.locality}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          Continuar
+          <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
+      </div>
     </div>
   );
 };
