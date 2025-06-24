@@ -76,7 +76,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
         return;
       }
 
-      // Preparar datos para Supabase
+      // Preparar datos para Supabase con todos los campos del formulario
       const userData = {
         firstName: finalData.firstName,
         lastName: finalData.lastName,
@@ -110,8 +110,17 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
           toast.error(error.message || "Error al crear la cuenta");
         }
       } else {
-        toast.success("¡Cuenta creada exitosamente! Revisa tu email para confirmar tu cuenta.");
+        // Cambiar el mensaje para no mencionar email de confirmación
+        toast.success("¡Cuenta creada exitosamente! Bienvenido a RunnersHEx.");
         onClose();
+        
+        // Mostrar modal de verificación obligatoria después de un breve delay
+        setTimeout(() => {
+          toast.info("Para usar la plataforma necesitas verificar tu identidad. Ve a tu perfil > Verificación para subir los documentos requeridos.", {
+            duration: 8000
+          });
+        }, 2000);
+        
         // Reset form
         setCurrentStep(1);
         setFormData({
