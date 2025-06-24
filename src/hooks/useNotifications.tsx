@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,6 +19,8 @@ export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const channelRef = useRef<any>(null);
+  const subscriptionActiveRef = useRef(false);
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -92,46 +94,72 @@ export const useNotifications = () => {
       return;
     }
 
+    // Cleanup any existing subscription first
+    if (channelRef.current) {
+      console.log('Cleaning up existing channel before creating new one');
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+      subscriptionActiveRef.current = false;
+    }
+
     // Fetch initial notifications
     fetchNotifications();
 
-    // Create a unique channel name to avoid conflicts
-    const channelName = `notifications-${user.id}-${Date.now()}`;
-    
-    // Create the channel
-    const channel = supabase.channel(channelName);
-    
-    // Set up the subscription
-    channel
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'user_notifications',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
-          
-          // Mostrar toast para notificaciones importantes
-          if (newNotification.type === 'verification_update') {
-            toast.success(newNotification.title, {
-              description: newNotification.message
-            });
-          }
-        }
-      )
-      .subscribe();
+    // Only create subscription if none exists
+    if (!subscriptionActiveRef.current) {
+      try {
+        const channelName = `notifications-${user.id}-${Math.random().toString(36).substr(2, 9)}`;
+        console.log('Creating new notification channel:', channelName);
+        
+        const channel = supabase.channel(channelName);
+        channelRef.current = channel;
+        subscriptionActiveRef.current = true;
+        
+        channel
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'user_notifications',
+              filter: `user_id=eq.${user.id}`
+            },
+            (payload) => {
+              console.log('New notification received:', payload);
+              const newNotification = payload.new as Notification;
+              setNotifications(prev => [newNotification, ...prev]);
+              setUnreadCount(prev => prev + 1);
+              
+              // Mostrar toast para notificaciones importantes
+              if (newNotification.type === 'verification_update') {
+                toast.success(newNotification.title, {
+                  description: newNotification.message
+                });
+              }
+            }
+          )
+          .subscribe((status) => {
+            console.log('Subscription status:', status);
+            if (status === 'SUBSCRIBED') {
+              console.log('Successfully subscribed to notifications channel');
+            }
+          });
+      } catch (error) {
+        console.error('Error setting up notification subscription:', error);
+        subscriptionActiveRef.current = false;
+      }
+    }
 
     // Cleanup function
     return () => {
-      console.log('Cleaning up notification channel:', channelName);
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        console.log('Cleaning up notification channel on unmount');
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+        subscriptionActiveRef.current = false;
+      }
     };
-  }, [user?.id]); // Only depend on user.id to avoid unnecessary re-subscriptions
+  }, [user?.id]);
 
   return {
     notifications,
