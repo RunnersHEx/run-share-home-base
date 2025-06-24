@@ -42,6 +42,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signUp = async (email: string, password: string, userData: any) => {
+    // Validar que email y password no estén vacíos
+    if (!email || !password) {
+      return { 
+        error: { 
+          message: "Email y contraseña son requeridos" 
+        } 
+      };
+    }
+
     // Usar la URL correcta de la aplicación Lovable
     const redirectUrl = `${window.location.origin}/`;
     
@@ -54,11 +63,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           first_name: userData.firstName,
           last_name: userData.lastName,
           phone: userData.phone,
-          birth_date: userData.dateOfBirth,
+          birth_date: userData.birthDate,
           bio: userData.bio,
           running_experience: userData.runningExperience,
-          running_modalities: userData.raceModality ? [userData.raceModality] : [],
-          preferred_distances: userData.preferredRaceTypes,
+          running_modalities: userData.runningModalities || [],
+          preferred_distances: userData.preferredDistances || [],
+          personal_records: userData.personalRecords || {},
           emergency_contact_name: userData.emergencyContactName,
           emergency_contact_phone: userData.emergencyContactPhone,
           is_host: userData.isHost,

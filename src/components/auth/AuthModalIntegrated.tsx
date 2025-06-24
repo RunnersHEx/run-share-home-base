@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -55,6 +54,8 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   const handleRegistrationStepSubmit = (stepData: any) => {
     const updatedData = { ...registrationData, ...stepData };
     setRegistrationData(updatedData);
+    console.log('Step data:', stepData);
+    console.log('Updated registration data:', updatedData);
 
     if (registrationStep < 4) {
       setRegistrationStep(registrationStep + 1);
@@ -64,17 +65,24 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   };
 
   const handleFinalRegistration = async (finalData: any) => {
+    console.log('Final registration data:', finalData);
+    
+    // Validar que tenemos email y password
+    if (!finalData.email || !finalData.password) {
+      toast.error("Email y contraseña son requeridos");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { error } = await signUp(finalData.email, finalData.password, finalData);
       
       if (error) {
-        // Si hay error, lanzarlo para que sea manejado en el catch
+        console.error('Registration error:', error);
         throw error;
       }
       
       // Si no hay error, el registro fue exitoso
-      // Como ya no requerimos confirmación de email, cerramos el modal y mostramos mensaje de éxito
       toast.success("¡Cuenta creada exitosamente! Ya puedes empezar a usar la plataforma.");
       
       // Reset state y cerrar modal
@@ -93,8 +101,9 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
         toast.error("Este email ya está registrado. Intenta iniciar sesión.");
       } else if (error.message?.includes("Password should be")) {
         toast.error("La contraseña debe tener al menos 6 caracteres.");
+      } else if (error.message?.includes("anonymous_provider_disabled")) {
+        toast.error("Error de configuración. Por favor, verifica que el email y contraseña estén completos.");
       } else if (error.message?.includes("Email not confirmed")) {
-        // Si aún requiere confirmación de email, mostrar el modal
         setShowEmailConfirmation(true);
       } else {
         toast.error("Error al crear la cuenta. Inténtalo de nuevo.");
