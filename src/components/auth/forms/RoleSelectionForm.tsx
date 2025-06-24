@@ -41,7 +41,7 @@ const RoleSelectionForm = ({ onSubmit, onBack, initialData, isLoading }: RoleSel
               checked={true} 
               disabled={true}
             />
-            <Label className="font-semibold text-blue-700">Quiero ser Host</Label>
+            <Label className="font-semibold text-blue-700">Como Host</Label>
           </div>
           <p className="text-sm text-gray-600">
             Ofrecer mi casa, carreras cercanas y conocimiento local a corredores que quieran venir a participar en ellas y visitar la zona
@@ -54,7 +54,7 @@ const RoleSelectionForm = ({ onSubmit, onBack, initialData, isLoading }: RoleSel
               checked={true} 
               disabled={true}
             />
-            <Label className="font-semibold text-orange-700">Quiero ser Guest</Label>
+            <Label className="font-semibold text-orange-700">Como Guest</Label>
           </div>
           <p className="text-sm text-gray-600">
             Buscar carreras que me atraigan, alojamiento cercano y experiencia local
