@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ const VerificationSection = () => {
   const { profile, uploadVerificationDoc, uploadAvatar, refetchProfile } = useProfile();
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const racePhotoInputRef = useRef<HTMLInputElement>(null);
   const [selectedDocType, setSelectedDocType] = useState<string>('');
 
   const handleDocumentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,29 +27,7 @@ const VerificationSection = () => {
     setUploadingDoc(selectedDocType);
     
     try {
-      let result;
-      if (selectedDocType === 'race_photo') {
-        // Para la foto en carrera, usar uploadAvatar para actualizar foto de perfil
-        result = await uploadAvatar(file);
-        if (result) {
-          // También agregar a verification_documents
-          const currentDocs = profile?.verification_documents || [];
-          const racePhotoDoc = `race_photo_${Date.now()}.jpg`;
-          const newDocs = currentDocs.filter(doc => !doc.includes('race_photo')).concat([racePhotoDoc]);
-          
-          await supabase
-            .from('profiles')
-            .update({ verification_documents: newDocs })
-            .eq('id', profile?.id);
-
-          // Refrescar el perfil para mostrar la nueva foto
-          setTimeout(() => {
-            refetchProfile();
-          }, 1000);
-        }
-      } else {
-        result = await uploadVerificationDoc(file, selectedDocType);
-      }
+      const result = await uploadVerificationDoc(file, selectedDocType);
       
       if (result) {
         // Enviar email de notificación al admin
@@ -75,9 +55,68 @@ const VerificationSection = () => {
     setSelectedDocType('');
   };
 
+  const handleRacePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('El archivo debe ser menor a 10MB');
+      return;
+    }
+
+    setUploadingDoc('race_photo');
+    
+    try {
+      // Subir como foto de perfil (que automáticamente aparecerá en "Mi Perfil")
+      const result = await uploadAvatar(file);
+      
+      if (result) {
+        // También agregar a verification_documents para el proceso de verificación
+        const currentDocs = profile?.verification_documents || [];
+        const racePhotoDoc = `race_photo_${Date.now()}.jpg`;
+        const newDocs = currentDocs.filter(doc => !doc.includes('race_photo')).concat([racePhotoDoc]);
+        
+        await supabase
+          .from('profiles')
+          .update({ verification_documents: newDocs })
+          .eq('id', profile?.id);
+
+        // Enviar email de notificación al admin
+        try {
+          await supabase.functions.invoke('send-verification-email', {
+            body: {
+              user_id: profile?.id,
+              user_name: `${profile?.first_name} ${profile?.last_name}`,
+              user_email: profile?.email || 'Sin email',
+              documents_count: newDocs.length
+            }
+          });
+          toast.success('Foto en carrera subida y admin notificado');
+        } catch (error) {
+          console.error('Error sending notification email:', error);
+          toast.success('Foto en carrera subida correctamente');
+        }
+
+        // Refrescar el perfil para mostrar la nueva foto
+        setTimeout(() => {
+          refetchProfile();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Error uploading race photo:', error);
+      toast.error('Error al subir la foto en carrera');
+    }
+    
+    setUploadingDoc(null);
+  };
+
   const triggerFileUpload = (docType: string) => {
-    setSelectedDocType(docType);
-    fileInputRef.current?.click();
+    if (docType === 'race_photo') {
+      racePhotoInputRef.current?.click();
+    } else {
+      setSelectedDocType(docType);
+      fileInputRef.current?.click();
+    }
   };
 
   const getVerificationStatus = () => {
@@ -236,7 +275,7 @@ const VerificationSection = () => {
                         Foto tuya corriendo o con medalla de finisher donde se te reconozca
                       </p>
                       <p className="text-xs text-blue-700 mt-1">
-                        Esta es la misma foto que tu foto de perfil. Si la cambias aquí, se actualizará también tu foto de perfil.
+                        Esta foto aparecerá como tu foto de perfil en "Mi Perfil". Si cambias tu foto de perfil, se actualizará también aquí.
                       </p>
                     </div>
                   </div>
@@ -282,11 +321,21 @@ const VerificationSection = () => {
           </ul>
         </div>
 
+        {/* Input para documentos generales */}
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*,.pdf"
           onChange={handleDocumentUpload}
+          className="hidden"
+        />
+
+        {/* Input específico para foto en carrera */}
+        <input
+          ref={racePhotoInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleRacePhotoUpload}
           className="hidden"
         />
       </CardContent>
