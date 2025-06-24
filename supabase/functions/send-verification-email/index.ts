@@ -27,14 +27,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { user_id, user_name, user_email, documents_count }: EmailRequest = await req.json();
 
-    // Log detallado para verificar que se recibe la petición
     console.log(`=== NUEVA SOLICITUD DE VERIFICACIÓN ===`);
-    console.log(`Timestamp: ${new Date().toISOString()}`);
     console.log(`Usuario: ${user_name} (${user_email})`);
-    console.log(`ID Usuario: ${user_id}`);
-    console.log(`Documentos subidos: ${documents_count}`);
-    console.log(`Email admin destino: runnershomeexchange@gmail.com`);
-    console.log(`=== DATOS RECIBIDOS ===`);
+    console.log(`Documentos: ${documents_count}`);
 
     // Crear notificación interna para el usuario
     const { error: notificationError } = await supabase
@@ -43,49 +38,87 @@ const handler = async (req: Request): Promise<Response> => {
         user_id: user_id,
         type: 'verification_submitted',
         title: 'Documentos de Verificación Enviados',
-        message: `Has enviado ${documents_count} documentos para verificación. Recibirás una notificación cuando sean revisados. El administrador ha sido notificado automáticamente.`,
+        message: `Has enviado ${documents_count} documentos para verificación. Recibirás una notificación cuando sean revisados.`,
         data: { 
           documents_count,
-          admin_email: 'runnershomeexchange@gmail.com',
-          submitted_at: new Date().toISOString(),
-          admin_notified: true
+          submitted_at: new Date().toISOString()
         }
       });
 
     if (notificationError) {
-      console.error('❌ Error creating user notification:', notificationError);
-    } else {
-      console.log('✅ User notification created successfully');
+      console.error('Error creating user notification:', notificationError);
     }
 
-    // Log simulando el envío de email al administrador
-    console.log(`\n📧 ===== EMAIL ENVIADO AL ADMINISTRADOR =====`);
-    console.log(`📬 DESTINATARIO: runnershomeexchange@gmail.com`);
-    console.log(`📋 ASUNTO: 🏃‍♂️ Nueva solicitud de verificación - ${user_name}`);
-    console.log(`📄 CONTENIDO DEL EMAIL:`);
-    console.log(`-------------------------------------------`);
-    console.log(`¡Hola Administrador de RunnersHEx!`);
-    console.log(``);
-    console.log(`📝 Has recibido una nueva solicitud de verificación de identidad:`);
-    console.log(``);
-    console.log(`👤 Usuario: ${user_name}`);
-    console.log(`📧 Email: ${user_email}`);
-    console.log(`🆔 ID Usuario: ${user_id}`);
-    console.log(`📎 Documentos subidos: ${documents_count}`);
-    console.log(`📅 Fecha y hora: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })}`);
-    console.log(``);
-    console.log(`🔍 ACCIÓN REQUERIDA:`);
-    console.log(`Por favor, revisa los documentos en el panel de administración de Supabase:`);
-    console.log(`🔗 https://supabase.com/dashboard/project/tufikuyzllmrfinvmltt`);
-    console.log(``);
-    console.log(`Los documentos están almacenados en el bucket 'verification-docs'.`);
-    console.log(`Una vez revisados, actualiza el estado de verificación del usuario.`);
-    console.log(``);
-    console.log(`-------------------------------------------`);
-    console.log(`🤖 Sistema RunnersHEx - Notificación Automática`);
-    console.log(`📧 ===== FIN DEL EMAIL =====\n`);
+    // Enviar email real al administrador usando Resend
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    
+    if (resendApiKey) {
+      try {
+        const emailResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'RunnersHEx <noreply@resend.dev>',
+            to: ['runnershomeexchange@gmail.com'],
+            subject: `🏃‍♂️ Nueva verificación de identidad - ${user_name}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #1E40AF;">🏃‍♂️ Nueva Solicitud de Verificación</h2>
+                
+                <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="margin-top: 0;">Detalles del Usuario</h3>
+                  <p><strong>Nombre:</strong> ${user_name}</p>
+                  <p><strong>Email:</strong> ${user_email}</p>
+                  <p><strong>ID Usuario:</strong> ${user_id}</p>
+                  <p><strong>Documentos subidos:</strong> ${documents_count}</p>
+                  <p><strong>Fecha:</strong> ${new Date().toLocaleString('es-ES')}</p>
+                </div>
 
-    // Crear registro en la tabla de solicitudes de verificación si no existe
+                <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="margin-top: 0; color: #92400e;">🔍 Acción Requerida</h3>
+                  <p>Por favor, revisa los documentos en el panel de administración:</p>
+                  <p><a href="https://supabase.com/dashboard/project/tufikuyzllmrfinvmltt" 
+                     style="color: #1E40AF; text-decoration: underline;">
+                     Ir al Panel de Administración
+                  </a></p>
+                </div>
+
+                <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="margin-top: 0; color: #1E40AF;">📋 Próximos Pasos</h3>
+                  <ol style="margin: 0; padding-left: 20px;">
+                    <li>Revisa los documentos subidos</li>
+                    <li>Verifica la identidad del usuario</li>
+                    <li>Actualiza el estado de verificación</li>
+                    <li>El usuario recibirá una notificación automática</li>
+                  </ol>
+                </div>
+
+                <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+                  Este email fue enviado automáticamente por el sistema RunnersHEx.
+                </p>
+              </div>
+            `
+          })
+        });
+
+        if (emailResponse.ok) {
+          const emailResult = await emailResponse.json();
+          console.log('✅ Email enviado exitosamente:', emailResult);
+        } else {
+          const errorText = await emailResponse.text();
+          console.error('❌ Error enviando email:', errorText);
+        }
+      } catch (emailError) {
+        console.error('❌ Error con servicio de email:', emailError);
+      }
+    } else {
+      console.log('⚠️ RESEND_API_KEY no configurada, email no enviado');
+    }
+
+    // Crear/actualizar solicitud de verificación
     const { error: requestError } = await supabase
       .from('verification_requests')
       .upsert({
@@ -97,30 +130,14 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
     if (requestError) {
-      console.error('❌ Error creating/updating verification request:', requestError);
-    } else {
-      console.log('✅ Verification request created/updated successfully');
+      console.error('Error creating verification request:', requestError);
     }
-
-    console.log(`\n🎯 RESUMEN DE PROCESAMIENTO:`);
-    console.log(`✅ Notificación al usuario: ${notificationError ? 'ERROR' : 'ÉXITO'}`);
-    console.log(`✅ Email al admin (simulado): ENVIADO`);
-    console.log(`✅ Solicitud de verificación: ${requestError ? 'ERROR' : 'ÉXITO'}`);
-    console.log(`📊 Estado final: PROCESADO COMPLETAMENTE`);
-    console.log(`=== FIN PROCESAMIENTO ===\n`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Solicitud de verificación procesada exitosamente',
-        details: {
-          admin_notified: true,
-          admin_email: 'runnershomeexchange@gmail.com',
-          user_notification_created: !notificationError,
-          verification_request_created: !requestError,
-          timestamp: new Date().toISOString(),
-          documents_count: documents_count
-        }
+        message: 'Solicitud de verificación procesada y email enviado',
+        email_sent: !!resendApiKey
       }), 
       {
         status: 200,
@@ -129,13 +146,12 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
   } catch (error: any) {
-    console.error('💥 ERROR CRÍTICO en send-verification-email:', error);
-    console.error('Stack trace:', error.stack);
+    console.error('Error en send-verification-email:', error);
     
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: 'Ver logs del servidor para más información'
+        details: 'Ver logs del servidor'
       }),
       {
         status: 500,

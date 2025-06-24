@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,8 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   const { signUp, signIn } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  
   const [formData, setFormData] = useState({
     // Información básica
     firstName: "",
@@ -110,16 +111,13 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
           toast.error(error.message || "Error al crear la cuenta");
         }
       } else {
-        // Cambiar el mensaje para no mencionar email de confirmación
-        toast.success("¡Cuenta creada exitosamente! Bienvenido a RunnersHEx.");
+        toast.success("¡Cuenta creada exitosamente!");
         onClose();
         
-        // Mostrar modal de verificación obligatoria después de un breve delay
+        // Mostrar modal de verificación después de un breve delay
         setTimeout(() => {
-          toast.info("Para usar la plataforma necesitas verificar tu identidad. Ve a tu perfil > Verificación para subir los documentos requeridos.", {
-            duration: 8000
-          });
-        }, 2000);
+          setShowVerificationModal(true);
+        }, 1000);
         
         // Reset form
         setCurrentStep(1);
@@ -266,90 +264,97 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={resetAndClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <img 
-              src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
-              alt="RunnersHEx" 
-              className="h-8 w-8"
-            />
-            <span className="font-bold text-xl text-gray-900">RunnersHEx</span>
+    <>
+      <Dialog open={isOpen} onOpenChange={resetAndClose}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <img 
+                src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
+                alt="RunnersHEx" 
+                className="h-8 w-8"
+              />
+              <span className="font-bold text-xl text-gray-900">RunnersHEx</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={resetAndClose}
+              className="h-6 w-6"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={resetAndClose}
-            className="h-6 w-6"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
 
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            {getTitle()}
-          </h2>
-          <p className="text-gray-600">
-            {getSubtitle()}
-          </p>
-        </div>
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {getTitle()}
+            </h2>
+            <p className="text-gray-600">
+              {getSubtitle()}
+            </p>
+          </div>
 
-        {mode === "register" && (
-          <div className="flex items-center justify-center mb-6">
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step <= currentStep 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {step}
+          {mode === "register" && (
+            <div className="flex items-center justify-center mb-6">
+              {[1, 2, 3, 4].map((step) => (
+                <div key={step} className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    step <= currentStep 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {step}
+                  </div>
+                  {step < 4 && (
+                    <div className={`w-12 h-1 mx-2 ${
+                      step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                    }`} />
+                  )}
                 </div>
-                {step < 4 && (
-                  <div className={`w-12 h-1 mx-2 ${
-                    step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
-                  }`} />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
 
-        {renderStep()}
+          {renderStep()}
 
-        {mode === "login" && (
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
-              ¿No tienes cuenta?{' '}
-              <Button
-                variant="link"
-                className="p-0 h-auto font-medium text-blue-600"
-                onClick={() => onModeChange("register")}
-              >
-                Regístrate aquí
-              </Button>
-            </p>
-          </div>
-        )}
+          {mode === "login" && (
+            <div className="text-center mt-4">
+              <p className="text-sm text-gray-600">
+                ¿No tienes cuenta?{' '}
+                <Button
+                  variant="link"
+                  className="p-0 h-auto font-medium text-blue-600"
+                  onClick={() => onModeChange("register")}
+                >
+                  Regístrate aquí
+                </Button>
+              </p>
+            </div>
+          )}
 
-        {mode === "register" && (
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
-              ¿Ya tienes cuenta?{' '}
-              <Button
-                variant="link"
-                className="p-0 h-auto font-medium text-blue-600"
-                onClick={() => onModeChange("login")}
-              >
-                Inicia sesión aquí
-              </Button>
-            </p>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+          {mode === "register" && (
+            <div className="text-center mt-4">
+              <p className="text-sm text-gray-600">
+                ¿Ya tienes cuenta?{' '}
+                <Button
+                  variant="link"
+                  className="p-0 h-auto font-medium text-blue-600"
+                  onClick={() => onModeChange("login")}
+                >
+                  Inicia sesión aquí
+                </Button>
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <VerificationRequiredModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+      />
+    </>
   );
 };
 

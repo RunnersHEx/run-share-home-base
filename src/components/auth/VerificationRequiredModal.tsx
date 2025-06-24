@@ -1,7 +1,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Shield, AlertCircle, Mail } from "lucide-react";
+import { Shield, AlertCircle, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface VerificationRequiredModalProps {
@@ -17,14 +17,28 @@ const VerificationRequiredModal = ({ isOpen, onClose }: VerificationRequiredModa
     navigate("/profile", { state: { activeSection: "verification" } });
   };
 
+  const handleRemindLater = () => {
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2 text-xl">
-            <Shield className="h-6 w-6 text-blue-600" />
-            <span>Verificación de Identidad Requerida</span>
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center space-x-2 text-xl">
+              <Shield className="h-6 w-6 text-blue-600" />
+              <span>Verificación de Identidad Requerida</span>
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-6 w-6"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
         
         <div className="space-y-6">
@@ -32,7 +46,7 @@ const VerificationRequiredModal = ({ isOpen, onClose }: VerificationRequiredModa
             <div className="flex items-start space-x-3">
               <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
-                <p className="text-sm text-blue-800 font-medium mb-2">
+                <p className="text-sm text-blue-800">
                   Para continuar disfrutando de la comunidad RunnersHEx necesitamos verificar tu identidad para asegurar la seguridad de todos nuestros runners.
                 </p>
               </div>
@@ -67,13 +81,20 @@ const VerificationRequiredModal = ({ isOpen, onClose }: VerificationRequiredModa
             </ul>
           </div>
 
-          <div className="flex justify-center pt-4">
+          <div className="flex space-x-3 pt-4">
             <Button 
               onClick={handleVerifyIdentity}
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
               <Shield className="h-4 w-4 mr-2" />
               Verificar Identidad
+            </Button>
+            <Button 
+              onClick={handleRemindLater}
+              variant="outline"
+              className="flex-1"
+            >
+              Recordármelo después
             </Button>
           </div>
         </div>

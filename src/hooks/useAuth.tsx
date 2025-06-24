@@ -38,50 +38,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         // Si es un nuevo usuario que se acaba de registrar, crear/actualizar su perfil
         if (event === 'SIGNED_IN' && session?.user) {
-          // Pequeño delay para asegurar que el trigger de la DB haya corrido
+          // Delay para asegurar que el trigger de la DB haya corrido
           setTimeout(async () => {
             try {
-              // Verificar si el perfil ya existe y actualizarlo con los datos completos
-              const { data: existingProfile } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
+              const metadata = session.user.user_metadata;
+              console.log('Processing user metadata:', metadata);
+              
+              if (metadata && Object.keys(metadata).length > 0) {
+                // Preparar todos los datos del registro
+                const profileData: any = {
+                  first_name: metadata.first_name || metadata.firstName,
+                  last_name: metadata.last_name || metadata.lastName,
+                  phone: metadata.phone,
+                  birth_date: metadata.birth_date || metadata.birthDate,
+                  bio: metadata.bio,
+                  running_experience: metadata.running_experience || metadata.runningExperience,
+                  running_modalities: metadata.running_modalities || metadata.runningModalities || [],
+                  preferred_distances: metadata.preferred_distances || metadata.preferredDistances || [],
+                  personal_records: metadata.personal_records || metadata.personalRecords || {},
+                  races_completed_this_year: metadata.races_completed_this_year || metadata.racesCompletedThisYear || 0,
+                  emergency_contact_name: metadata.emergency_contact_name || metadata.emergencyContactName,
+                  emergency_contact_phone: metadata.emergency_contact_phone || metadata.emergencyContactPhone,
+                  is_host: metadata.is_host !== undefined ? metadata.is_host : metadata.isHost,
+                  is_guest: metadata.is_guest !== undefined ? metadata.is_guest : metadata.isGuest
+                };
 
-              if (existingProfile) {
-                // Actualizar con datos completos del metadata si están disponibles
-                const metadata = session.user.user_metadata;
-                if (metadata && Object.keys(metadata).length > 0) {
-                  const updateData: any = {};
-                  
-                  // Mapear todos los campos del metadata al perfil
-                  if (metadata.first_name) updateData.first_name = metadata.first_name;
-                  if (metadata.last_name) updateData.last_name = metadata.last_name;
-                  if (metadata.phone) updateData.phone = metadata.phone;
-                  if (metadata.birth_date) updateData.birth_date = metadata.birth_date;
-                  if (metadata.bio) updateData.bio = metadata.bio;
-                  if (metadata.running_experience) updateData.running_experience = metadata.running_experience;
-                  if (metadata.running_modalities) updateData.running_modalities = metadata.running_modalities;
-                  if (metadata.preferred_distances) updateData.preferred_distances = metadata.preferred_distances;
-                  if (metadata.personal_records) updateData.personal_records = metadata.personal_records;
-                  if (metadata.races_completed_this_year) updateData.races_completed_this_year = metadata.races_completed_this_year;
-                  if (metadata.emergency_contact_name) updateData.emergency_contact_name = metadata.emergency_contact_name;
-                  if (metadata.emergency_contact_phone) updateData.emergency_contact_phone = metadata.emergency_contact_phone;
-                  if (metadata.is_host !== undefined) updateData.is_host = metadata.is_host;
-                  if (metadata.is_guest !== undefined) updateData.is_guest = metadata.is_guest;
+                console.log('Updating profile with complete data:', profileData);
 
-                  if (Object.keys(updateData).length > 0) {
-                    const { error } = await supabase
-                      .from('profiles')
-                      .update(updateData)
-                      .eq('id', session.user.id);
+                // Actualizar el perfil con todos los datos
+                const { error } = await supabase
+                  .from('profiles')
+                  .update(profileData)
+                  .eq('id', session.user.id);
 
-                    if (error) {
-                      console.error('Error updating profile with registration data:', error);
-                    } else {
-                      console.log('Profile updated successfully with registration data');
-                    }
-                  }
+                if (error) {
+                  console.error('Error updating profile with registration data:', error);
+                } else {
+                  console.log('Profile updated successfully with all registration data');
                 }
               }
             } catch (error) {
@@ -110,26 +103,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     console.log('SignUp userData being sent:', userData);
     
+    // Enviar TODOS los datos del usuario en el metadata
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
+          // Datos básicos
           first_name: userData.firstName,
           last_name: userData.lastName,
           phone: userData.phone,
           birth_date: userData.birthDate,
+          
+          // Información del runner
           bio: userData.bio,
           running_experience: userData.runningExperience,
           running_modalities: userData.runningModalities || [],
           preferred_distances: userData.preferredDistances || [],
           personal_records: userData.personalRecords || {},
           races_completed_this_year: userData.racesCompletedThisYear || 0,
+          
+          // Contacto de emergencia
           emergency_contact_name: userData.emergencyContactName,
           emergency_contact_phone: userData.emergencyContactPhone,
+          
+          // Roles
           is_host: userData.isHost,
-          is_guest: userData.isGuest
+          is_guest: userData.isGuest,
+          
+          // Datos adicionales para compatibilidad
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          birthDate: userData.birthDate,
+          runningExperience: userData.runningExperience,
+          runningModalities: userData.runningModalities || [],
+          preferredDistances: userData.preferredDistances || [],
+          personalRecords: userData.personalRecords || {},
+          racesCompletedThisYear: userData.racesCompletedThisYear || 0,
+          emergencyContactName: userData.emergencyContactName,
+          emergencyContactPhone: userData.emergencyContactPhone,
+          isHost: userData.isHost,
+          isGuest: userData.isGuest
         }
       }
     });
