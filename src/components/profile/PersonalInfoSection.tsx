@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ const PersonalInfoSection = () => {
   const { profile, updateProfile, uploadAvatar } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
@@ -58,7 +60,20 @@ const PersonalInfoSection = () => {
       return;
     }
 
-    await uploadAvatar(file);
+    setIsUploadingAvatar(true);
+    try {
+      const avatarUrl = await uploadAvatar(file);
+      if (avatarUrl) {
+        toast.success('Foto de perfil actualizada correctamente');
+        // Forzar actualización del componente
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error('Error al subir la foto de perfil');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   };
 
   const getInitials = () => {
@@ -126,7 +141,7 @@ const PersonalInfoSection = () => {
         <div className="flex items-center space-x-4">
           <div className="relative">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={profile?.profile_image_url || ''} alt="Foto de perfil" />
+              <AvatarImage src={profile?.profile_image_url || ''} alt="Foto de perfil corriendo" />
               <AvatarFallback className="bg-blue-600 text-white text-xl">
                 {getInitials()}
               </AvatarFallback>
@@ -135,6 +150,7 @@ const PersonalInfoSection = () => {
               size="sm"
               className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 p-0"
               onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingAvatar}
             >
               <Camera className="h-4 w-4" />
             </Button>
@@ -147,10 +163,16 @@ const PersonalInfoSection = () => {
             />
           </div>
           <div>
-            <h3 className="font-semibold text-lg">Foto de Perfil</h3>
+            <h3 className="font-semibold text-lg">Foto de Perfil Corriendo</h3>
             <p className="text-sm text-gray-600">
-              JPG, PNG o GIF. Máximo 5MB.
+              Foto tuya corriendo o con medalla de finisher donde se te reconozca. JPG, PNG o GIF. Máximo 5MB.
             </p>
+            <p className="text-xs text-blue-700 mt-1">
+              Esta foto también se usa como "Foto en Carrera" en tu verificación de identidad.
+            </p>
+            {isUploadingAvatar && (
+              <p className="text-sm text-blue-600 mt-2">Subiendo foto...</p>
+            )}
           </div>
         </div>
 

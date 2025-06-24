@@ -191,6 +191,7 @@ export const useProfile = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/avatar.${fileExt}`;
 
+      // Subir a bucket de avatars
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { upsert: true });
@@ -201,7 +202,14 @@ export const useProfile = () => {
         .from('avatars')
         .getPublicUrl(fileName);
 
-      await updateProfile({ profile_image_url: data.publicUrl });
+      // Actualizar el perfil con la nueva URL
+      const success = await updateProfile({ profile_image_url: data.publicUrl });
+      
+      if (success) {
+        // Forzar refetch del perfil para obtener la URL actualizada
+        await fetchProfile();
+      }
+      
       return data.publicUrl;
     } catch (error) {
       console.error('Error uploading avatar:', error);
@@ -224,10 +232,13 @@ export const useProfile = () => {
       if (uploadError) throw uploadError;
 
       const currentDocs = profile?.verification_documents || [];
-      const newDocs = [...currentDocs, fileName];
       
-      await updateProfile({ verification_documents: newDocs });
-      return fileName;
+      // Remover documento anterior del mismo tipo
+      const filteredDocs = currentDocs.filter(doc => !doc.includes(docType));
+      const newDocs = [...filteredDocs, fileName];
+      
+      const success = await updateProfile({ verification_documents: newDocs });
+      return success ? fileName : null;
     } catch (error) {
       console.error('Error uploading verification document:', error);
       toast.error('Error al subir el documento de verificación');
