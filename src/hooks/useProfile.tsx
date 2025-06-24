@@ -204,12 +204,17 @@ export const useProfile = () => {
         .from('avatars')
         .getPublicUrl(fileName);
 
+      console.log('New avatar URL:', data.publicUrl);
+
       // Actualizar el perfil con la nueva URL
       const success = await updateProfile({ profile_image_url: data.publicUrl });
       
       if (success) {
-        // Forzar refetch del perfil para obtener la URL actualizada
-        await fetchProfile();
+        console.log('Profile updated, forcing refresh...');
+        // Pequeño delay para asegurar que la DB esté actualizada
+        setTimeout(() => {
+          fetchProfile();
+        }, 500);
       }
       
       return data.publicUrl;

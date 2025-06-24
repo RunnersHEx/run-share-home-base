@@ -1,5 +1,6 @@
 
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,6 +16,7 @@ import { User, Settings, LogOut, Home, Trophy, Building } from "lucide-react";
 
 const UserProfile = () => {
   const { user, signOut } = useAuth();
+  const { profile } = useProfile(); // Usamos el hook para obtener la foto del perfil
   const navigate = useNavigate();
 
   if (!user) return null;
@@ -45,7 +47,12 @@ const UserProfile = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.user_metadata?.avatar_url} alt="Avatar" />
+            {/* Ahora usa la foto del perfil en lugar del user metadata */}
+            <AvatarImage 
+              src={profile?.profile_image_url || user.user_metadata?.avatar_url} 
+              alt="Avatar"
+              className="object-cover"
+            />
             <AvatarFallback className="bg-blue-600 text-white">
               {getInitials(user.email || "")}
             </AvatarFallback>
@@ -56,7 +63,7 @@ const UserProfile = () => {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user.user_metadata?.first_name || user.email?.split('@')[0]}
+              {profile?.first_name || user.user_metadata?.first_name || user.email?.split('@')[0]}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}

@@ -62,17 +62,24 @@ const PersonalInfoSection = () => {
 
     setIsUploadingAvatar(true);
     try {
+      console.log('Uploading new avatar from PersonalInfoSection...');
       const avatarUrl = await uploadAvatar(file);
       if (avatarUrl) {
+        console.log('Avatar uploaded successfully:', avatarUrl);
         toast.success('Foto de perfil actualizada correctamente');
-        // Forzar actualización del componente
-        window.location.reload();
+        
+        // No necesitamos recargar la página, el hook ya actualiza el estado
+        // La imagen se actualizará automáticamente cuando el perfil se refresqué
       }
     } catch (error) {
       console.error('Error uploading avatar:', error);
       toast.error('Error al subir la foto de perfil');
     } finally {
       setIsUploadingAvatar(false);
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -137,11 +144,18 @@ const PersonalInfoSection = () => {
           </div>
         )}
 
-        {/* Avatar */}
+        {/* Avatar - ahora con mejor key para forzar re-render */}
         <div className="flex items-center space-x-4">
           <div className="relative">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={profile?.profile_image_url || ''} alt="Foto de perfil corriendo" />
+            <Avatar 
+              className="h-20 w-20"
+              key={profile?.profile_image_url || 'no-image'} // Force re-render when image changes
+            >
+              <AvatarImage 
+                src={profile?.profile_image_url || ''} 
+                alt="Foto de perfil corriendo"
+                className="object-cover"
+              />
               <AvatarFallback className="bg-blue-600 text-white text-xl">
                 {getInitials()}
               </AvatarFallback>
