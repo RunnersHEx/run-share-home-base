@@ -8,9 +8,10 @@ import { Mail, Lock } from "lucide-react";
 interface LoginFormProps {
   onSubmit: (data: { email: string; password: string }) => Promise<void>;
   isLoading: boolean;
+  onModeChange: () => void;
 }
 
-const LoginForm = ({ onSubmit, isLoading }: LoginFormProps) => {
+const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
   const [formData, setFormData] = useState({
     email: "",
     password: ""
