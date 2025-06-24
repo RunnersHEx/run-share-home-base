@@ -4,8 +4,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProperties } from "@/hooks/useProperties";
-import { PropertyWizard } from "@/components/properties/PropertyWizard";
-import { PropertyEditButton } from "@/components/properties/PropertyEditButton";
+import PropertyWizard from "@/components/properties/PropertyWizard";
+import PropertyEditButton from "@/components/properties/PropertyEditButton";
 import { Plus, Home, MapPin, Users, Bed, Bath, Eye, Star } from "lucide-react";
 
 const PropertiesSection = () => {

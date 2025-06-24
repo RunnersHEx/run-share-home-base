@@ -129,11 +129,11 @@ const PropertyWizard = ({ onClose, propertyId, initialData }: PropertyWizardProp
       case 1:
         return <BasicInfoStep formData={formData} updateFormData={updateFormData} />;
       case 2:
-        return <LocationStep formData={formData} updateFormData={updateFormData} />;
+        return <LocationStep formData={formData} onUpdate={updateFormData} onNext={nextStep} onPrev={prevStep} />;
       case 3:
         return <AmenitiesStep formData={formData} updateFormData={updateFormData} />;
       case 4:
-        return <RulesStep formData={formData} updateFormData={updateFormData} />;
+        return <RulesStep formData={formData} onUpdate={updateFormData} onNext={nextStep} onPrev={prevStep} />;
       case 5:
         return <PhotosStep formData={formData} updateFormData={updateFormData} photos={photos} setPhotos={setPhotos} />;
       default:

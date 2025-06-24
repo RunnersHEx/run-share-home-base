@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 interface Profile {
   id: string;
+  email: string | null;
   first_name: string | null;
   last_name: string | null;
   phone: string | null;
@@ -78,6 +79,7 @@ export const useProfile = () => {
       // Ensure all required fields are present with proper defaults
       const profileData: Profile = {
         id: extendedData.id,
+        email: extendedData.email || user.email || null,
         first_name: extendedData.first_name || null,
         last_name: extendedData.last_name || null,
         phone: extendedData.phone || null,

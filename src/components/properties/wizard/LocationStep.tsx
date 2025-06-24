@@ -15,7 +15,7 @@ interface LocationStepProps {
 }
 
 const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps) => {
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | string[]) => {
     onUpdate({ [field]: value });
   };
 
