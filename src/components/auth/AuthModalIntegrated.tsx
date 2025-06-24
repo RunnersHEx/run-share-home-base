@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import RunnerProfileForm from "./forms/RunnerProfileForm";
 import EmergencyContactForm from "./forms/EmergencyContactForm";
 import RoleSelectionForm from "./forms/RoleSelectionForm";
 import LoginForm from "./forms/LoginForm";
+import VerificationRequiredModal from "./VerificationRequiredModal";
 import { X } from "lucide-react";
 
 interface AuthModalIntegratedProps {
