@@ -21,12 +21,11 @@ const RunnerProfileForm = ({ onSubmit, onBack, initialData, isLoading }: RunnerP
     runningExperience: initialData.runningExperience || "",
     preferredDistances: initialData.preferredDistances || [],
     runningModalities: initialData.runningModalities || [],
-    personalRecords: initialData.personalRecords || {},
-    racesCompletedThisYear: initialData.racesCompletedThisYear || 0
+    personalRecords: initialData.personalRecords || {}
   });
 
   const distances = ["5K", "10K", "21K", "Maratón", "Ultra"];
-  const modalities = ["Carretera", "Trail", "Montaña", "Pista", "Cross"];
+  const modalities = ["Ruta/Asfalto", "Trail/Montaña"];
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -70,9 +69,20 @@ const RunnerProfileForm = ({ onSubmit, onBack, initialData, isLoading }: RunnerP
     }));
   };
 
+  const isFormValid = () => {
+    return (
+      formData.runningExperience &&
+      formData.bio.trim() &&
+      formData.preferredDistances.length > 0 &&
+      formData.runningModalities.length > 0
+    );
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (isFormValid()) {
+      onSubmit(formData);
+    }
   };
 
   return (
@@ -80,7 +90,7 @@ const RunnerProfileForm = ({ onSubmit, onBack, initialData, isLoading }: RunnerP
       <h3 className="text-lg font-semibold text-gray-900">Perfil Runner</h3>
       
       <div className="space-y-2">
-        <Label htmlFor="runningExperience">Experiencia Corriendo</Label>
+        <Label htmlFor="runningExperience">Experiencia Corriendo *</Label>
         <Select value={formData.runningExperience} onValueChange={(value) => handleInputChange("runningExperience", value)}>
           <SelectTrigger>
             <SelectValue placeholder="Selecciona tu nivel" />
@@ -94,8 +104,19 @@ const RunnerProfileForm = ({ onSubmit, onBack, initialData, isLoading }: RunnerP
         </Select>
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="bio">Biografía Runner *</Label>
+        <Textarea
+          id="bio"
+          placeholder="Cuéntanos sobre ti como runner..."
+          value={formData.bio}
+          onChange={(e) => handleInputChange("bio", e.target.value)}
+          rows={3}
+        />
+      </div>
+
       <div className="space-y-3">
-        <Label>Distancias Preferidas</Label>
+        <Label>Distancias Preferidas *</Label>
         <div className="grid grid-cols-3 gap-3">
           {distances.map((distance) => (
             <div key={distance} className="flex items-center space-x-2">
@@ -111,8 +132,8 @@ const RunnerProfileForm = ({ onSubmit, onBack, initialData, isLoading }: RunnerP
       </div>
 
       <div className="space-y-3">
-        <Label>Modalidades</Label>
-        <div className="grid grid-cols-3 gap-3">
+        <Label>Modalidades *</Label>
+        <div className="grid grid-cols-2 gap-3">
           {modalities.map((modality) => (
             <div key={modality} className="flex items-center space-x-2">
               <Checkbox 
@@ -124,17 +145,6 @@ const RunnerProfileForm = ({ onSubmit, onBack, initialData, isLoading }: RunnerP
             </div>
           ))}
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="bio">Biografía Runner</Label>
-        <Textarea
-          id="bio"
-          placeholder="Cuéntanos sobre ti como runner..."
-          value={formData.bio}
-          onChange={(e) => handleInputChange("bio", e.target.value)}
-          rows={3}
-        />
       </div>
 
       <div className="space-y-3">
@@ -154,23 +164,16 @@ const RunnerProfileForm = ({ onSubmit, onBack, initialData, isLoading }: RunnerP
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="racesCompletedThisYear">Carreras Completadas Este Año</Label>
-        <Input
-          id="racesCompletedThisYear"
-          type="number"
-          min="0"
-          value={formData.racesCompletedThisYear}
-          onChange={(e) => handleInputChange("racesCompletedThisYear", parseInt(e.target.value) || 0)}
-        />
-      </div>
-
       <div className="flex gap-3">
         <Button type="button" variant="outline" onClick={onBack}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Atrás
         </Button>
-        <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+        <Button 
+          type="submit" 
+          className="flex-1 bg-blue-600 hover:bg-blue-700" 
+          disabled={isLoading || !isFormValid()}
+        >
           {isLoading ? "Guardando..." : "Continuar"}
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
