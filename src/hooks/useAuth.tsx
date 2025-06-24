@@ -45,42 +45,66 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               console.log('Processing user metadata:', metadata);
               
               if (metadata && Object.keys(metadata).length > 0) {
-                // Preparar todos los datos del registro
+                // Preparar todos los datos del registro con mejor mapeo
                 const profileData: any = {
-                  first_name: metadata.first_name || metadata.firstName,
-                  last_name: metadata.last_name || metadata.lastName,
+                  first_name: metadata.firstName || metadata.first_name,
+                  last_name: metadata.lastName || metadata.last_name,
                   phone: metadata.phone,
-                  birth_date: metadata.birth_date || metadata.birthDate,
+                  birth_date: metadata.birthDate || metadata.birth_date,
                   bio: metadata.bio,
-                  running_experience: metadata.running_experience || metadata.runningExperience,
-                  running_modalities: metadata.running_modalities || metadata.runningModalities || [],
-                  preferred_distances: metadata.preferred_distances || metadata.preferredDistances || [],
-                  personal_records: metadata.personal_records || metadata.personalRecords || {},
-                  races_completed_this_year: metadata.races_completed_this_year || metadata.racesCompletedThisYear || 0,
-                  emergency_contact_name: metadata.emergency_contact_name || metadata.emergencyContactName,
-                  emergency_contact_phone: metadata.emergency_contact_phone || metadata.emergencyContactPhone,
-                  is_host: metadata.is_host !== undefined ? metadata.is_host : metadata.isHost,
-                  is_guest: metadata.is_guest !== undefined ? metadata.is_guest : metadata.isGuest
+                  running_experience: metadata.runningExperience || metadata.running_experience,
+                  running_modalities: metadata.runningModalities || metadata.running_modalities || [],
+                  preferred_distances: metadata.preferredDistances || metadata.preferred_distances || [],
+                  personal_records: metadata.personalRecords || metadata.personal_records || {},
+                  races_completed_this_year: metadata.racesCompletedThisYear || metadata.races_completed_this_year || 0,
+                  emergency_contact_name: metadata.emergencyContactName || metadata.emergency_contact_name,
+                  emergency_contact_phone: metadata.emergencyContactPhone || metadata.emergency_contact_phone,
+                  is_host: metadata.isHost !== undefined ? metadata.isHost : (metadata.is_host !== undefined ? metadata.is_host : true),
+                  is_guest: metadata.isGuest !== undefined ? metadata.isGuest : (metadata.is_guest !== undefined ? metadata.is_guest : true)
                 };
 
                 console.log('Updating profile with complete data:', profileData);
 
-                // Actualizar el perfil con todos los datos
-                const { error } = await supabase
+                // Primero verificar si ya existe el perfil
+                const { data: existingProfile } = await supabase
                   .from('profiles')
-                  .update(profileData)
-                  .eq('id', session.user.id);
+                  .select('id')
+                  .eq('id', session.user.id)
+                  .single();
 
-                if (error) {
-                  console.error('Error updating profile with registration data:', error);
+                if (existingProfile) {
+                  // Actualizar el perfil existente
+                  const { error } = await supabase
+                    .from('profiles')
+                    .update(profileData)
+                    .eq('id', session.user.id);
+
+                  if (error) {
+                    console.error('Error updating profile with registration data:', error);
+                  } else {
+                    console.log('Profile updated successfully with all registration data');
+                  }
                 } else {
-                  console.log('Profile updated successfully with all registration data');
+                  // Crear nuevo perfil si no existe
+                  const { error } = await supabase
+                    .from('profiles')
+                    .insert({
+                      id: session.user.id,
+                      email: session.user.email,
+                      ...profileData
+                    });
+
+                  if (error) {
+                    console.error('Error creating profile with registration data:', error);
+                  } else {
+                    console.log('Profile created successfully with all registration data');
+                  }
                 }
               }
             } catch (error) {
               console.error('Error processing user profile after login:', error);
             }
-          }, 1000);
+          }, 1500); // Increased delay to ensure DB trigger completes
         }
       }
     );
@@ -103,39 +127,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     console.log('SignUp userData being sent:', userData);
     
-    // Enviar TODOS los datos del usuario en el metadata
+    // Enviar TODOS los datos del usuario en el metadata con campos más consistentes
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          // Datos básicos
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-          phone: userData.phone,
-          birth_date: userData.birthDate,
-          
-          // Información del runner
-          bio: userData.bio,
-          running_experience: userData.runningExperience,
-          running_modalities: userData.runningModalities || [],
-          preferred_distances: userData.preferredDistances || [],
-          personal_records: userData.personalRecords || {},
-          races_completed_this_year: userData.racesCompletedThisYear || 0,
-          
-          // Contacto de emergencia
-          emergency_contact_name: userData.emergencyContactName,
-          emergency_contact_phone: userData.emergencyContactPhone,
-          
-          // Roles
-          is_host: userData.isHost,
-          is_guest: userData.isGuest,
-          
-          // Datos adicionales para compatibilidad
+          // Campos principales con nombres consistentes
           firstName: userData.firstName,
           lastName: userData.lastName,
+          phone: userData.phone,
           birthDate: userData.birthDate,
+          bio: userData.bio,
           runningExperience: userData.runningExperience,
           runningModalities: userData.runningModalities || [],
           preferredDistances: userData.preferredDistances || [],
@@ -143,8 +147,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           racesCompletedThisYear: userData.racesCompletedThisYear || 0,
           emergencyContactName: userData.emergencyContactName,
           emergencyContactPhone: userData.emergencyContactPhone,
-          isHost: userData.isHost,
-          isGuest: userData.isGuest
+          isHost: userData.isHost !== undefined ? userData.isHost : true,
+          isGuest: userData.isGuest !== undefined ? userData.isGuest : true,
+          
+          // Campos alternativos para compatibilidad con base de datos
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          birth_date: userData.birthDate,
+          running_experience: userData.runningExperience,
+          running_modalities: userData.runningModalities || [],
+          preferred_distances: userData.preferredDistances || [],
+          personal_records: userData.personalRecords || {},
+          races_completed_this_year: userData.racesCompletedThisYear || 0,
+          emergency_contact_name: userData.emergencyContactName,
+          emergency_contact_phone: userData.emergencyContactPhone,
+          is_host: userData.isHost !== undefined ? userData.isHost : true,
+          is_guest: userData.isGuest !== undefined ? userData.isGuest : true
         }
       }
     });

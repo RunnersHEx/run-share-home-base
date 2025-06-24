@@ -47,7 +47,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     emergencyContactName: "",
     emergencyContactPhone: "",
     
-    // Roles
+    // Roles (por defecto ambos true como es obligatorio)
     isHost: true,
     isGuest: true
   });
@@ -60,10 +60,18 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       return newData;
     });
     
-    if (currentStep < 4) {
-      setCurrentStep(prev => prev + 1);
-    } else {
-      handleFinalSubmit({ ...formData, ...stepData });
+    // Lógica de navegación de pasos corregida
+    if (mode === "register") {
+      if (currentStep === 1) {
+        // Después de paso 1 (Info básica), saltar paso 2 (Runner info) y ir a paso 3 (Emergencia)
+        setCurrentStep(3);
+      } else if (currentStep === 3) {
+        // Después de paso 3 (Emergencia), ir a paso 4 (Roles)
+        setCurrentStep(4);
+      } else if (currentStep === 4) {
+        // Último paso - crear cuenta
+        handleFinalSubmit({ ...formData, ...stepData });
+      }
     }
   };
 
@@ -122,26 +130,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
         }, 1000);
         
         // Reset form
-        setCurrentStep(1);
-        setFormData({
-          firstName: "",
-          lastName: "",
-          email: "",
-          password: "",
-          confirmPassword: "",
-          phone: "",
-          birthDate: "",
-          bio: "",
-          runningExperience: "",
-          preferredDistances: [],
-          runningModalities: [],
-          personalRecords: {},
-          racesCompletedThisYear: 0,
-          emergencyContactName: "",
-          emergencyContactPhone: "",
-          isHost: true,
-          isGuest: true
-        });
+        resetForm();
       }
     } catch (error) {
       console.error('Error in final submit:', error);
@@ -170,12 +159,16 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
+    if (currentStep === 3) {
+      // Desde paso 3 (emergencia) volver a paso 1 (básica)
+      setCurrentStep(1);
+    } else if (currentStep === 4) {
+      // Desde paso 4 (roles) volver a paso 3 (emergencia)
+      setCurrentStep(3);
     }
   };
 
-  const resetAndClose = () => {
+  const resetForm = () => {
     setCurrentStep(1);
     setFormData({
       firstName: "",
@@ -196,6 +189,10 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       isHost: true,
       isGuest: true
     });
+  };
+
+  const resetAndClose = () => {
+    resetForm();
     onClose();
   };
 
@@ -215,15 +212,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
         return (
           <BasicInfoForm
             onSubmit={handleStepSubmit}
-            initialData={formData}
-            isLoading={isLoading}
-          />
-        );
-      case 2:
-        return (
-          <RunnerProfileForm
-            onSubmit={handleStepSubmit}
-            onBack={handleBack}
             initialData={formData}
             isLoading={isLoading}
           />
@@ -255,7 +243,14 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     if (mode === "login") {
       return "Iniciar Sesión";
     }
-    return `Crear Cuenta - Paso ${currentStep} de 4`;
+    
+    const stepTitles = {
+      1: "Paso 1 de 3",
+      3: "Paso 2 de 3", 
+      4: "Paso 3 de 3"
+    };
+    
+    return `Crear Cuenta - ${stepTitles[currentStep as keyof typeof stepTitles]}`;
   };
 
   const getSubtitle = () => {
@@ -263,6 +258,12 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       return "Accede a tu cuenta de runner";
     }
     return "Únete a la comunidad de runners";
+  };
+
+  // Función para obtener el número de paso actual para mostrar en el progreso
+  const getCurrentStepForProgress = () => {
+    const stepMapping = { 1: 1, 3: 2, 4: 3 };
+    return stepMapping[currentStep as keyof typeof stepMapping] || 1;
   };
 
   return (
@@ -299,18 +300,18 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
 
           {mode === "register" && (
             <div className="flex items-center justify-center mb-6">
-              {[1, 2, 3, 4].map((step) => (
+              {[1, 2, 3].map((step) => (
                 <div key={step} className="flex items-center">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    step <= currentStep 
+                    step <= getCurrentStepForProgress() 
                       ? 'bg-blue-600 text-white' 
                       : 'bg-gray-200 text-gray-600'
                   }`}>
                     {step}
                   </div>
-                  {step < 4 && (
+                  {step < 3 && (
                     <div className={`w-12 h-1 mx-2 ${
-                      step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                      step < getCurrentStepForProgress() ? 'bg-blue-600' : 'bg-gray-200'
                     }`} />
                   )}
                 </div>

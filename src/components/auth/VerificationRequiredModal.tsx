@@ -17,10 +17,6 @@ const VerificationRequiredModal = ({ isOpen, onClose }: VerificationRequiredModa
     navigate("/profile", { state: { activeSection: "verification" } });
   };
 
-  const handleRemindLater = () => {
-    onClose();
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
@@ -81,20 +77,13 @@ const VerificationRequiredModal = ({ isOpen, onClose }: VerificationRequiredModa
             </ul>
           </div>
 
-          <div className="flex space-x-3 pt-4">
+          <div className="flex justify-center pt-4">
             <Button 
               onClick={handleVerifyIdentity}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-blue-600 hover:bg-blue-700"
             >
               <Shield className="h-4 w-4 mr-2" />
-              Verificar Identidad
-            </Button>
-            <Button 
-              onClick={handleRemindLater}
-              variant="outline"
-              className="flex-1"
-            >
-              Recordármelo después
+              Verificar Identidad Ahora
             </Button>
           </div>
         </div>
