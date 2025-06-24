@@ -41,17 +41,14 @@ const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps)
       <Card>
         <CardContent className="p-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="full_address">Dirección Completa *</Label>
+            <Label htmlFor="full_address">Dirección (solo calle sin Nº. La dirección exacta se la proporcionará el Host al Guest cuando hagan Match y nunca antes) *</Label>
             <Input
               id="full_address"
-              placeholder="Calle Principal 123, Piso 2A"
+              placeholder="Calle Principal"
               value={formData.full_address || ''}
               onChange={(e) => handleInputChange('full_address', e.target.value)}
               required
             />
-            <p className="text-sm text-gray-500">
-              Incluye calle, número, piso, puerta, etc.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -66,7 +63,7 @@ const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps)
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="provinces">Provincia/Estado</Label>
+              <Label htmlFor="provinces">Provincia</Label>
               <Input
                 id="provinces"
                 placeholder="Madrid"
@@ -77,7 +74,7 @@ const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps)
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="runner_instructions">Instrucciones para Runners</Label>
+            <Label htmlFor="runner_instructions">Describe si existen zonas cercanas a tu casa para correr (Opcional)</Label>
             <Textarea
               id="runner_instructions"
               placeholder="Describe las mejores rutas cercanas, parques, senderos o cualquier información útil para correr en la zona..."
@@ -85,9 +82,6 @@ const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps)
               onChange={(e) => handleInputChange('runner_instructions', e.target.value)}
               rows={4}
             />
-            <p className="text-sm text-gray-500">
-              Comparte tu conocimiento local sobre las mejores zonas para correr
-            </p>
           </div>
         </CardContent>
       </Card>

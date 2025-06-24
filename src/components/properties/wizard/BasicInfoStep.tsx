@@ -47,57 +47,62 @@ const BasicInfoStep = ({ formData, updateFormData }: BasicInfoStepProps) => {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="bedrooms">Dormitorios *</Label>
-              <Input
-                id="bedrooms"
-                type="number"
-                min="1"
-                max="10"
-                value={formData.bedrooms}
-                onChange={(e) => updateFormData({ bedrooms: parseInt(e.target.value) || 1 })}
-                className="mt-2"
-              />
-            </div>
+          <div>
+            <p className="text-sm text-gray-600 mb-4">
+              Indica los dormitorios, camas, baños disponibles para los Guest y nº máximo de huéspedes que podrías alojar
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <Label htmlFor="bedrooms">Dormitorios *</Label>
+                <Input
+                  id="bedrooms"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={formData.bedrooms}
+                  onChange={(e) => updateFormData({ bedrooms: parseInt(e.target.value) || 1 })}
+                  className="mt-2"
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="beds">Camas *</Label>
-              <Input
-                id="beds"
-                type="number"
-                min="1"
-                max="20"
-                value={formData.beds}
-                onChange={(e) => updateFormData({ beds: parseInt(e.target.value) || 1 })}
-                className="mt-2"
-              />
-            </div>
+              <div>
+                <Label htmlFor="beds">Camas *</Label>
+                <Input
+                  id="beds"
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={formData.beds}
+                  onChange={(e) => updateFormData({ beds: parseInt(e.target.value) || 1 })}
+                  className="mt-2"
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="bathrooms">Baños *</Label>
-              <Input
-                id="bathrooms"
-                type="number"
-                min="1"
-                max="10"
-                value={formData.bathrooms}
-                onChange={(e) => updateFormData({ bathrooms: parseInt(e.target.value) || 1 })}
-                className="mt-2"
-              />
-            </div>
+              <div>
+                <Label htmlFor="bathrooms">Baños *</Label>
+                <Input
+                  id="bathrooms"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={formData.bathrooms}
+                  onChange={(e) => updateFormData({ bathrooms: parseInt(e.target.value) || 1 })}
+                  className="mt-2"
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="max_guests">Max Huéspedes *</Label>
-              <Input
-                id="max_guests"
-                type="number"
-                min="1"
-                max="16"
-                value={formData.max_guests}
-                onChange={(e) => updateFormData({ max_guests: parseInt(e.target.value) || 1 })}
-                className="mt-2"
-              />
+              <div>
+                <Label htmlFor="max_guests">Max Huéspedes *</Label>
+                <Input
+                  id="max_guests"
+                  type="number"
+                  min="1"
+                  max="16"
+                  value={formData.max_guests}
+                  onChange={(e) => updateFormData({ max_guests: parseInt(e.target.value) || 1 })}
+                  className="mt-2"
+                />
+              </div>
             </div>
           </div>
         </CardContent>

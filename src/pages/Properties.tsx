@@ -34,8 +34,14 @@ const Properties = () => {
     setSelectedPropertyId(propertyId);
   };
 
+  const handleCloseWizard = () => {
+    setShowWizard(false);
+    // Refrescar la lista de propiedades después de cerrar el wizard
+    refetchProperties();
+  };
+
   if (showWizard) {
-    return <PropertyWizard onClose={() => setShowWizard(false)} />;
+    return <PropertyWizard onClose={handleCloseWizard} />;
   }
 
   if (selectedPropertyId) {
@@ -129,10 +135,10 @@ const Properties = () => {
           <Card className="p-12 text-center">
             <Home className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              ¡Agrega tu propiedad!
+              No has registrado todavía tu propiedad
             </h3>
             <p className="text-gray-600 mb-6">
-              Comienza a compartir tu espacio con runners de todo el mundo
+              Agrega tu propiedad para comenzar a compartir tu espacio con runners de todo el mundo
             </p>
             <Button 
               onClick={() => setShowWizard(true)}

@@ -9,7 +9,7 @@ import PropertyEditButton from "@/components/properties/PropertyEditButton";
 import { Plus, Home, MapPin, Users, Bed, Bath, Eye, Star } from "lucide-react";
 
 const PropertiesSection = () => {
-  const { properties, loading } = useProperties();
+  const { properties, loading, refetchProperties } = useProperties();
   const [showWizard, setShowWizard] = useState(false);
   const [editingProperty, setEditingProperty] = useState<any>(null);
 
@@ -21,6 +21,8 @@ const PropertiesSection = () => {
   const handleCloseWizard = () => {
     setShowWizard(false);
     setEditingProperty(null);
+    // Refrescar la lista de propiedades después de cerrar el wizard
+    refetchProperties();
   };
 
   if (showWizard) {
@@ -63,10 +65,10 @@ const PropertiesSection = () => {
           <div className="text-center py-12">
             <Home className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No tienes propiedades registradas
+              No has registrado todavía tu propiedad
             </h3>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              Agrega tu primera propiedad para comenzar a recibir runners de todo el mundo. 
+              Agrega tu propiedad para comenzar a recibir runners de todo el mundo. 
               Comparte tu hogar y descubre nuevas culturas corriendo.
             </p>
             <Button onClick={() => setShowWizard(true)} className="bg-blue-600 hover:bg-blue-700">

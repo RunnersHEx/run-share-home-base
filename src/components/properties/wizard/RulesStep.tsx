@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
 
 interface RulesStepProps {
@@ -12,9 +13,53 @@ interface RulesStepProps {
   onPrev: () => void;
 }
 
+const HOUSE_RULES_OPTIONS = [
+  "No fumar",
+  "No mascotas", 
+  "No beber",
+  "Silencio después de las 24h",
+  "No usar nada sin previo permiso al Host"
+];
+
 const RulesStep = ({ formData, onUpdate, onNext, onPrev }: RulesStepProps) => {
-  const handleInputChange = (field: string, value: string) => {
-    onUpdate({ [field]: value });
+  const handleRuleToggle = (rule: string, checked: boolean) => {
+    const currentRules = formData.house_rules || '';
+    const rulesArray = currentRules.split('\n').filter((r: string) => r.trim() !== '');
+    
+    let updatedRules;
+    if (checked) {
+      updatedRules = [...rulesArray, rule];
+    } else {
+      updatedRules = rulesArray.filter((r: string) => r !== rule);
+    }
+    
+    onUpdate({ house_rules: updatedRules.join('\n') });
+  };
+
+  const handleCustomRulesChange = (value: string) => {
+    const currentRules = formData.house_rules || '';
+    const rulesArray = currentRules.split('\n').filter((r: string) => r.trim() !== '');
+    
+    // Filtrar las reglas predefinidas
+    const customRules = rulesArray.filter((rule: string) => !HOUSE_RULES_OPTIONS.includes(rule));
+    const predefinedRules = rulesArray.filter((rule: string) => HOUSE_RULES_OPTIONS.includes(rule));
+    
+    // Agregar las nuevas reglas personalizadas
+    const newCustomRules = value.split('\n').filter((r: string) => r.trim() !== '');
+    const allRules = [...predefinedRules, ...newCustomRules];
+    
+    onUpdate({ house_rules: allRules.join('\n') });
+  };
+
+  const isRuleSelected = (rule: string) => {
+    const currentRules = formData.house_rules || '';
+    return currentRules.includes(rule);
+  };
+
+  const getCustomRules = () => {
+    const currentRules = formData.house_rules || '';
+    const rulesArray = currentRules.split('\n').filter((r: string) => r.trim() !== '');
+    return rulesArray.filter((rule: string) => !HOUSE_RULES_OPTIONS.includes(rule)).join('\n');
   };
 
   return (
@@ -31,31 +76,36 @@ const RulesStep = ({ formData, onUpdate, onNext, onPrev }: RulesStepProps) => {
 
       <Card>
         <CardContent className="p-6 space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="house_rules">Normas de la Casa</Label>
-            <Textarea
-              id="house_rules"
-              placeholder="Ej: No fumar, No mascotas, Silencio después de las 22:00h, etc."
-              value={formData.house_rules || ''}
-              onChange={(e) => handleInputChange('house_rules', e.target.value)}
-              rows={4}
-            />
-            <p className="text-sm text-gray-500">
-              Define las normas básicas que deben seguir tus huéspedes
-            </p>
+          <div className="space-y-4">
+            <Label>Normas de la Casa</Label>
+            <div className="space-y-3">
+              {HOUSE_RULES_OPTIONS.map((rule) => (
+                <div key={rule} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={rule}
+                    checked={isRuleSelected(rule)}
+                    onCheckedChange={(checked) => handleRuleToggle(rule, checked as boolean)}
+                  />
+                  <Label htmlFor={rule} className="text-sm font-normal cursor-pointer">
+                    {rule}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            
+            <div className="space-y-2">
+              <Textarea
+                placeholder="Si quieres añadir alguna norma más, escríbela aquí"
+                value={getCustomRules()}
+                onChange={(e) => handleCustomRulesChange(e.target.value)}
+                rows={3}
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="check_in_instructions">Instrucciones de Check-in</Label>
-            <Textarea
-              id="check_in_instructions"
-              placeholder="Ej: Las llaves están en la caja fuerte del portal (código 1234), el timbre es el 2A..."
-              value={formData.check_in_instructions || ''}
-              onChange={(e) => handleInputChange('check_in_instructions', e.target.value)}
-              rows={4}
-            />
-            <p className="text-sm text-gray-500">
-              Explica cómo pueden acceder a tu propiedad
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Check-in:</strong> Una vez hecho el Match con tu Host, procederéis a hablar entre vosotros.
             </p>
           </div>
         </CardContent>
