@@ -1,4 +1,5 @@
 
+
 import * as React from "react"
 
 type ToasterToast = {
@@ -8,6 +9,8 @@ type ToasterToast = {
   action?: React.ReactElement
   duration?: number
   variant?: "default" | "destructive"
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 const TOAST_LIMIT = 1
@@ -190,3 +193,4 @@ function useToast() {
 }
 
 export { useToast, toast }
+
