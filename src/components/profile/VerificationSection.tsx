@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,7 @@ const VerificationSection = () => {
               documents_count: (profile?.verification_documents?.length || 0) + 1
             }
           });
+          console.log('Email notification sent successfully');
           toast.success('Documento subido y admin notificado');
         } catch (error) {
           console.error('Error sending notification email:', error);
@@ -67,23 +67,35 @@ const VerificationSection = () => {
     setUploadingDoc('race_photo');
     
     try {
-      // Subir como foto de perfil (que automáticamente aparecerá en "Mi Perfil")
-      const result = await uploadAvatar(file);
+      console.log('Starting race photo upload...');
       
-      if (result) {
-        // También agregar a verification_documents para el proceso de verificación
+      // 1. Subir como foto de perfil (para que aparezca en "Mi Perfil")
+      const avatarUrl = await uploadAvatar(file);
+      console.log('Avatar uploaded, URL:', avatarUrl);
+      
+      if (avatarUrl) {
+        // 2. También registrar en verification_documents para el proceso de verificación
         const currentDocs = profile?.verification_documents || [];
         const racePhotoDoc = `race_photo_${Date.now()}.jpg`;
         const newDocs = currentDocs.filter(doc => !doc.includes('race_photo')).concat([racePhotoDoc]);
         
-        await supabase
+        console.log('Updating verification documents:', newDocs);
+        
+        // Actualizar los documentos de verificación
+        const { error: updateError } = await supabase
           .from('profiles')
           .update({ verification_documents: newDocs })
           .eq('id', profile?.id);
 
-        // Enviar email de notificación al admin
+        if (updateError) {
+          console.error('Error updating verification documents:', updateError);
+          throw updateError;
+        }
+
+        // 3. Enviar email de notificación al admin
         try {
-          await supabase.functions.invoke('send-verification-email', {
+          console.log('Sending verification email...');
+          const response = await supabase.functions.invoke('send-verification-email', {
             body: {
               user_id: profile?.id,
               user_name: `${profile?.first_name} ${profile?.last_name}`,
@@ -91,16 +103,18 @@ const VerificationSection = () => {
               documents_count: newDocs.length
             }
           });
-          toast.success('Foto en carrera subida y admin notificado');
-        } catch (error) {
-          console.error('Error sending notification email:', error);
+          console.log('Email function response:', response);
+          toast.success('Foto en carrera subida y admin notificado por email');
+        } catch (emailError) {
+          console.error('Error sending notification email:', emailError);
           toast.success('Foto en carrera subida correctamente');
         }
 
-        // Refrescar el perfil para mostrar la nueva foto
+        // 4. Refrescar el perfil para mostrar los cambios
+        console.log('Refreshing profile...');
         setTimeout(() => {
           refetchProfile();
-        }, 1000);
+        }, 1500);
       }
     } catch (error) {
       console.error('Error uploading race photo:', error);
@@ -275,7 +289,7 @@ const VerificationSection = () => {
                         Foto tuya corriendo o con medalla de finisher donde se te reconozca
                       </p>
                       <p className="text-xs text-blue-700 mt-1">
-                        Esta foto aparecerá como tu foto de perfil en "Mi Perfil". Si cambias tu foto de perfil, se actualizará también aquí.
+                        ✅ Esta foto aparecerá automáticamente como tu foto de perfil en "Mi Perfil"
                       </p>
                     </div>
                   </div>
@@ -302,7 +316,9 @@ const VerificationSection = () => {
                       alt="Vista previa de foto en carrera" 
                       className="w-16 h-16 rounded-lg object-cover"
                     />
-                    <p className="text-sm text-gray-600">Vista previa de tu foto en carrera actual</p>
+                    <p className="text-sm text-gray-600">
+                      Esta es tu foto actual que aparece en "Mi Perfil" ✅
+                    </p>
                   </div>
                 )}
               </div>
@@ -317,8 +333,13 @@ const VerificationSection = () => {
             <li>1. Sube los documentos requeridos</li>
             <li>2. Nuestro equipo los revisará en 24-48 horas</li>
             <li>3. Te notificaremos el resultado</li>
-            <li>4. Recibirás un email a runnershomeexchange@gmail.com con tu solicitud</li>
+            <li>4. Recibirás un email de confirmación en runnershomeexchange@gmail.com</li>
           </ul>
+          <div className="mt-3 p-2 bg-orange-100 rounded border-l-4 border-orange-400">
+            <p className="text-sm text-orange-800">
+              <strong>Nota:</strong> Si no recibes el email, revisa tu carpeta de spam o contacta con soporte.
+            </p>
+          </div>
         </div>
 
         {/* Input para documentos generales */}
