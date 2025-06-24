@@ -2,11 +2,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import AuthModalIntegrated from "@/components/auth/AuthModalIntegrated";
 import UserProfile from "@/components/common/UserProfile";
-import NotificationBell from "@/components/notifications/NotificationBell";
 
 const Header = () => {
   const { user } = useAuth();
@@ -58,10 +56,7 @@ const Header = () => {
             {/* Right side */}
             <div className="flex items-center space-x-4">
               {user ? (
-                <>
-                  <NotificationBell />
-                  <UserProfile />
-                </>
+                <UserProfile />
               ) : (
                 <div className="flex items-center space-x-3">
                   <Button

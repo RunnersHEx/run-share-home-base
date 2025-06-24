@@ -1,15 +1,15 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Mail, AlertTriangle } from "lucide-react";
-import LoginForm from "./forms/LoginForm";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import BasicInfoForm from "./forms/BasicInfoForm";
 import RunnerProfileForm from "./forms/RunnerProfileForm";
 import EmergencyContactForm from "./forms/EmergencyContactForm";
 import RoleSelectionForm from "./forms/RoleSelectionForm";
-import VerificationRequiredModal from "./VerificationRequiredModal";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
+import LoginForm from "./forms/LoginForm";
+import { X } from "lucide-react";
 
 interface AuthModalIntegratedProps {
   isOpen: boolean;
@@ -20,144 +20,220 @@ interface AuthModalIntegratedProps {
 
 const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalIntegratedProps) => {
   const { signUp, signIn } = useAuth();
-  const [registrationStep, setRegistrationStep] = useState(1);
-  const [registrationData, setRegistrationData] = useState<any>({});
+  const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
-
-  const handleLogin = async (data: { email: string; password: string }) => {
-    setIsLoading(true);
-    try {
-      await signIn(data.email, data.password);
-      toast.success("¡Bienvenido de vuelta!");
-      onClose();
-      
-      // Mostrar modal de verificación después del login exitoso
-      setTimeout(() => {
-        setShowVerificationModal(true);
-      }, 500);
-    } catch (error: any) {
-      console.error("Error during login:", error);
-      if (error.message?.includes("Invalid login credentials")) {
-        toast.error("Credenciales incorrectas. Verifica tu email y contraseña.");
-      } else if (error.message?.includes("Email not confirmed")) {
-        toast.error("Por favor, confirma tu email antes de iniciar sesión. Revisa tu bandeja de entrada y correos no deseados.");
-      } else {
-        toast.error("Error al iniciar sesión. Inténtalo de nuevo.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRegistrationStepSubmit = (stepData: any) => {
-    const updatedData = { ...registrationData, ...stepData };
-    setRegistrationData(updatedData);
-    console.log('Step data:', stepData);
-    console.log('Updated registration data:', updatedData);
-
-    if (registrationStep < 4) {
-      setRegistrationStep(registrationStep + 1);
-    } else {
-      handleFinalRegistration(updatedData);
-    }
-  };
-
-  const handleFinalRegistration = async (finalData: any) => {
-    console.log('Final registration data:', finalData);
+  const [formData, setFormData] = useState({
+    // Información básica
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    phone: "",
+    birthDate: "",
     
-    // Validar que tenemos email y password
-    if (!finalData.email || !finalData.password) {
-      toast.error("Email y contraseña son requeridos");
-      return;
-    }
+    // Información del corredor
+    bio: "",
+    runningExperience: "",
+    preferredDistances: [] as string[],
+    runningModalities: [] as string[],
+    personalRecords: {} as Record<string, string>,
+    racesCompletedThisYear: 0,
+    
+    // Contacto de emergencia
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    
+    // Roles
+    isHost: true,
+    isGuest: true
+  });
 
+  const handleStepSubmit = (stepData: any) => {
+    console.log('Handling step submit:', currentStep, stepData);
+    setFormData(prev => {
+      const newData = { ...prev, ...stepData };
+      console.log('Updated form data:', newData);
+      return newData;
+    });
+    
+    if (currentStep < 4) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      handleFinalSubmit({ ...formData, ...stepData });
+    }
+  };
+
+  const handleFinalSubmit = async (finalData: typeof formData) => {
     setIsLoading(true);
+    console.log('Final submit with data:', finalData);
+    
     try {
-      const { error } = await signUp(finalData.email, finalData.password, finalData);
+      // Validar que tenemos todos los datos necesarios
+      if (!finalData.email || !finalData.password) {
+        toast.error("Email y contraseña son requeridos");
+        setIsLoading(false);
+        return;
+      }
+
+      // Preparar datos para Supabase
+      const userData = {
+        firstName: finalData.firstName,
+        lastName: finalData.lastName,
+        phone: finalData.phone,
+        birthDate: finalData.birthDate,
+        bio: finalData.bio,
+        runningExperience: finalData.runningExperience,
+        runningModalities: finalData.runningModalities,
+        preferredDistances: finalData.preferredDistances,
+        personalRecords: finalData.personalRecords,
+        racesCompletedThisYear: finalData.racesCompletedThisYear,
+        emergencyContactName: finalData.emergencyContactName,
+        emergencyContactPhone: finalData.emergencyContactPhone,
+        isHost: finalData.isHost,
+        isGuest: finalData.isGuest
+      };
+
+      console.log('Calling signUp with userData:', userData);
+      
+      const { error } = await signUp(finalData.email, finalData.password, userData);
       
       if (error) {
-        console.error('Registration error:', error);
-        throw error;
-      }
-      
-      // Si no hay error, el registro fue exitoso
-      toast.success("¡Cuenta creada exitosamente! Ya puedes empezar a usar la plataforma.");
-      
-      // Reset state y cerrar modal
-      setRegistrationStep(1);
-      setRegistrationData({});
-      onClose();
-      
-      // Mostrar modal de verificación después del registro exitoso
-      setTimeout(() => {
-        setShowVerificationModal(true);
-      }, 500);
-      
-    } catch (error: any) {
-      console.error("Error during registration:", error);
-      if (error.message?.includes("User already registered")) {
-        toast.error("Este email ya está registrado. Intenta iniciar sesión.");
-      } else if (error.message?.includes("Password should be")) {
-        toast.error("La contraseña debe tener al menos 6 caracteres.");
-      } else if (error.message?.includes("anonymous_provider_disabled")) {
-        toast.error("Error de configuración. Por favor, verifica que el email y contraseña estén completos.");
-      } else if (error.message?.includes("Email not confirmed")) {
-        setShowEmailConfirmation(true);
+        console.error('SignUp error:', error);
+        if (error.message?.includes('User already registered')) {
+          toast.error("Este email ya está registrado. Intenta iniciar sesión.");
+        } else if (error.message?.includes('Invalid email')) {
+          toast.error("El formato del email no es válido");
+        } else if (error.message?.includes('Password')) {
+          toast.error("La contraseña no cumple los requisitos mínimos");
+        } else {
+          toast.error(error.message || "Error al crear la cuenta");
+        }
       } else {
-        toast.error("Error al crear la cuenta. Inténtalo de nuevo.");
+        toast.success("¡Cuenta creada exitosamente! Revisa tu email para confirmar tu cuenta.");
+        onClose();
+        // Reset form
+        setCurrentStep(1);
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          phone: "",
+          birthDate: "",
+          bio: "",
+          runningExperience: "",
+          preferredDistances: [],
+          runningModalities: [],
+          personalRecords: {},
+          racesCompletedThisYear: 0,
+          emergencyContactName: "",
+          emergencyContactPhone: "",
+          isHost: true,
+          isGuest: true
+        });
+      }
+    } catch (error) {
+      console.error('Error in final submit:', error);
+      toast.error("Error inesperado al crear la cuenta");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLoginSubmit = async (loginData: { email: string; password: string }) => {
+    setIsLoading(true);
+    try {
+      await signIn(loginData.email, loginData.password);
+      toast.success("¡Has iniciado sesión correctamente!");
+      onClose();
+    } catch (error: any) {
+      console.error('Login error:', error);
+      if (error.message?.includes('Invalid credentials')) {
+        toast.error("Email o contraseña incorrectos");
+      } else {
+        toast.error(error.message || "Error al iniciar sesión");
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEmailConfirmed = () => {
-    setShowEmailConfirmation(false);
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  const resetAndClose = () => {
+    setCurrentStep(1);
+    setFormData({
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      phone: "",
+      birthDate: "",
+      bio: "",
+      runningExperience: "",
+      preferredDistances: [],
+      runningModalities: [],
+      personalRecords: {},
+      racesCompletedThisYear: 0,
+      emergencyContactName: "",
+      emergencyContactPhone: "",
+      isHost: true,
+      isGuest: true
+    });
     onClose();
   };
 
-  const handleBackStep = () => {
-    if (registrationStep > 1) {
-      setRegistrationStep(registrationStep - 1);
+  const renderStep = () => {
+    if (mode === "login") {
+      return (
+        <LoginForm 
+          onSubmit={handleLoginSubmit} 
+          isLoading={isLoading}
+          onModeChange={() => onModeChange("register")}
+        />
+      );
     }
-  };
 
-  const renderRegistrationStep = () => {
-    switch (registrationStep) {
+    switch (currentStep) {
       case 1:
         return (
-          <BasicInfoForm 
-            onSubmit={handleRegistrationStepSubmit}
-            initialData={registrationData}
+          <BasicInfoForm
+            onSubmit={handleStepSubmit}
+            initialData={formData}
             isLoading={isLoading}
           />
         );
       case 2:
         return (
-          <RunnerProfileForm 
-            onSubmit={handleRegistrationStepSubmit}
-            onBack={handleBackStep}
-            initialData={registrationData}
+          <RunnerProfileForm
+            onSubmit={handleStepSubmit}
+            onBack={handleBack}
+            initialData={formData}
             isLoading={isLoading}
           />
         );
       case 3:
         return (
-          <EmergencyContactForm 
-            onSubmit={handleRegistrationStepSubmit}
-            onBack={handleBackStep}
-            initialData={registrationData}
+          <EmergencyContactForm
+            onSubmit={handleStepSubmit}
+            onBack={handleBack}
+            initialData={formData}
             isLoading={isLoading}
           />
         );
       case 4:
         return (
-          <RoleSelectionForm 
-            onSubmit={handleRegistrationStepSubmit}
-            onBack={handleBackStep}
-            initialData={registrationData}
+          <RoleSelectionForm
+            onSubmit={handleStepSubmit}
+            onBack={handleBack}
+            initialData={formData}
             isLoading={isLoading}
           />
         );
@@ -166,170 +242,105 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     }
   };
 
-  const handleCloseModal = () => {
-    onClose();
-    // Reset state when closing
-    setRegistrationStep(1);
-    setRegistrationData({});
-    setShowEmailConfirmation(false);
+  const getTitle = () => {
+    if (mode === "login") {
+      return "Iniciar Sesión";
+    }
+    return `Crear Cuenta - Paso ${currentStep} de 4`;
   };
 
-  // Modal de confirmación de email (solo se muestra si hay error específico de confirmación)
-  if (showEmailConfirmation) {
-    return (
-      <Dialog open={true} onOpenChange={handleCloseModal}>
-        <DialogContent className="sm:max-w-[500px]">
-          <div className="flex items-center justify-between p-0 mb-6">
-            <div className="flex items-center space-x-2">
-              <img src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" alt="RunnersHEx" className="h-8 w-8" />
-              <span className="font-bold text-xl text-gray-900">RunnersHEx</span>
-            </div>
-            <Button variant="ghost" size="icon" onClick={handleCloseModal}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="space-y-6 text-center">
-            <div className="flex justify-center">
-              <Mail className="h-16 w-16 text-blue-600" />
-            </div>
-            
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Cuenta Creada Exitosamente!</h2>
-              <p className="text-gray-600">Para completar tu registro, confirma tu email</p>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-start space-x-3">
-                <Mail className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div className="text-left">
-                  <p className="text-sm text-blue-800 font-medium mb-2">
-                    Revisa tu bandeja de entrada para confirmar tu email y activar tu cuenta.
-                  </p>
-                  <p className="text-xs text-blue-700">
-                    <strong>Emisor:</strong> noreply@mail.app.supabase.io
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-start space-x-3">
-                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                <div className="text-left">
-                  <p className="text-sm text-yellow-800 font-medium mb-1">
-                    ¿No encuentras el email?
-                  </p>
-                  <ul className="text-xs text-yellow-700 space-y-1">
-                    <li>• Revisa tu carpeta de <strong>Correos No Deseados/Spam</strong></li>
-                    <li>• Busca el remitente: <strong>noreply@mail.app.supabase.io</strong></li>
-                    <li>• El email puede tardar unos minutos en llegar</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-              <p className="text-sm text-green-800">
-                <strong>Próximo paso:</strong> Después de confirmar tu email, inicia sesión con tus credenciales para acceder a la plataforma.
-              </p>
-            </div>
-
-            <Button 
-              onClick={handleEmailConfirmed}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              Entendido
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  const getSubtitle = () => {
+    if (mode === "login") {
+      return "Accede a tu cuenta de runner";
+    }
+    return "Únete a la comunidad de runners";
+  };
 
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={handleCloseModal}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between p-0 mb-6">
-            <div className="flex items-center space-x-2">
-              <img src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" alt="RunnersHEx" className="h-8 w-8" />
-              <span className="font-bold text-xl text-gray-900">RunnersHEx</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleCloseModal}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+    <Dialog open={isOpen} onOpenChange={resetAndClose}>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <img 
+              src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
+              alt="RunnersHEx" 
+              className="h-8 w-8"
+            />
+            <span className="font-bold text-xl text-gray-900">RunnersHEx</span>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={resetAndClose}
+            className="h-6 w-6"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
-          {mode === "login" ? (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900">Iniciar Sesión</h2>
-                <p className="text-gray-600 mt-2">Accede a tu cuenta de runner</p>
-              </div>
-              
-              <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
-              
-              <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  ¿No tienes cuenta?{" "}
-                  <button
-                    onClick={() => onModeChange("register")}
-                    className="text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    Créate una aquí
-                  </button>
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Crear Cuenta - Paso {registrationStep} de 4
-                </h2>
-                <p className="text-gray-600 mt-2">Únete a la comunidad de runners</p>
-              </div>
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            {getTitle()}
+          </h2>
+          <p className="text-gray-600">
+            {getSubtitle()}
+          </p>
+        </div>
 
-              {/* Progress indicator */}
-              <div className="flex space-x-2">
-                {[1, 2, 3, 4].map((step) => (
-                  <div
-                    key={step}
-                    className={`flex-1 h-2 rounded-full ${
-                      step <= registrationStep ? 'bg-blue-600' : 'bg-gray-200'
-                    }`}
-                  />
-                ))}
+        {mode === "register" && (
+          <div className="flex items-center justify-center mb-6">
+            {[1, 2, 3, 4].map((step) => (
+              <div key={step} className="flex items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  step <= currentStep 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {step}
+                </div>
+                {step < 4 && (
+                  <div className={`w-12 h-1 mx-2 ${
+                    step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                  }`} />
+                )}
               </div>
+            ))}
+          </div>
+        )}
 
-              {renderRegistrationStep()}
-              
-              <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  ¿Ya tienes cuenta?{" "}
-                  <button
-                    onClick={() => onModeChange("login")}
-                    className="text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    Inicia sesión aquí
-                  </button>
-                </p>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+        {renderStep()}
 
-      <VerificationRequiredModal 
-        isOpen={showVerificationModal}
-        onClose={() => setShowVerificationModal(false)}
-      />
-    </>
+        {mode === "login" && (
+          <div className="text-center mt-4">
+            <p className="text-sm text-gray-600">
+              ¿No tienes cuenta?{' '}
+              <Button
+                variant="link"
+                className="p-0 h-auto font-medium text-blue-600"
+                onClick={() => onModeChange("register")}
+              >
+                Regístrate aquí
+              </Button>
+            </p>
+          </div>
+        )}
+
+        {mode === "register" && (
+          <div className="text-center mt-4">
+            <p className="text-sm text-gray-600">
+              ¿Ya tienes cuenta?{' '}
+              <Button
+                variant="link"
+                className="p-0 h-auto font-medium text-blue-600"
+                onClick={() => onModeChange("login")}
+              >
+                Inicia sesión aquí
+              </Button>
+            </p>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };
 

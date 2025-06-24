@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const VerificationSection = () => {
-  const { profile, uploadVerificationDoc, uploadAvatar } = useProfile();
+  const { profile, uploadVerificationDoc, uploadAvatar, refetchProfile } = useProfile();
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedDocType, setSelectedDocType] = useState<string>('');
@@ -28,7 +27,7 @@ const VerificationSection = () => {
     try {
       let result;
       if (selectedDocType === 'race_photo') {
-        // Para la foto en carrera, usar uploadAvatar para sincronizar con foto de perfil
+        // Para la foto en carrera, usar uploadAvatar para actualizar foto de perfil
         result = await uploadAvatar(file);
         if (result) {
           // También agregar a verification_documents
@@ -40,6 +39,11 @@ const VerificationSection = () => {
             .from('profiles')
             .update({ verification_documents: newDocs })
             .eq('id', profile?.id);
+
+          // Refrescar el perfil para mostrar la nueva foto
+          setTimeout(() => {
+            refetchProfile();
+          }, 1000);
         }
       } else {
         result = await uploadVerificationDoc(file, selectedDocType);
@@ -52,6 +56,7 @@ const VerificationSection = () => {
             body: {
               user_id: profile?.id,
               user_name: `${profile?.first_name} ${profile?.last_name}`,
+              user_email: profile?.email || 'Sin email',
               documents_count: (profile?.verification_documents?.length || 0) + 1
             }
           });
