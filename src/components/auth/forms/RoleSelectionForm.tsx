@@ -26,10 +26,10 @@ const RoleSelectionForm = ({ onSubmit, onBack, initialData, isLoading }: RoleSel
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">¿Cómo quieres usar la plataforma?</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Comienza a usar la plataforma</h3>
         <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-800 font-medium">
-            ⚠️ Es OBLIGATORIO activar ambos roles para desempeñar las funciones tanto de Host como Guest y disfrutar al máximo de la experiencia
+            Comienza a desempeñar las funciones tanto de Host como Guest y disfrutar al máximo de la experiencia
           </p>
         </div>
       </div>
