@@ -80,17 +80,6 @@ const RunnerProfileForm = ({ onSubmit, onBack, initialData, isLoading }: RunnerP
       <h3 className="text-lg font-semibold text-gray-900">Perfil Runner</h3>
       
       <div className="space-y-2">
-        <Label htmlFor="bio">Biografía</Label>
-        <Textarea
-          id="bio"
-          placeholder="Cuéntanos sobre ti como runner..."
-          value={formData.bio}
-          onChange={(e) => handleInputChange("bio", e.target.value)}
-          rows={3}
-        />
-      </div>
-
-      <div className="space-y-2">
         <Label htmlFor="runningExperience">Experiencia Corriendo</Label>
         <Select value={formData.runningExperience} onValueChange={(value) => handleInputChange("runningExperience", value)}>
           <SelectTrigger>
@@ -135,6 +124,17 @@ const RunnerProfileForm = ({ onSubmit, onBack, initialData, isLoading }: RunnerP
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="bio">Biografía Runner</Label>
+        <Textarea
+          id="bio"
+          placeholder="Cuéntanos sobre ti como runner..."
+          value={formData.bio}
+          onChange={(e) => handleInputChange("bio", e.target.value)}
+          rows={3}
+        />
       </div>
 
       <div className="space-y-3">
