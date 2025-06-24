@@ -85,15 +85,17 @@ export const useNotifications = () => {
   };
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    // Fetch initial notifications
     fetchNotifications();
-  }, [user]);
 
-  // Escuchar nuevas notificaciones en tiempo real
-  useEffect(() => {
-    if (!user) return;
-
+    // Create a single channel for real-time updates
     const channel = supabase
-      .channel('notifications')
+      .channel(`notifications-${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -117,10 +119,11 @@ export const useNotifications = () => {
       )
       .subscribe();
 
+    // Cleanup function
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user?.id]); // Only depend on user.id to avoid unnecessary re-subscriptions
 
   return {
     notifications,
