@@ -87,6 +87,8 @@ export const useNotifications = () => {
   useEffect(() => {
     if (!user) {
       setLoading(false);
+      setNotifications([]);
+      setUnreadCount(0);
       return;
     }
 
