@@ -27,7 +27,8 @@ const PropertiesSection = () => {
     return (
       <PropertyWizard 
         onClose={handleCloseWizard}
-        editingProperty={editingProperty}
+        propertyId={editingProperty?.id}
+        initialData={editingProperty}
       />
     );
   }
@@ -94,7 +95,7 @@ const PropertiesSection = () => {
                       </Badge>
                       <PropertyEditButton 
                         property={property}
-                        onEdit={() => handleEditProperty(property)}
+                        onPropertyUpdated={() => handleEditProperty(property)}
                       />
                     </div>
                   </div>
