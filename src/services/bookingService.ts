@@ -39,7 +39,7 @@ export class BookingService {
     }
 
     console.log('BookingService: Created booking successfully:', data);
-    return data;
+    return data as Booking;
   }
 
   static async fetchUserBookings(userId: string, filters?: BookingFilters): Promise<Booking[]> {
