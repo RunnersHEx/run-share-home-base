@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +78,36 @@ export const RaceDetailModal = ({ race, isOpen, onClose }: RaceDetailModalProps)
 
   const handleBookingRequest = () => {
     setShowBookingModal(true);
+  };
+
+  const handleBookingSubmit = async (bookingData: any) => {
+    // This will be handled by the BookingRequestModal
+    console.log('Booking request submitted:', bookingData);
+    setShowBookingModal(false);
+  };
+
+  // Transform our race data to match the expected Race type
+  const raceForBooking = {
+    id: race.id,
+    name: race.name,
+    race_date: race.date,
+    points_cost: race.pointsCost,
+    host_id: race.host.id,
+    max_guests: race.maxGuests || 1,
+    start_location: race.location,
+    highlights: race.highlights,
+    modalities: race.modalities,
+    distances: race.distances,
+    terrain_profile: race.terrainProfile
+  };
+
+  // Mock property data - in a real app, this would come from the API
+  const propertyForBooking = {
+    id: `property_${race.host.id}`,
+    title: `Alojamiento en ${race.location}`,
+    locality: race.location,
+    max_guests: race.maxGuests || 1,
+    host_id: race.host.id
   };
 
   return (
@@ -261,12 +292,9 @@ export const RaceDetailModal = ({ race, isOpen, onClose }: RaceDetailModalProps)
         <BookingRequestModal
           isOpen={showBookingModal}
           onClose={() => setShowBookingModal(false)}
-          raceId={race.id}
-          hostId={race.host.id}
-          pointsCost={race.pointsCost}
-          raceName={race.name}
-          raceDate={race.date}
-          maxGuests={race.maxGuests || 1}
+          onSubmit={handleBookingSubmit}
+          race={raceForBooking}
+          property={propertyForBooking}
         />
       )}
     </>
