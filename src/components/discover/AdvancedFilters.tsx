@@ -236,13 +236,13 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
               <Label className="text-sm font-medium">Distancia/s carrera</Label>
               <div className="mt-2 space-y-2">
                 {[
-                  { id: 'ultra', label: 'Ultra' },
-                  { id: 'marathon', label: 'Maratón' },
-                  { id: 'half_marathon', label: 'Media Maratón' },
-                  { id: '20k', label: '20K' },
-                  { id: '15k', label: '15K' },
-                  { id: '10k', label: '10K' },
-                  { id: '5k', label: '5K' }
+                  { id: 'ultra' as RaceDistance, label: 'Ultra' },
+                  { id: 'marathon' as RaceDistance, label: 'Maratón' },
+                  { id: 'half_marathon' as RaceDistance, label: 'Media Maratón' },
+                  { id: '20k' as RaceDistance, label: '20K' },
+                  { id: '15k' as RaceDistance, label: '15K' },
+                  { id: '10k' as RaceDistance, label: '10K' },
+                  { id: '5k' as RaceDistance, label: '5K' }
                 ].map((distance) => (
                   <div key={distance.id} className="flex items-center space-x-2">
                     <Checkbox 
