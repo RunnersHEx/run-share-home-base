@@ -1,4 +1,5 @@
 
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -86,28 +87,61 @@ export const RaceDetailModal = ({ race, isOpen, onClose }: RaceDetailModalProps)
     setShowBookingModal(false);
   };
 
-  // Transform our race data to match the expected Race type
+  // Transform our race data to match the expected Race type with ALL required properties
   const raceForBooking = {
     id: race.id,
-    name: race.name,
-    race_date: race.date,
-    points_cost: race.pointsCost,
     host_id: race.host.id,
-    max_guests: race.maxGuests || 1,
+    property_id: `property_${race.host.id}`, // Mock property ID
+    name: race.name,
+    description: race.highlights,
+    race_date: race.date,
+    registration_deadline: race.date,
+    modalities: race.modalities as any[],
+    terrain_profile: race.terrainProfile as any[],
+    distances: race.distances as any[],
+    has_wave_starts: false,
     start_location: race.location,
+    distance_from_property: 0,
+    official_website: '',
+    registration_cost: 0,
+    points_cost: race.pointsCost,
+    max_guests: race.maxGuests || 1,
     highlights: race.highlights,
-    modalities: race.modalities,
-    distances: race.distances,
-    terrain_profile: race.terrainProfile
+    local_tips: '',
+    weather_notes: '',
+    is_active: race.available,
+    total_bookings: 0,
+    average_rating: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
 
-  // Mock property data - in a real app, this would come from the API
+  // Mock property data with ALL required properties
   const propertyForBooking = {
     id: `property_${race.host.id}`,
+    owner_id: race.host.id,
     title: `Alojamiento en ${race.location}`,
+    description: `Alojamiento disponible para la carrera ${race.name}`,
+    provinces: [race.location],
     locality: race.location,
+    full_address: race.location,
+    latitude: null,
+    longitude: null,
+    bedrooms: 1,
+    beds: 1,
+    bathrooms: 1,
     max_guests: race.maxGuests || 1,
-    host_id: race.host.id
+    amenities: [],
+    house_rules: null,
+    check_in_instructions: null,
+    runner_instructions: null,
+    cancellation_policy: 'flexible',
+    is_active: true,
+    total_bookings: 0,
+    average_rating: 0,
+    points_earned: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
 
   return (
@@ -300,3 +334,4 @@ export const RaceDetailModal = ({ race, isOpen, onClose }: RaceDetailModalProps)
     </>
   );
 };
+
