@@ -11,6 +11,7 @@ import { BookingFormData } from "@/types/booking";
 import { Race } from "@/types/race";
 import { Property } from "@/types/property";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 
 interface BookingRequestModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ interface BookingRequestModalProps {
 
 const BookingRequestModal = ({ isOpen, onClose, onSubmit, race, property }: BookingRequestModalProps) => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<BookingFormData>>({
     race_id: race.id,
@@ -76,6 +78,8 @@ const BookingRequestModal = ({ isOpen, onClose, onSubmit, race, property }: Book
            formData.guest_phone && 
            agreedToTerms;
   };
+
+  const userPointsBalance = profile?.points_balance || 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -271,30 +275,28 @@ const BookingRequestModal = ({ isOpen, onClose, onSubmit, race, property }: Book
                   <span>Costo Total:</span>
                   <span className="text-blue-600">{race.points_cost} puntos</span>
                 </div>
-                {user && (
-                  <div className="flex justify-between items-center text-sm text-gray-600 mt-1">
-                    <span>Tu balance actual:</span>
-                    <span>{user.points_balance || 0} puntos</span>
-                  </div>
-                )}
+                <div className="flex justify-between items-center text-sm text-gray-600 mt-1">
+                  <span>Tu balance actual:</span>
+                  <span>{userPointsBalance} puntos</span>
+                </div>
               </div>
 
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="terms"
                   checked={agreedToTerms}
-                  onCheckedChange={setAgreedToTerms}
+                  onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
                 />
                 <Label htmlFor="terms" className="text-sm">
                   Acepto los términos y condiciones y la política de cancelación
                 </Label>
               </div>
 
-              {user && user.points_balance && user.points_balance < race.points_cost && (
+              {userPointsBalance < race.points_cost && (
                 <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <AlertTriangle className="w-5 h-5 text-red-500" />
                   <p className="text-sm text-red-700">
-                    No tienes suficientes puntos para esta reserva. Necesitas {race.points_cost - (user.points_balance || 0)} puntos más.
+                    No tienes suficientes puntos para esta reserva. Necesitas {race.points_cost - userPointsBalance} puntos más.
                   </p>
                 </div>
               )}
@@ -308,7 +310,7 @@ const BookingRequestModal = ({ isOpen, onClose, onSubmit, race, property }: Book
             </Button>
             <Button 
               type="submit" 
-              disabled={!canSubmit() || loading || (user && user.points_balance && user.points_balance < race.points_cost)}
+              disabled={!canSubmit() || loading || userPointsBalance < race.points_cost}
               className="bg-blue-600 hover:bg-blue-700"
             >
               {loading ? 'Enviando...' : 'Enviar Solicitud'}

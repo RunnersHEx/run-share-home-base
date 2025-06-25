@@ -6,12 +6,25 @@ export class BookingService {
   static async createBookingRequest(bookingData: BookingFormData, guestId: string): Promise<Booking> {
     console.log('BookingService: Creating booking request:', bookingData);
     
+    // No incluir host_response_deadline porque se establece automáticamente por el trigger
+    const insertData = {
+      race_id: bookingData.race_id,
+      property_id: bookingData.property_id,
+      host_id: bookingData.host_id,
+      guest_id: guestId,
+      check_in_date: bookingData.check_in_date,
+      check_out_date: bookingData.check_out_date,
+      guests_count: bookingData.guests_count,
+      request_message: bookingData.request_message,
+      special_requests: bookingData.special_requests,
+      guest_phone: bookingData.guest_phone,
+      estimated_arrival_time: bookingData.estimated_arrival_time,
+      points_cost: bookingData.points_cost
+    };
+
     const { data, error } = await supabase
       .from('bookings')
-      .insert({
-        ...bookingData,
-        guest_id: guestId
-      })
+      .insert(insertData)
       .select(`
         *,
         race:races(name, race_date, start_location),
@@ -26,7 +39,7 @@ export class BookingService {
     }
 
     console.log('BookingService: Created booking successfully:', data);
-    return data as Booking;
+    return data;
   }
 
   static async fetchUserBookings(userId: string, filters?: BookingFilters): Promise<Booking[]> {
