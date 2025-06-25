@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Race, RaceFormData, RaceFilters, RaceStats, RaceImage } from "@/types/race";
 
@@ -65,8 +66,8 @@ export class RaceService {
       .from('races')
       .select(`
         *,
-        properties(title, locality, max_guests),
-        profiles:host_id(first_name, last_name, profile_image_url, verification_status, average_rating)
+        properties!inner(title, locality, max_guests),
+        profiles!races_host_id_fkey(first_name, last_name, profile_image_url, verification_status, average_rating)
       `)
       .eq('is_active', true)
       .order('race_date', { ascending: true });

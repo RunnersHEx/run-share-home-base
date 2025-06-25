@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, MapPin, Calendar, Trophy, Users } from "lucide-react";
-import { RaceFilters } from "@/types/race";
+import { RaceFilters, RaceModality, RaceDistance, TerrainProfile } from "@/types/race";
 
 interface AdvancedFiltersProps {
   filters: RaceFilters;
@@ -45,28 +44,28 @@ const months = [
 
 export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }: AdvancedFiltersProps) => {
   const [pointsRange, setPointsRange] = useState([0, 500]);
-  const [selectedModalities, setSelectedModalities] = useState<string[]>([]);
-  const [selectedDistances, setSelectedDistances] = useState<string[]>([]);
-  const [selectedTerrainProfiles, setSelectedTerrainProfiles] = useState<string[]>([]);
+  const [selectedModalities, setSelectedModalities] = useState<RaceModality[]>([]);
+  const [selectedDistances, setSelectedDistances] = useState<RaceDistance[]>([]);
+  const [selectedTerrainProfiles, setSelectedTerrainProfiles] = useState<TerrainProfile[]>([]);
   const [maxGuests, setMaxGuests] = useState<number>(1);
   const [selectedProvince, setSelectedProvince] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
 
-  const handleModalityChange = (modality: string, checked: boolean) => {
+  const handleModalityChange = (modality: RaceModality, checked: boolean) => {
     const updated = checked 
       ? [...selectedModalities, modality]
       : selectedModalities.filter(m => m !== modality);
     setSelectedModalities(updated);
   };
 
-  const handleDistanceChange = (distance: string, checked: boolean) => {
+  const handleDistanceChange = (distance: RaceDistance, checked: boolean) => {
     const updated = checked
       ? [...selectedDistances, distance] 
       : selectedDistances.filter(d => d !== distance);
     setSelectedDistances(updated);
   };
 
-  const handleTerrainChange = (terrain: string, checked: boolean) => {
+  const handleTerrainChange = (terrain: TerrainProfile, checked: boolean) => {
     const updated = checked
       ? [...selectedTerrainProfiles, terrain]
       : selectedTerrainProfiles.filter(t => t !== terrain);
@@ -85,10 +84,10 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
   };
 
   const handleSearch = () => {
-    // Apply all current filter states to the filters
-    const newFilters = {
+    // Apply all current filter states to the filters with proper type casting
+    const newFilters: RaceFilters = {
       ...filters,
-      pointsRange,
+      pointsRange: pointsRange as [number, number],
       modalities: selectedModalities.length > 0 ? selectedModalities : undefined,
       distances: selectedDistances.length > 0 ? selectedDistances : undefined,
       terrainProfiles: selectedTerrainProfiles.length > 0 ? selectedTerrainProfiles : undefined,
