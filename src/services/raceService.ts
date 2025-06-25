@@ -1,9 +1,10 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Race, RaceFormData, RaceFilters, RaceStats, RaceImage } from "@/types/race";
 
 export class RaceService {
   static async fetchHostRaces(hostId: string, filters?: RaceFilters): Promise<Race[]> {
+    console.log('RaceService: Fetching races for host:', hostId);
+    
     let query = supabase
       .from('races')
       .select(`
@@ -37,19 +38,27 @@ export class RaceService {
     const { data, error } = await query;
 
     if (error) {
+      console.error('RaceService: Error fetching races:', error);
       throw error;
     }
 
+    console.log('RaceService: Raw data from database:', data);
+
     // Type cast the JSON fields to their proper types
-    return (data || []).map(race => ({
+    const processedRaces = (data || []).map(race => ({
       ...race,
       modalities: Array.isArray(race.modalities) ? race.modalities : [],
       terrain_profile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
       distances: Array.isArray(race.distances) ? race.distances : []
     })) as Race[];
+
+    console.log('RaceService: Processed races:', processedRaces);
+    return processedRaces;
   }
 
   static async createRace(raceData: RaceFormData, hostId: string): Promise<Race> {
+    console.log('RaceService: Creating race:', raceData, 'for host:', hostId);
+    
     const { data, error } = await supabase
       .from('races')
       .insert({
@@ -60,8 +69,11 @@ export class RaceService {
       .single();
 
     if (error) {
+      console.error('RaceService: Error creating race:', error);
       throw error;
     }
+
+    console.log('RaceService: Created race successfully:', data);
 
     // Type cast the JSON fields to their proper types
     return {
@@ -112,7 +124,7 @@ export class RaceService {
     return {
       totalRaces,
       bookingsThisYear,
-      averageRating
+      averageRating: Math.round(averageRating * 10) / 10
     };
   }
 

@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { MapPin, Euro, Trophy, Users, Globe, Calculator } from "lucide-react";
+import { MapPin, Euro, Trophy, Users, Globe } from "lucide-react";
 import { RaceFormData } from "@/types/race";
 
 interface LogisticsStepProps {
@@ -13,13 +13,6 @@ interface LogisticsStepProps {
 }
 
 const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProps) => {
-  // Calculate suggested points based on registration cost
-  const getSuggestedPoints = (registrationCost?: number) => {
-    if (!registrationCost) return 50;
-    // Simple formula: 1 euro = 2 points approximately
-    return Math.max(50, Math.round(registrationCost * 2));
-  };
-
   const canProceed = () => {
     return formData.points_cost && 
            formData.points_cost > 0 && 
@@ -114,36 +107,23 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
             <Trophy className="w-5 h-5" />
             <span>Costo en Puntos</span>
           </CardTitle>
-          <CardDescription>Define cuántos puntos costará esta experiencia</CardDescription>
+          <CardDescription>Los puntos se asignan automáticamente según nuestro algoritmo</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="points_cost">Puntos requeridos para reservar</Label>
-            <div className="flex space-x-3">
-              <input
-                id="points_cost"
-                type="number"
-                min="1"
-                value={formData.points_cost || ''}
-                onChange={(e) => onUpdate({ points_cost: parseInt(e.target.value) || 0 })}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="100"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onUpdate({ points_cost: getSuggestedPoints(formData.registration_cost) })}
-                className="flex items-center space-x-1"
-              >
-                <Calculator className="w-4 h-4" />
-                <span>Sugerir</span>
-              </Button>
-            </div>
-            {formData.registration_cost && (
-              <p className="text-sm text-blue-600 mt-1">
-                Sugerencia basada en costo de inscripción: {getSuggestedPoints(formData.registration_cost)} puntos
-              </p>
-            )}
+            <input
+              id="points_cost"
+              type="number"
+              min="1"
+              value={formData.points_cost || ''}
+              onChange={(e) => onUpdate({ points_cost: parseInt(e.target.value) || 0 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="100"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              El sistema asignará automáticamente los puntos según la carrera y ubicación
+            </p>
           </div>
         </CardContent>
       </Card>

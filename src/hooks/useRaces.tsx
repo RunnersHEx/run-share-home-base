@@ -20,7 +20,9 @@ export const useRaces = () => {
 
     try {
       setLoading(true);
+      console.log('Fetching races for user:', user.id);
       const data = await RaceService.fetchHostRaces(user.id, filters);
+      console.log('Fetched races:', data);
       setRaces(data);
     } catch (error) {
       console.error('Error fetching races:', error);
@@ -45,7 +47,11 @@ export const useRaces = () => {
     if (!user) return null;
 
     try {
+      console.log('Creating race with data:', raceData);
       const data = await RaceService.createRace(raceData, user.id);
+      console.log('Created race:', data);
+      
+      // Immediately refresh races to show the new one
       await fetchRaces();
       await fetchStats();
       toast.success('Carrera creada correctamente');
@@ -84,11 +90,31 @@ export const useRaces = () => {
     }
   };
 
+  // Force refresh function for when user navigates back
+  const forceRefresh = async () => {
+    console.log('Force refreshing races...');
+    await fetchRaces();
+  };
+
   useEffect(() => {
     if (user) {
+      console.log('useRaces: User detected, fetching races');
       fetchRaces();
       fetchStats();
     }
+  }, [user]);
+
+  // Add visibility change listener to refresh when user comes back to tab
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        console.log('Tab became visible, refreshing races');
+        fetchRaces();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [user]);
 
   return {
@@ -99,6 +125,7 @@ export const useRaces = () => {
     createRace,
     updateRace,
     deleteRace,
+    forceRefresh,
     refetchRaces: fetchRaces
   };
 };

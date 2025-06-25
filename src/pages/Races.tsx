@@ -1,18 +1,27 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Star, Trophy, Target, TrendingUp, Plus } from "lucide-react";
+import { Calendar, MapPin, Users, Star, Trophy, Target, TrendingUp, Plus, RefreshCw } from "lucide-react";
 import { useRaces } from "@/hooks/useRaces";
 import { RaceFilters } from "@/types/race";
 import { RaceWizard } from "@/components/races/RaceWizard";
 import { RaceFiltersComponent } from "@/components/races/RaceFiltersComponent";
 
 const Races = () => {
-  const { races, loading, stats } = useRaces();
+  const { races, loading, stats, forceRefresh } = useRaces();
   const [showWizard, setShowWizard] = useState(false);
   const [filters, setFilters] = useState<RaceFilters>({});
+
+  // Auto-refresh when component mounts or when user navigates back
+  useEffect(() => {
+    console.log('Races page mounted, current races:', races);
+    if (races.length === 0 && !loading) {
+      console.log('No races found, forcing refresh...');
+      forceRefresh();
+    }
+  }, []);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -45,7 +54,10 @@ const Races = () => {
         onClose={() => setShowWizard(false)}
         onSuccess={() => {
           setShowWizard(false);
-          // Refresh data is handled by the hook
+          // Force refresh after creating race
+          setTimeout(() => {
+            forceRefresh();
+          }, 500);
         }}
       />
     );
@@ -60,14 +72,24 @@ const Races = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Mis Carreras</h1>
             <p className="text-gray-600">Gestiona las carreras locales que ofreces a tus guests</p>
           </div>
-          <Button 
-            onClick={() => setShowWizard(true)}
-            className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
-            size="lg"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Crear Nueva Carrera
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={forceRefresh}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Cargando...' : 'Actualizar'}
+            </Button>
+            <Button 
+              onClick={() => setShowWizard(true)}
+              className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
+              size="lg"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Crear Nueva Carrera
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -108,6 +130,13 @@ const Races = () => {
 
         {/* Filters */}
         <RaceFiltersComponent filters={filters} onFiltersChange={setFilters} />
+
+        {/* Debug info */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
+            <p className="text-sm">Debug: {races.length} carreras cargadas, loading: {loading ? 'sí' : 'no'}</p>
+          </div>
+        )}
 
         {/* Races Grid */}
         {loading ? (
