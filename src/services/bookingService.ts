@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Booking, BookingFormData, BookingFilters, BookingMessage, PointsTransaction, BookingStats } from "@/types/booking";
 
@@ -6,7 +5,7 @@ export class BookingService {
   static async createBookingRequest(bookingData: BookingFormData, guestId: string): Promise<Booking> {
     console.log('BookingService: Creating booking request:', bookingData);
     
-    // No incluir host_response_deadline porque se establece automáticamente por el trigger
+    // Create insert data without host_response_deadline (handled by trigger)
     const insertData = {
       race_id: bookingData.race_id,
       property_id: bookingData.property_id,
@@ -19,7 +18,9 @@ export class BookingService {
       special_requests: bookingData.special_requests,
       guest_phone: bookingData.guest_phone,
       estimated_arrival_time: bookingData.estimated_arrival_time,
-      points_cost: bookingData.points_cost
+      points_cost: bookingData.points_cost,
+      // Add required field with placeholder - will be overwritten by trigger
+      host_response_deadline: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
     };
 
     const { data, error } = await supabase
@@ -39,7 +40,7 @@ export class BookingService {
     }
 
     console.log('BookingService: Created booking successfully:', data);
-    return data as Booking;
+    return data as unknown as Booking;
   }
 
   static async fetchUserBookings(userId: string, filters?: BookingFilters): Promise<Booking[]> {
@@ -86,7 +87,7 @@ export class BookingService {
     }
 
     console.log('BookingService: Fetched bookings:', data);
-    return (data || []) as Booking[];
+    return (data || []) as unknown as Booking[];
   }
 
   static async respondToBooking(bookingId: string, response: 'accepted' | 'rejected', message?: string): Promise<void> {
