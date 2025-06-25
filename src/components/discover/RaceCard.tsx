@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { MapPin, Calendar, Star, Clock, Trophy, Heart } from "lucide-react";
+import { MapPin, Calendar, Star, Clock, Trophy, Heart, CheckCircle } from "lucide-react";
 
 // Move utility functions outside component to prevent re-creation on each render
 const formatDate = (dateString: string) => {
@@ -28,6 +28,19 @@ const getDistanceBadgeColor = (distance: string) => {
     '5k': 'bg-purple-100 text-purple-800'
   };
   return colors[distance as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+};
+
+const getDistanceLabel = (distance: string) => {
+  const labels = {
+    'ultra': 'ULTRA',
+    'marathon': 'MARATÓN',
+    'half_marathon': 'MEDIA MARATÓN',
+    '20k': '20K',
+    '15k': '15K',
+    '10k': '10K',
+    '5k': '5K'
+  };
+  return labels[distance as keyof typeof labels] || distance.toUpperCase();
 };
 
 interface RaceCardProps {
@@ -82,12 +95,14 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails }: RaceCardProps
         </Button>
         
         {/* Countdown Badge */}
-        <div className="absolute bottom-2 left-2">
-          <Badge className="bg-[#1E40AF] text-white">
-            <Clock className="w-3 h-3 mr-1" />
-            En {race.daysUntil} días
-          </Badge>
-        </div>
+        {race.daysUntil > 0 && (
+          <div className="absolute bottom-2 left-2">
+            <Badge className="bg-[#1E40AF] text-white">
+              <Clock className="w-3 h-3 mr-1" />
+              En {race.daysUntil} días
+            </Badge>
+          </div>
+        )}
       </div>
 
       <CardHeader className="pb-3">
@@ -109,6 +124,7 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails }: RaceCardProps
       <CardContent className="pt-0">
         {/* Race Characteristics */}
         <div className="space-y-3">
+          {/* Modalities */}
           <div className="flex flex-wrap gap-1">
             {race.modalities.map((modality) => (
               <Badge key={modality} className={getModalityBadgeColor(modality)}>
@@ -117,10 +133,11 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails }: RaceCardProps
             ))}
           </div>
           
+          {/* Distances with proper colors */}
           <div className="flex flex-wrap gap-1">
             {race.distances.slice(0, 2).map((distance) => (
               <Badge key={distance} className={getDistanceBadgeColor(distance)}>
-                {distance.replace('_', ' ').toUpperCase()}
+                {getDistanceLabel(distance)}
               </Badge>
             ))}
             {race.distances.length > 2 && (
@@ -130,8 +147,10 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails }: RaceCardProps
             )}
           </div>
 
-          {/* Highlights */}
-          <p className="text-sm text-gray-600 line-clamp-2">{race.highlights}</p>
+          {/* Highlights - Special phrase */}
+          <p className="text-sm text-gray-600 line-clamp-2 italic">
+            "{race.highlights}"
+          </p>
 
           {/* Host Info */}
           <div className="flex items-center justify-between pt-2 border-t">
@@ -139,24 +158,25 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails }: RaceCardProps
               <img 
                 src={race.host.imageUrl} 
                 alt={race.host.name}
-                className="w-6 h-6 rounded-full"
+                className="w-8 h-8 rounded-full"
               />
-              <span className="text-sm font-medium">{race.host.name}</span>
-              {race.host.verified && (
-                <Badge variant="secondary" className="text-xs">
-                  ✓ Verificado
-                </Badge>
-              )}
-            </div>
-            
-            <div className="flex items-center">
-              <Star className="w-4 h-4 text-yellow-500 fill-current" />
-              <span className="text-sm ml-1">{race.host.rating}</span>
+              <div className="flex flex-col">
+                <div className="flex items-center">
+                  <span className="text-sm font-medium">{race.host.name}</span>
+                  {race.host.verified && (
+                    <CheckCircle className="w-3 h-3 ml-1 text-green-600" />
+                  )}
+                </div>
+                <div className="flex items-center">
+                  <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                  <span className="text-xs ml-1 text-gray-500">{race.host.rating}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Points Cost */}
-          <div className="flex items-center justify-between pt-2">
+          {/* Points Cost and Action */}
+          <div className="flex items-center justify-between pt-3 border-t">
             <div className="flex items-center">
               <Trophy className="w-4 h-4 text-[#EA580C] mr-1" />
               <span className="text-lg font-bold text-[#EA580C]">

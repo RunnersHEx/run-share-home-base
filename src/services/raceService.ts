@@ -9,7 +9,8 @@ export class RaceService {
       .from('races')
       .select(`
         *,
-        properties(title, locality)
+        properties(title, locality),
+        profiles:host_id(first_name, last_name, profile_image_url, verification_status)
       `)
       .eq('host_id', hostId)
       .order('race_date', { ascending: false });
@@ -53,6 +54,74 @@ export class RaceService {
     })) as Race[];
 
     console.log('RaceService: Processed races:', processedRaces);
+    return processedRaces;
+  }
+
+  // New method to fetch ALL races for discovery (not just host's races)
+  static async fetchAllRaces(filters?: RaceFilters): Promise<Race[]> {
+    console.log('RaceService: Fetching all races with filters:', filters);
+    
+    let query = supabase
+      .from('races')
+      .select(`
+        *,
+        properties(title, locality, max_guests),
+        profiles:host_id(first_name, last_name, profile_image_url, verification_status, average_rating)
+      `)
+      .eq('is_active', true)
+      .order('race_date', { ascending: true });
+
+    if (filters?.month) {
+      const year = new Date().getFullYear();
+      const monthNum = parseInt(filters.month);
+      const startDate = new Date(year, monthNum - 1, 1).toISOString().split('T')[0];
+      const endDate = new Date(year, monthNum, 0).toISOString().split('T')[0];
+      query = query.gte('race_date', startDate).lte('race_date', endDate);
+    }
+
+    if (filters?.modalities && filters.modalities.length > 0) {
+      // Use overlap operator for array matching
+      query = query.overlaps('modalities', filters.modalities);
+    }
+
+    if (filters?.distances && filters.distances.length > 0) {
+      query = query.overlaps('distances', filters.distances);
+    }
+
+    if (filters?.province) {
+      query = query.ilike('start_location', `%${filters.province}%`);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('RaceService: Error fetching all races:', error);
+      throw error;
+    }
+
+    console.log('RaceService: Raw data from database:', data);
+
+    // Type cast the JSON fields to their proper types and add host info
+    const processedRaces = (data || []).map(race => ({
+      ...race,
+      modalities: Array.isArray(race.modalities) ? race.modalities : [],
+      terrain_profile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
+      distances: Array.isArray(race.distances) ? race.distances : [],
+      host_info: race.profiles ? {
+        first_name: race.profiles.first_name,
+        last_name: race.profiles.last_name,
+        profile_image_url: race.profiles.profile_image_url,
+        verification_status: race.profiles.verification_status,
+        average_rating: race.profiles.average_rating || 4.5
+      } : null,
+      property_info: race.properties ? {
+        title: race.properties.title,
+        locality: race.properties.locality,
+        max_guests: race.properties.max_guests
+      } : null
+    })) as Race[];
+
+    console.log('RaceService: Processed all races:', processedRaces);
     return processedRaces;
   }
 

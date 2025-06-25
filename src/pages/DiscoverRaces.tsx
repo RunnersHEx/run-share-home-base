@@ -21,53 +21,8 @@ import { HeroSearchSection } from "@/components/discover/HeroSearchSection";
 import { AdvancedFilters } from "@/components/discover/AdvancedFilters";
 import { RaceCard } from "@/components/discover/RaceCard";
 import { RaceFilters as SearchFilters } from "@/types/race";
+import { useDiscoverRaces } from "@/hooks/useDiscoverRaces";
 import { toast } from "sonner";
-
-// Mock data - replace with actual data from hooks
-const mockRaces = [
-  {
-    id: "1",
-    name: "Maratón Internacional de Barcelona",
-    location: "Barcelona, Catalunya",
-    date: "2024-03-10",
-    daysUntil: 45,
-    modalities: ["road"],
-    distances: ["marathon", "half_marathon"],
-    terrainProfile: ["flat"],
-    imageUrl: "/placeholder.svg",
-    host: {
-      id: "host1",
-      name: "Carlos Ruiz",
-      rating: 4.8,
-      verified: true,
-      imageUrl: "/placeholder.svg"
-    },
-    pointsCost: 250,
-    available: true,
-    highlights: "Recorrido icónico por el centro histórico"
-  },
-  {
-    id: "2", 
-    name: "Trail de los Picos de Europa",
-    location: "Asturias",
-    date: "2024-04-15",
-    daysUntil: 80,
-    modalities: ["trail"],
-    distances: ["ultra", "marathon"],
-    terrainProfile: ["hilly"],
-    imageUrl: "/placeholder.svg",
-    host: {
-      id: "host2",
-      name: "Ana García",
-      rating: 4.9,
-      verified: true,
-      imageUrl: "/placeholder.svg"
-    },
-    pointsCost: 300,
-    available: true,
-    highlights: "Vistas espectaculares de montaña"
-  }
-];
 
 const DiscoverRaces = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,25 +31,55 @@ const DiscoverRaces = () => {
   const [sortBy, setSortBy] = useState("relevance");
   const [filters, setFilters] = useState<SearchFilters>({});
   const [savedRaces, setSavedRaces] = useState<string[]>([]);
+  
+  // Use the new discover races hook
+  const { races, loading, fetchRaces } = useDiscoverRaces();
 
   const filteredRaces = useMemo(() => {
-    return mockRaces.filter(race => {
+    return races.filter(race => {
+      // Text search
       if (searchQuery && !race.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
           !race.location.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
       
-      if (filters.modality && !race.modalities.includes(filters.modality)) {
+      // Province filter
+      if (filters.province && !race.location.toLowerCase().includes(filters.province.toLowerCase())) {
         return false;
       }
       
-      if (filters.distance && !race.distances.includes(filters.distance)) {
+      // Modality filter
+      if (filters.modalities && filters.modalities.length > 0) {
+        const hasMatchingModality = filters.modalities.some(modality => 
+          race.modalities.includes(modality)
+        );
+        if (!hasMatchingModality) return false;
+      }
+      
+      // Distance filter
+      if (filters.distances && filters.distances.length > 0) {
+        const hasMatchingDistance = filters.distances.some(distance => 
+          race.distances.includes(distance)
+        );
+        if (!hasMatchingDistance) return false;
+      }
+      
+      // Month filter
+      if (filters.month) {
+        const raceMonth = new Date(race.date).getMonth() + 1;
+        const filterMonth = parseInt(filters.month);
+        if (raceMonth !== filterMonth) return false;
+      }
+      
+      // Max guests filter
+      if (filters.maxGuests && race.maxGuests && race.maxGuests < filters.maxGuests) {
         return false;
       }
       
-      return true;
+      // Only show available races
+      return race.available;
     });
-  }, [searchQuery, filters]);
+  }, [races, searchQuery, filters]);
 
   const handleSaveRace = (raceId: string) => {
     setSavedRaces(prev => 
@@ -106,9 +91,16 @@ const DiscoverRaces = () => {
 
   const handleSearch = () => {
     toast.success(`Buscando carreras con los filtros aplicados...`);
-    // Here you would typically call your API with the current filters
-    console.log('Searching with filters:', filters);
+    fetchRaces(filters);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#1E40AF]"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
