@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -110,11 +111,14 @@ const VerificationSection = () => {
           toast.success('Foto en carrera subida correctamente');
         }
 
-        // 4. Refrescar el perfil para mostrar los cambios
-        console.log('Refreshing profile...');
-        setTimeout(() => {
-          refetchProfile();
-        }, 1500);
+        // 4. Refrescar inmediatamente para mostrar los cambios
+        console.log('Refreshing profile immediately...');
+        await refetchProfile();
+        
+        // Forzar actualización adicional para asegurar sincronización
+        setTimeout(async () => {
+          await refetchProfile();
+        }, 500);
       }
     } catch (error) {
       console.error('Error uploading race photo:', error);
@@ -332,8 +336,8 @@ const VerificationSection = () => {
           <ul className="text-sm text-blue-700 space-y-1">
             <li>1. Sube los documentos requeridos</li>
             <li>2. Nuestro equipo los revisará en 24-48 horas</li>
-            <li>3. Te notificaremos el resultado</li>
-            <li>4. Recibirás un email de confirmación en runnershomeexchange@gmail.com</li>
+            <li>3. Te notificaremos el resultado por email</li>
+            <li>4. Recibirás la confirmación en tu email registrado</li>
           </ul>
           <div className="mt-3 p-2 bg-orange-100 rounded border-l-4 border-orange-400">
             <p className="text-sm text-orange-800">
