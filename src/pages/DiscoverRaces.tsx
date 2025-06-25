@@ -20,6 +20,7 @@ import {
 import { HeroSearchSection } from "@/components/discover/HeroSearchSection";
 import { AdvancedFilters } from "@/components/discover/AdvancedFilters";
 import { RaceCard } from "@/components/discover/RaceCard";
+import { RaceDetailModal } from "@/components/discover/RaceDetailModal";
 import { RaceFilters as SearchFilters } from "@/types/race";
 import { useDiscoverRaces } from "@/hooks/useDiscoverRaces";
 import { toast } from "sonner";
@@ -31,6 +32,8 @@ const DiscoverRaces = () => {
   const [sortBy, setSortBy] = useState("relevance");
   const [filters, setFilters] = useState<SearchFilters>({});
   const [savedRaces, setSavedRaces] = useState<string[]>([]);
+  const [selectedRace, setSelectedRace] = useState<any>(null);
+  const [showRaceDetail, setShowRaceDetail] = useState(false);
   
   // Use the new discover races hook
   const { races, loading, fetchRaces } = useDiscoverRaces();
@@ -87,6 +90,11 @@ const DiscoverRaces = () => {
         ? prev.filter(id => id !== raceId)
         : [...prev, raceId]
     );
+  };
+
+  const handleViewDetails = (race: any) => {
+    setSelectedRace(race);
+    setShowRaceDetail(true);
   };
 
   const handleSearch = () => {
@@ -190,7 +198,7 @@ const DiscoverRaces = () => {
                     race={race}
                     isSaved={savedRaces.includes(race.id)}
                     onSave={() => handleSaveRace(race.id)}
-                    onViewDetails={() => console.log("View details for race:", race.id)}
+                    onViewDetails={() => handleViewDetails(race)}
                   />
                 ))}
               </div>
@@ -229,6 +237,18 @@ const DiscoverRaces = () => {
           </div>
         </div>
       </div>
+
+      {/* Race Detail Modal */}
+      {selectedRace && (
+        <RaceDetailModal
+          race={selectedRace}
+          isOpen={showRaceDetail}
+          onClose={() => {
+            setShowRaceDetail(false);
+            setSelectedRace(null);
+          }}
+        />
+      )}
     </div>
   );
 };

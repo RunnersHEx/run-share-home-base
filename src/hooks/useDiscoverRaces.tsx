@@ -37,8 +37,23 @@ export const useDiscoverRaces = () => {
       console.log('Fetching races for discovery with filters:', filters);
       const data = await RaceService.fetchAllRaces(filters);
       
+      // Get race images for each race
+      const raceImagesPromises = data.map(async (race) => {
+        try {
+          const images = await RaceService.getRaceImages(race.id);
+          // Use the first image if available, otherwise fallback to placeholder
+          const imageUrl = images.length > 0 ? images[0].image_url : "/placeholder.svg";
+          return { ...race, imageUrl };
+        } catch (error) {
+          console.error('Error fetching race images for race:', race.id, error);
+          return { ...race, imageUrl: "/placeholder.svg" };
+        }
+      });
+
+      const racesWithImages = await Promise.all(raceImagesPromises);
+      
       // Transform the data to match the DiscoverRace interface
-      const transformedRaces: DiscoverRace[] = data.map(race => ({
+      const transformedRaces: DiscoverRace[] = racesWithImages.map(race => ({
         id: race.id,
         name: race.name,
         location: race.start_location || race.property_info?.locality || "Ubicación no especificada",
@@ -47,7 +62,7 @@ export const useDiscoverRaces = () => {
         modalities: race.modalities || [],
         distances: race.distances || [],
         terrainProfile: race.terrain_profile || [],
-        imageUrl: "/placeholder.svg", // TODO: Add real images from race_images
+        imageUrl: race.imageUrl,
         host: {
           id: race.host_id,
           name: race.host_info ? `${race.host_info.first_name} ${race.host_info.last_name}` : "Host Runner",
