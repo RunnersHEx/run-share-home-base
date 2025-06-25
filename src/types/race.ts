@@ -25,6 +25,19 @@ export interface Race {
   average_rating?: number;
   created_at: string;
   updated_at: string;
+  // Joined data from queries
+  host_info?: {
+    first_name: string;
+    last_name: string;
+    profile_image_url?: string;
+    verification_status: string;
+    average_rating?: number;
+  };
+  property_info?: {
+    title: string;
+    locality: string;
+    max_guests?: number;
+  };
 }
 
 export interface RaceImage {
@@ -66,8 +79,14 @@ export interface RaceFormData {
 export interface RaceFilters {
   month?: string;
   modality?: RaceModality;
+  modalities?: RaceModality[];
   distance?: RaceDistance;
+  distances?: RaceDistance[];
   status?: 'active' | 'inactive';
+  province?: string;
+  maxGuests?: number;
+  terrainProfiles?: TerrainProfile[];
+  pointsRange?: [number, number];
 }
 
 export interface RaceStats {

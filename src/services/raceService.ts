@@ -113,12 +113,12 @@ export class RaceService {
         profile_image_url: race.profiles.profile_image_url,
         verification_status: race.profiles.verification_status,
         average_rating: race.profiles.average_rating || 4.5
-      } : null,
+      } : undefined,
       property_info: race.properties ? {
         title: race.properties.title,
         locality: race.properties.locality,
         max_guests: race.properties.max_guests
-      } : null
+      } : undefined
     })) as Race[];
 
     console.log('RaceService: Processed all races:', processedRaces);
