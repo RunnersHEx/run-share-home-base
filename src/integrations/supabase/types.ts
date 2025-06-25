@@ -9,6 +9,134 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      booking_messages: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          message: string
+          read_at: string | null
+          sender_id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          message: string
+          read_at?: string | null
+          sender_id: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          read_at?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_messages_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          accepted_at: string | null
+          cancelled_at: string | null
+          check_in_date: string
+          check_out_date: string
+          completed_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          estimated_arrival_time: string | null
+          guest_id: string
+          guest_phone: string | null
+          guests_count: number
+          host_id: string
+          host_response_deadline: string
+          host_response_message: string | null
+          id: string
+          points_cost: number
+          property_id: string
+          race_id: string
+          rejected_at: string | null
+          request_message: string | null
+          special_requests: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          cancelled_at?: string | null
+          check_in_date: string
+          check_out_date: string
+          completed_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          estimated_arrival_time?: string | null
+          guest_id: string
+          guest_phone?: string | null
+          guests_count?: number
+          host_id: string
+          host_response_deadline: string
+          host_response_message?: string | null
+          id?: string
+          points_cost: number
+          property_id: string
+          race_id: string
+          rejected_at?: string | null
+          request_message?: string | null
+          special_requests?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          cancelled_at?: string | null
+          check_in_date?: string
+          check_out_date?: string
+          completed_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          estimated_arrival_time?: string | null
+          guest_id?: string
+          guest_phone?: string | null
+          guests_count?: number
+          host_id?: string
+          host_response_deadline?: string
+          host_response_message?: string | null
+          id?: string
+          points_cost?: number
+          property_id?: string
+          race_id?: string
+          rejected_at?: string | null
+          request_message?: string | null
+          special_requests?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_race_id_fkey"
+            columns: ["race_id"]
+            isOneToOne: false
+            referencedRelation: "races"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       houses: {
         Row: {
           address: string
@@ -82,6 +210,44 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      points_transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
         ]
@@ -694,7 +860,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      process_booking_points_transaction: {
+        Args: {
+          p_booking_id: string
+          p_guest_id: string
+          p_host_id: string
+          p_points_cost: number
+          p_transaction_type: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
