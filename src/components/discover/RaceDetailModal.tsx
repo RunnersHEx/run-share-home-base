@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +18,7 @@ import {
   Route,
   Target
 } from "lucide-react";
-import { BookingRequestModal } from "@/components/bookings/BookingRequestModal";
+import BookingRequestModal from "@/components/bookings/BookingRequestModal";
 
 interface RaceDetailModalProps {
   race: {
