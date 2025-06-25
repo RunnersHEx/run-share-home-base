@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, MapPin, Calendar, Trophy, Users } from "lucide-react";
 import { RaceFilters } from "@/types/race";
 
@@ -17,12 +18,39 @@ interface AdvancedFiltersProps {
   onSearch?: () => void;
 }
 
+const spanishProvinces = [
+  "A Coruña", "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz",
+  "Baleares", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
+  "Córdoba", "Cuenca", "Girona", "Granada", "Guadalajara", "Gipuzkoa", "Huelva", "Huesca",
+  "Jaén", "León", "Lleida", "La Rioja", "Lugo", "Madrid", "Málaga", "Murcia", "Navarra",
+  "Ourense", "Palencia", "Las Palmas", "Pontevedra", "Salamanca", "Santa Cruz de Tenerife",
+  "Segovia", "Sevilla", "Soria", "Tarragona", "Teruel", "Toledo", "Valencia", "Valladolid",
+  "Vizcaya", "Zamora", "Zaragoza"
+];
+
+const months = [
+  { value: "01", label: "Enero" },
+  { value: "02", label: "Febrero" },
+  { value: "03", label: "Marzo" },
+  { value: "04", label: "Abril" },
+  { value: "05", label: "Mayo" },
+  { value: "06", label: "Junio" },
+  { value: "07", label: "Julio" },
+  { value: "08", label: "Agosto" },
+  { value: "09", label: "Septiembre" },
+  { value: "10", label: "Octubre" },
+  { value: "11", label: "Noviembre" },
+  { value: "12", label: "Diciembre" }
+];
+
 export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }: AdvancedFiltersProps) => {
   const [pointsRange, setPointsRange] = useState([0, 500]);
   const [selectedModalities, setSelectedModalities] = useState<string[]>([]);
   const [selectedDistances, setSelectedDistances] = useState<string[]>([]);
   const [selectedTerrainProfiles, setSelectedTerrainProfiles] = useState<string[]>([]);
   const [maxGuests, setMaxGuests] = useState<number>(1);
+  const [selectedProvince, setSelectedProvince] = useState<string>("");
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
 
   const handleModalityChange = (modality: string, checked: boolean) => {
     const updated = checked 
@@ -52,6 +80,8 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
     setSelectedDistances([]);
     setSelectedTerrainProfiles([]);
     setMaxGuests(1);
+    setSelectedProvince("");
+    setSelectedMonth("");
   };
 
   const handleSearch = () => {
@@ -62,7 +92,9 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
       modalities: selectedModalities.length > 0 ? selectedModalities : undefined,
       distances: selectedDistances.length > 0 ? selectedDistances : undefined,
       terrainProfiles: selectedTerrainProfiles.length > 0 ? selectedTerrainProfiles : undefined,
-      maxGuests: maxGuests > 1 ? maxGuests : undefined
+      maxGuests: maxGuests > 1 ? maxGuests : undefined,
+      province: selectedProvince || undefined,
+      month: selectedMonth || undefined
     };
     
     onFiltersChange(newFilters);
@@ -94,32 +126,52 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
           <div className="space-y-3">
             <div>
               <Label htmlFor="province">Provincia</Label>
-              <Input 
-                id="province"
-                placeholder="Buscar provincia..." 
-                className="mt-1"
-              />
+              <Select value={selectedProvince} onValueChange={setSelectedProvince}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Seleccionar provincia..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {spanishProvinces.map((province) => (
+                    <SelectItem key={province} value={province}>
+                      {province}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div>
               <Label htmlFor="radius">Radio de búsqueda</Label>
-              <select className="w-full mt-1 px-3 py-2 border rounded-md">
-                <option>Cualquier distancia</option>
-                <option>25 km</option>
-                <option>50 km</option>
-                <option>100 km</option>
-                <option>200 km</option>
-                <option>500 km</option>
-                <option>+500 km</option>
-              </select>
+              <Select>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Cualquier distancia" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Cualquier distancia</SelectItem>
+                  <SelectItem value="25">25 km</SelectItem>
+                  <SelectItem value="50">50 km</SelectItem>
+                  <SelectItem value="100">100 km</SelectItem>
+                  <SelectItem value="200">200 km</SelectItem>
+                  <SelectItem value="500">500 km</SelectItem>
+                  <SelectItem value="500+">+500 km</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div>
-              <Label htmlFor="dateRange">Rango de fechas</Label>
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                <Input type="date" placeholder="Desde" />
-                <Input type="date" placeholder="Hasta" />
-              </div>
+              <Label htmlFor="month">Mes</Label>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Seleccionar mes..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((month) => (
+                    <SelectItem key={month.value} value={month.value}>
+                      {month.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -250,29 +302,33 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
             {/* Número máximo de huéspedes */}
             <div>
               <Label className="text-sm font-medium">Número máximo huéspedes</Label>
-              <select 
-                value={maxGuests}
-                onChange={(e) => setMaxGuests(parseInt(e.target.value))}
-                className="w-full mt-1 px-3 py-2 border rounded-md"
-              >
-                <option value={1}>1 huésped</option>
-                <option value={2}>2 huéspedes</option>
-                <option value={3}>3 huéspedes</option>
-                <option value={4}>4 huéspedes</option>
-                <option value={5}>5 huéspedes</option>
-                <option value={6}>6+ huéspedes</option>
-              </select>
+              <Select value={maxGuests.toString()} onValueChange={(value) => setMaxGuests(parseInt(value))}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 huésped</SelectItem>
+                  <SelectItem value="2">2 huéspedes</SelectItem>
+                  <SelectItem value="3">3 huéspedes</SelectItem>
+                  <SelectItem value="4">4 huéspedes</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Rating mínimo */}
             <div>
               <Label className="text-sm font-medium">Rating mínimo del host</Label>
-              <select className="w-full mt-1 px-3 py-2 border rounded-md">
-                <option>Cualquier rating</option>
-                <option>4.0+ estrellas</option>
-                <option>4.5+ estrellas</option>
-                <option>4.8+ estrellas</option>
-              </select>
+              <Select>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Cualquier rating" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Cualquier rating</SelectItem>
+                  <SelectItem value="4.0">4.0+ estrellas</SelectItem>
+                  <SelectItem value="4.5">4.5+ estrellas</SelectItem>
+                  <SelectItem value="4.8">4.8+ estrellas</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
