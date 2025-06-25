@@ -11,6 +11,7 @@ import StatsSection from "@/components/profile/StatsSection";
 import DeleteAccountSection from "@/components/profile/DeleteAccountSection";
 import PropertiesSection from "@/components/profile/PropertiesSection";
 import RacesSection from "@/components/profile/RacesSection";
+import BookingsSection from "@/components/profile/BookingsSection";
 
 const Profile = () => {
   const { user, loading } = useAuth();
@@ -50,6 +51,8 @@ const Profile = () => {
         return <PropertiesSection />;
       case "races":
         return <RacesSection />;
+      case "bookings":
+        return <BookingsSection />;
       case "verification":
         return <VerificationSection />;
       case "stats":

@@ -7,21 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
-import { X, MapPin, Calendar, Trophy, Star, Users } from "lucide-react";
+import { X, MapPin, Calendar, Trophy, Users } from "lucide-react";
 import { RaceFilters } from "@/types/race";
 
 interface AdvancedFiltersProps {
   filters: RaceFilters;
   onFiltersChange: (filters: RaceFilters) => void;
   onClose?: () => void;
+  onSearch?: () => void;
 }
 
-export const AdvancedFilters = ({ filters, onFiltersChange, onClose }: AdvancedFiltersProps) => {
+export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }: AdvancedFiltersProps) => {
   const [pointsRange, setPointsRange] = useState([0, 500]);
   const [selectedModalities, setSelectedModalities] = useState<string[]>([]);
   const [selectedDistances, setSelectedDistances] = useState<string[]>([]);
   const [selectedTerrainProfiles, setSelectedTerrainProfiles] = useState<string[]>([]);
-  const [hasWaveStarts, setHasWaveStarts] = useState<string[]>([]);
+  const [maxGuests, setMaxGuests] = useState<number>(1);
 
   const handleModalityChange = (modality: string, checked: boolean) => {
     const updated = checked 
@@ -50,7 +51,25 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose }: AdvancedF
     setSelectedModalities([]);
     setSelectedDistances([]);
     setSelectedTerrainProfiles([]);
-    setHasWaveStarts([]);
+    setMaxGuests(1);
+  };
+
+  const handleSearch = () => {
+    // Apply all current filter states to the filters
+    const newFilters = {
+      ...filters,
+      pointsRange,
+      modalities: selectedModalities.length > 0 ? selectedModalities : undefined,
+      distances: selectedDistances.length > 0 ? selectedDistances : undefined,
+      terrainProfiles: selectedTerrainProfiles.length > 0 ? selectedTerrainProfiles : undefined,
+      maxGuests: maxGuests > 1 ? maxGuests : undefined
+    };
+    
+    onFiltersChange(newFilters);
+    
+    if (onSearch) {
+      onSearch();
+    }
   };
 
   return (
@@ -191,23 +210,11 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose }: AdvancedF
               <Label className="text-sm font-medium">Cajones de salida según marcas</Label>
               <div className="mt-2 space-y-2">
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="wave-yes"
-                    checked={hasWaveStarts.includes('yes')}
-                    onCheckedChange={(checked) => {
-                      setHasWaveStarts(checked ? ['yes'] : []);
-                    }}
-                  />
+                  <Checkbox id="wave-yes" />
                   <Label htmlFor="wave-yes" className="text-sm">Sí</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="wave-no"
-                    checked={hasWaveStarts.includes('no')}
-                    onCheckedChange={(checked) => {
-                      setHasWaveStarts(checked ? ['no'] : []);
-                    }}
-                  />
+                  <Checkbox id="wave-no" />
                   <Label htmlFor="wave-no" className="text-sm">No</Label>
                 </div>
               </div>
@@ -240,6 +247,23 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose }: AdvancedF
               />
             </div>
 
+            {/* Número máximo de huéspedes */}
+            <div>
+              <Label className="text-sm font-medium">Número máximo huéspedes</Label>
+              <select 
+                value={maxGuests}
+                onChange={(e) => setMaxGuests(parseInt(e.target.value))}
+                className="w-full mt-1 px-3 py-2 border rounded-md"
+              >
+                <option value={1}>1 huésped</option>
+                <option value={2}>2 huéspedes</option>
+                <option value={3}>3 huéspedes</option>
+                <option value={4}>4 huéspedes</option>
+                <option value={5}>5 huéspedes</option>
+                <option value={6}>6+ huéspedes</option>
+              </select>
+            </div>
+
             {/* Rating mínimo */}
             <div>
               <Label className="text-sm font-medium">Rating mínimo del host</Label>
@@ -250,36 +274,26 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose }: AdvancedF
                 <option>4.8+ estrellas</option>
               </select>
             </div>
-
-            {/* Solo hosts verificados */}
-            <div className="flex items-center space-x-2">
-              <Checkbox id="verified-only" />
-              <Label htmlFor="verified-only" className="text-sm">Solo hosts verificados</Label>
-            </div>
-
-            {/* Idiomas */}
-            <div>
-              <Label className="text-sm font-medium">Idiomas que habla el host</Label>
-              <div className="mt-2 space-y-2">
-                {['Español', 'Inglés', 'Francés', 'Alemán', 'Italiano'].map((language) => (
-                  <div key={language} className="flex items-center space-x-2">
-                    <Checkbox id={language.toLowerCase()} />
-                    <Label htmlFor={language.toLowerCase()} className="text-sm">{language}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Clear Filters Button */}
-        <Button 
-          variant="outline" 
-          onClick={clearAllFilters}
-          className="w-full"
-        >
-          Limpiar todos los filtros
-        </Button>
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <Button 
+            onClick={handleSearch}
+            className="w-full bg-[#1E40AF] hover:bg-[#1E40AF]/90"
+          >
+            Buscar Carreras
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={clearAllFilters}
+            className="w-full"
+          >
+            Limpiar todos los filtros
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

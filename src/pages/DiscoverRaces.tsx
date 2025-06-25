@@ -21,6 +21,7 @@ import { HeroSearchSection } from "@/components/discover/HeroSearchSection";
 import { AdvancedFilters } from "@/components/discover/AdvancedFilters";
 import { RaceCard } from "@/components/discover/RaceCard";
 import { RaceFilters as SearchFilters } from "@/types/race";
+import { toast } from "sonner";
 
 // Mock data - replace with actual data from hooks
 const mockRaces = [
@@ -103,6 +104,12 @@ const DiscoverRaces = () => {
     );
   };
 
+  const handleSearch = () => {
+    toast.success(`Buscando carreras con los filtros aplicados...`);
+    // Here you would typically call your API with the current filters
+    console.log('Searching with filters:', filters);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Search Section */}
@@ -123,6 +130,7 @@ const DiscoverRaces = () => {
               filters={filters}
               onFiltersChange={setFilters}
               onClose={() => setShowFilters(false)}
+              onSearch={handleSearch}
             />
           </div>
 

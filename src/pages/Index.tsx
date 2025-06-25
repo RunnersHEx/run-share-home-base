@@ -37,8 +37,8 @@ const Index = () => {
       </section>
 
       <FeaturesSection />
-      <FeaturedRacesSection />
       <HowItWorksSection />
+      <FeaturedRacesSection />
       <CTASection onAuthModal={openAuthModal} />
 
       <AuthModalIntegrated 
