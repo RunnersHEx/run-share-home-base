@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Race, RaceFormData, RaceFilters, RaceStats, RaceImage } from "@/types/race";
 
@@ -5,13 +6,10 @@ export class RaceService {
   static async fetchHostRaces(hostId: string, filters?: RaceFilters): Promise<Race[]> {
     console.log('RaceService: Fetching races for host:', hostId);
     
+    // Use a simple query without complex joins to avoid foreign key relationship errors
     let query = supabase
       .from('races')
-      .select(`
-        *,
-        properties(title, locality),
-        profiles:host_id(first_name, last_name, profile_image_url, verification_status)
-      `)
+      .select('*')
       .eq('host_id', hostId)
       .order('race_date', { ascending: false });
 
@@ -36,22 +34,67 @@ export class RaceService {
       query = query.eq('is_active', isActive);
     }
 
-    const { data, error } = await query;
+    const { data: raceData, error: raceError } = await query;
 
-    if (error) {
-      console.error('RaceService: Error fetching races:', error);
-      throw error;
+    if (raceError) {
+      console.error('RaceService: Error fetching races:', raceError);
+      throw raceError;
     }
 
-    console.log('RaceService: Raw data from database:', data);
+    console.log('RaceService: Raw race data from database:', raceData);
 
-    // Type cast the JSON fields to their proper types
-    const processedRaces = (data || []).map(race => ({
-      ...race,
-      modalities: Array.isArray(race.modalities) ? race.modalities : [],
-      terrain_profile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
-      distances: Array.isArray(race.distances) ? race.distances : []
-    })) as Race[];
+    if (!raceData || raceData.length === 0) {
+      return [];
+    }
+
+    // Get host profile and property info separately to avoid join issues
+    const { data: hostProfile, error: hostError } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, profile_image_url, verification_status, average_rating')
+      .eq('id', hostId)
+      .single();
+
+    if (hostError) {
+      console.error('RaceService: Error fetching host profile:', hostError);
+    }
+
+    // Get property data for each race
+    const propertyIds = [...new Set(raceData.map(race => race.property_id))];
+    const { data: properties, error: propertyError } = await supabase
+      .from('properties')
+      .select('id, title, locality, max_guests')
+      .in('id', propertyIds);
+
+    if (propertyError) {
+      console.error('RaceService: Error fetching properties:', propertyError);
+    }
+
+    // Create property lookup map
+    const propertyMap = new Map(properties?.map(prop => [prop.id, prop]) || []);
+
+    // Type cast the JSON fields to their proper types and add host/property info
+    const processedRaces = raceData.map(race => {
+      const property = propertyMap.get(race.property_id);
+
+      return {
+        ...race,
+        modalities: Array.isArray(race.modalities) ? race.modalities : [],
+        terrain_profile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
+        distances: Array.isArray(race.distances) ? race.distances : [],
+        host_info: hostProfile ? {
+          first_name: hostProfile.first_name,
+          last_name: hostProfile.last_name,
+          profile_image_url: hostProfile.profile_image_url,
+          verification_status: hostProfile.verification_status,
+          average_rating: hostProfile.average_rating || 4.5
+        } : undefined,
+        property_info: property ? {
+          title: property.title,
+          locality: property.locality,
+          max_guests: property.max_guests
+        } : undefined
+      };
+    }) as Race[];
 
     console.log('RaceService: Processed races:', processedRaces);
     return processedRaces;
