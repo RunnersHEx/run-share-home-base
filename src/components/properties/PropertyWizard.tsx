@@ -39,6 +39,7 @@ const PropertyWizard = ({ onClose, propertyId, initialData }: PropertyWizardProp
   const { createProperty, updateProperty, uploadPropertyImage } = useProperties();
   const [currentStep, setCurrentStep] = useState(1);
   const [photos, setPhotos] = useState<PhotoPreview[]>([]);
+  const [acknowledgedImportantNote, setAcknowledgedImportantNote] = useState(false);
   const [formData, setFormData] = useState<PropertyFormData>({
     title: initialData?.title || "",
     description: initialData?.description || "",
@@ -131,7 +132,12 @@ const PropertyWizard = ({ onClose, propertyId, initialData }: PropertyWizardProp
       case 2:
         return <LocationStep formData={formData} onUpdate={updateFormData} onNext={nextStep} onPrev={prevStep} />;
       case 3:
-        return <AmenitiesStep formData={formData} updateFormData={updateFormData} />;
+        return (
+          <AmenitiesStep 
+            formData={formData} 
+            updateFormData={updateFormData}
+          />
+        );
       case 4:
         return <RulesStep formData={formData} onUpdate={updateFormData} onNext={nextStep} onPrev={prevStep} />;
       case 5:
@@ -148,7 +154,8 @@ const PropertyWizard = ({ onClose, propertyId, initialData }: PropertyWizardProp
       case 2:
         return formData.provinces.length > 0 && formData.locality.trim() !== "" && formData.full_address.trim() !== "";
       case 3:
-        return true;
+        // En el paso 3, debe haber confirmado la nota importante
+        return acknowledgedImportantNote;
       case 4:
         return true;
       case 5:

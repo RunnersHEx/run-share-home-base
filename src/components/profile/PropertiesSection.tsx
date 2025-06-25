@@ -73,76 +73,101 @@ const PropertiesSection = () => {
             </p>
             <Button onClick={() => setShowWizard(true)} className="bg-blue-600 hover:bg-blue-700">
               <Plus className="h-4 w-4 mr-2" />
-              Agregar Mi Primera Propiedad
+              Agregar Propiedad
             </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {properties.map((property) => (
-              <Card key={property.id} className="border border-gray-200 hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-gray-900 mb-1">
-                        {property.title}
-                      </h3>
-                      <div className="flex items-center text-gray-600 text-sm mb-2">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {property.locality}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={property.is_active ? "default" : "secondary"}>
-                        {property.is_active ? "Activa" : "Inactiva"}
-                      </Badge>
-                      <PropertyEditButton 
-                        property={property}
-                        onPropertyUpdated={() => handleEditProperty(property)}
+            {properties.map((property) => {
+              console.log('Property images:', property.images); // Debug log
+              const mainImage = property.images?.find(img => img.is_main)?.image_url || 
+                              property.images?.[0]?.image_url;
+              
+              return (
+                <Card key={property.id} className="border border-gray-200 hover:shadow-lg transition-shadow">
+                  {/* Image section */}
+                  <div className="aspect-video bg-gray-200 relative overflow-hidden rounded-t-lg">
+                    {mainImage ? (
+                      <img 
+                        src={mainImage} 
+                        alt={property.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.log('Image failed to load:', mainImage);
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
-                    </div>
-                  </div>
-
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {property.description}
-                  </p>
-
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="text-center">
-                      <div className="flex items-center justify-center text-gray-600 mb-1">
-                        <Users className="h-4 w-4 mr-1" />
-                        <span className="text-sm font-medium">{property.max_guests}</span>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Home className="h-12 w-12 text-gray-400" />
                       </div>
-                      <span className="text-xs text-gray-500">Huéspedes</span>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center text-gray-600 mb-1">
-                        <Bed className="h-4 w-4 mr-1" />
-                        <span className="text-sm font-medium">{property.bedrooms}</span>
-                      </div>
-                      <span className="text-xs text-gray-500">Habitaciones</span>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center text-gray-600 mb-1">
-                        <Bath className="h-4 w-4 mr-1" />
-                        <span className="text-sm font-medium">{property.bathrooms}</span>
-                      </div>
-                      <span className="text-xs text-gray-500">Baños</span>
-                    </div>
+                    )}
                   </div>
+                  
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg text-gray-900 mb-1">
+                          {property.title}
+                        </h3>
+                        <div className="flex items-center text-gray-600 text-sm mb-2">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          {property.locality}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={property.is_active ? "default" : "secondary"}>
+                          {property.is_active ? "Activa" : "Inactiva"}
+                        </Badge>
+                        <PropertyEditButton 
+                          property={property}
+                          onPropertyUpdated={() => handleEditProperty(property)}
+                        />
+                      </div>
+                    </div>
 
-                  <div className="flex justify-between items-center text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <Eye className="h-4 w-4 mr-1" />
-                      {property.total_bookings} reservas
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      {property.description}
+                    </p>
+
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      <div className="text-center">
+                        <div className="flex items-center justify-center text-gray-600 mb-1">
+                          <Users className="h-4 w-4 mr-1" />
+                          <span className="text-sm font-medium">{property.max_guests}</span>
+                        </div>
+                        <span className="text-xs text-gray-500">Huéspedes</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center text-gray-600 mb-1">
+                          <Bed className="h-4 w-4 mr-1" />
+                          <span className="text-sm font-medium">{property.bedrooms}</span>
+                        </div>
+                        <span className="text-xs text-gray-500">Habitaciones</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center text-gray-600 mb-1">
+                          <Bath className="h-4 w-4 mr-1" />
+                          <span className="text-sm font-medium">{property.bathrooms}</span>
+                        </div>
+                        <span className="text-xs text-gray-500">Baños</span>
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4 mr-1 fill-yellow-400 text-yellow-400" />
-                      {property.average_rating?.toFixed(1) || '0.0'}
+
+                    <div className="flex justify-between items-center text-sm text-gray-600">
+                      <div className="flex items-center">
+                        <Eye className="h-4 w-4 mr-1" />
+                        {property.total_bookings} reservas
+                      </div>
+                      <div className="flex items-center">
+                        <Star className="h-4 w-4 mr-1 fill-yellow-400 text-yellow-400" />
+                        {property.average_rating?.toFixed(1) || '0.0'}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </CardContent>

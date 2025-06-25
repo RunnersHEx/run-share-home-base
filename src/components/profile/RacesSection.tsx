@@ -1,27 +1,24 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, MapPin, Users, Trophy } from "lucide-react";
+import { Plus, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useRaces } from "@/hooks/useRaces";
 
 const RacesSection = () => {
   const navigate = useNavigate();
+  const { races, loading } = useRaces();
 
-  // Datos de ejemplo - en el futuro se conectará con la base de datos
-  const races = [
-    {
-      id: 1,
-      name: "Maratón de Madrid 2024",
-      date: "2024-04-28",
-      city: "Madrid",
-      country: "España",
-      distance: "42K",
-      participants: 15000,
-      status: "upcoming",
-      registrationOpen: true
-    }
-  ];
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando carreras...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -68,29 +65,14 @@ const RacesSection = () => {
                       {race.name}
                     </h3>
                     <div className="flex items-center text-gray-600 mt-1">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      <span>{race.city}, {race.country}</span>
+                      <span>{race.start_location}</span>
                     </div>
                     <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
                       <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        <span>{new Date(race.date).toLocaleDateString()}</span>
+                        <span>{new Date(race.race_date).toLocaleDateString()}</span>
                       </div>
                       <span>•</span>
-                      <span>{race.distance}</span>
-                      <span>•</span>
-                      <div className="flex items-center">
-                        <Users className="h-4 w-4 mr-1" />
-                        <span>{race.participants.toLocaleString()} participantes</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4 mt-3">
-                      <Badge variant={race.status === 'upcoming' ? 'default' : 'secondary'}>
-                        {race.status === 'upcoming' ? 'Próxima' : 'Finalizada'}
-                      </Badge>
-                      <Badge variant={race.registrationOpen ? 'default' : 'secondary'}>
-                        {race.registrationOpen ? 'Inscripciones abiertas' : 'Inscripciones cerradas'}
-                      </Badge>
+                      <span>{race.distances?.join(', ')}</span>
                     </div>
                   </div>
                   <div className="ml-4">

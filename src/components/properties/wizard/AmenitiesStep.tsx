@@ -1,123 +1,130 @@
 
 import { useState } from "react";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Wifi, Thermometer, Wind, ChefHat, Shirt, Car, Mountain, Shield, Coffee, Dumbbell } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { PropertyFormData } from "@/types/property";
+import { 
+  Wifi, 
+  Car, 
+  Utensils, 
+  Tv, 
+  Waves, 
+  Wind, 
+  Coffee,
+  Bath,
+  Shirt,
+  Shield,
+  MapPin,
+  Trees
+} from "lucide-react";
 
 interface AmenitiesStepProps {
   formData: PropertyFormData;
   updateFormData: (updates: Partial<PropertyFormData>) => void;
 }
 
-const AMENITY_CATEGORIES = {
-  basic: {
-    title: "Básico",
-    icon: <Wifi className="h-5 w-5" />,
-    items: [
-      { id: "wifi", name: "WiFi", icon: <Wifi className="h-4 w-4" /> },
-      { id: "heating", name: "Calefacción", icon: <Thermometer className="h-4 w-4" /> },
-      { id: "air_conditioning", name: "Aire acondicionado", icon: <Wind className="h-4 w-4" /> },
-      { id: "kitchen", name: "Cocina", icon: <ChefHat className="h-4 w-4" /> },
-      { id: "laundry", name: "Lavadora", icon: <Shirt className="h-4 w-4" /> }
-    ]
-  },
-  runners: {
-    title: "Para Runners",
-    icon: <Dumbbell className="h-5 w-5" />,
-    items: [
-      { id: "early_breakfast", name: "Desayuno temprano", icon: <Coffee className="h-4 w-4" /> },
-      { id: "stretching_mat", name: "Esterilla para estiramiento", icon: <Dumbbell className="h-4 w-4" /> },
-      { id: "foam_roller", name: "Roller Foam", icon: <Dumbbell className="h-4 w-4" /> },
-      { id: "massage_gun", name: "Pistola de masaje", icon: <Dumbbell className="h-4 w-4" /> }
-    ]
-  },
-  comfort: {
-    title: "Comodidad",
-    icon: <Car className="h-5 w-5" />,
-    items: [
-      { id: "parking", name: "Parking", icon: <Car className="h-4 w-4" /> },
-      { id: "balcony", name: "Balcón/Terraza", icon: <Mountain className="h-4 w-4" /> },
-      { id: "garden", name: "Jardín", icon: <Mountain className="h-4 w-4" /> }
-    ]
-  },
-  location: {
-    title: "Ubicación",
-    icon: <Mountain className="h-5 w-5" />,
-    items: [
-      { id: "near_transport", name: "Cerca de transporte público", icon: <Car className="h-4 w-4" /> },
-      { id: "near_parks", name: "Cerca parques/campo/montaña", icon: <Mountain className="h-4 w-4" /> },
-      { id: "safe_running", name: "Zona segura para correr", icon: <Shield className="h-4 w-4" /> }
-    ]
-  }
-};
+const AMENITIES = [
+  { id: "wifi", label: "WiFi", icon: Wifi },
+  { id: "parking", label: "Estacionamiento", icon: Car },
+  { id: "kitchen", label: "Cocina completa", icon: Utensils },
+  { id: "tv", label: "Televisión", icon: Tv },
+  { id: "pool", label: "Piscina", icon: Waves },
+  { id: "air_conditioning", label: "Aire acondicionado", icon: Wind },
+  { id: "coffee_machine", label: "Cafetera", icon: Coffee },
+  { id: "hot_water", label: "Agua caliente", icon: Bath },
+  { id: "washing_machine", label: "Lavadora", icon: Shirt },
+  { id: "security", label: "Seguridad 24h", icon: Shield },
+  { id: "public_transport", label: "Cerca de transporte público", icon: MapPin },
+  { id: "running_area", label: "Zona segura para correr", icon: Trees }
+];
 
 const AmenitiesStep = ({ formData, updateFormData }: AmenitiesStepProps) => {
-  const [hasAcceptedResponsibility, setHasAcceptedResponsibility] = useState(false);
+  const [acknowledgedImportantNote, setAcknowledgedImportantNote] = useState(false);
 
   const handleAmenityChange = (amenityId: string, checked: boolean) => {
-    const updatedAmenities = checked
-      ? [...formData.amenities, amenityId]
-      : formData.amenities.filter(a => a !== amenityId);
+    const currentAmenities = formData.amenities || [];
     
-    updateFormData({ amenities: updatedAmenities });
+    if (checked) {
+      updateFormData({
+        amenities: [...currentAmenities, amenityId]
+      });
+    } else {
+      updateFormData({
+        amenities: currentAmenities.filter(id => id !== amenityId)
+      });
+    }
+  };
+
+  const handleAcknowledge = () => {
+    setAcknowledgedImportantNote(true);
   };
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Servicios y Comodidades</CardTitle>
+          <CardTitle>Comodidades que ofreces</CardTitle>
+          <p className="text-gray-600">
+            Selecciona todas las comodidades disponibles en tu propiedad
+          </p>
         </CardHeader>
-        <CardContent className="space-y-8">
-          {Object.entries(AMENITY_CATEGORIES).map(([categoryKey, category]) => (
-            <div key={categoryKey}>
-              <div className="flex items-center mb-4">
-                {category.icon}
-                <h3 className="text-lg font-semibold ml-2">{category.title}</h3>
-              </div>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {AMENITIES.map((amenity) => {
+              const IconComponent = amenity.icon;
+              const isChecked = formData.amenities?.includes(amenity.id) || false;
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {category.items.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
-                    <Checkbox
-                      id={item.id}
-                      checked={formData.amenities.includes(item.id)}
-                      onCheckedChange={(checked) => handleAmenityChange(item.id, checked as boolean)}
-                    />
-                    <div className="flex items-center space-x-2">
-                      {item.icon}
-                      <Label htmlFor={item.id} className="font-normal cursor-pointer">
-                        {item.name}
-                      </Label>
-                    </div>
+              return (
+                <div key={amenity.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                  <Checkbox
+                    id={amenity.id}
+                    checked={isChecked}
+                    onCheckedChange={(checked) => handleAmenityChange(amenity.id, checked as boolean)}
+                  />
+                  <IconComponent className="h-5 w-5 text-gray-600" />
+                  <Label 
+                    htmlFor={amenity.id} 
+                    className="flex-1 cursor-pointer font-medium"
+                  >
+                    {amenity.label}
+                  </Label>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Important Notice */}
+          <div className="mt-8 p-4 bg-orange-100 border-l-4 border-orange-400 rounded">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <Shield className="h-5 w-5 text-orange-400 mt-0.5" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-orange-800">
+                  Importante
+                </h3>
+                <p className="mt-1 text-sm text-orange-700">
+                  Recuerda que todas aquellas facilidades y espacios que dejes usar a tu Guest en tu casa es bajo tu responsabilidad como Host.
+                </p>
+                {!acknowledgedImportantNote && (
+                  <Button 
+                    onClick={handleAcknowledge}
+                    className="mt-3 bg-blue-600 hover:bg-blue-700 text-white"
+                    size="sm"
+                  >
+                    Entendido
+                  </Button>
+                )}
+                {acknowledgedImportantNote && (
+                  <div className="mt-2 text-sm text-green-700 font-medium">
+                    ✓ Confirmado
                   </div>
-                ))}
+                )}
               </div>
             </div>
-          ))}
-
-          {/* Responsibility Alert */}
-          <Alert className="border-orange-200 bg-orange-50">
-            <Shield className="h-4 w-4 text-orange-600" />
-            <AlertDescription className="text-orange-800">
-              <strong>Importante:</strong> Recuerda que todas aquellas facilidades y espacios que dejes usar a tu Guest en tu casa es bajo tu responsabilidad como Host.
-            </AlertDescription>
-          </Alert>
-
-          {!hasAcceptedResponsibility && (
-            <div className="flex items-center justify-center">
-              <Button
-                onClick={() => setHasAcceptedResponsibility(true)}
-                className="bg-runner-blue-600 hover:bg-runner-blue-700"
-              >
-                Entendido
-              </Button>
-            </div>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>
