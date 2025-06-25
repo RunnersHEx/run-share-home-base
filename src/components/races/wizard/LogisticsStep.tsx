@@ -107,7 +107,7 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
             <Trophy className="w-5 h-5" />
             <span>Costo en Puntos</span>
           </CardTitle>
-          <CardDescription>Los puntos se asignan automáticamente según nuestro algoritmo</CardDescription>
+          <CardDescription>El sistema asignará automáticamente los puntos del costo de carrera según oferta-demanda</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -122,7 +122,7 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
               placeholder="100"
             />
             <p className="text-sm text-gray-500 mt-1">
-              El sistema asignará automáticamente los puntos según la carrera y ubicación
+              El sistema asignará automáticamente los puntos del costo de carrera según oferta-demanda
             </p>
           </div>
         </CardContent>
