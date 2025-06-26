@@ -10,14 +10,14 @@ export class RaceDiscoveryService {
       .from('races')
       .select(`
         *,
-        host_info:profiles(
+        host_info:profiles!host_id(
           first_name,
           last_name,
           profile_image_url,
           verification_status,
           average_rating
         ),
-        property_info:properties(
+        property_info:properties!property_id(
           title,
           locality,
           max_guests
