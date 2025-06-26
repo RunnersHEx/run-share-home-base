@@ -11,9 +11,11 @@ import { CalendarDays, FileText, Home } from "lucide-react";
 interface BasicInfoStepProps {
   formData: Partial<RaceFormData>;
   onUpdate: (data: Partial<RaceFormData>) => void;
+  onNext: () => void;
+  onPrev: () => void;
 }
 
-export const BasicInfoStep = ({ formData, onUpdate }: BasicInfoStepProps) => {
+export const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProps) => {
   const { properties } = useProperties();
 
   return (
