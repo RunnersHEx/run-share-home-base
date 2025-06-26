@@ -23,7 +23,7 @@ const DiscoverRaces = () => {
   const [selectedRace, setSelectedRace] = useState<any>(null);
   const [showRaceDetail, setShowRaceDetail] = useState(false);
   
-  const { races, loading, fetchRaces } = useDiscoverRaces();
+  const { races, loading, error, fetchRaces } = useDiscoverRaces();
 
   // Load filters from URL parameters on component mount
   useEffect(() => {
@@ -147,7 +147,6 @@ const DiscoverRaces = () => {
 
   const handleSearch = () => {
     console.log(`Searching races with filters:`, filters);
-    toast.success(`Buscando carreras con los filtros aplicados...`);
     fetchRaces(filters);
   };
 
@@ -167,6 +166,23 @@ const DiscoverRaces = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#1E40AF]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Error al cargar carreras</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button 
+            onClick={() => fetchRaces()}
+            className="bg-[#1E40AF] text-white px-6 py-2 rounded-lg hover:bg-[#1E40AF]/90"
+          >
+            Reintentar
+          </button>
+        </div>
       </div>
     );
   }

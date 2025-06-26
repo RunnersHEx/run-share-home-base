@@ -30,10 +30,12 @@ interface DiscoverRace {
 export const useDiscoverRaces = () => {
   const [races, setRaces] = useState<DiscoverRace[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchRaces = async (filters?: RaceFilters) => {
     try {
       setLoading(true);
+      setError(null);
       console.log('Fetching races for discovery with filters:', filters);
       
       const data = await RaceService.fetchAllRaces(filters);
@@ -99,6 +101,7 @@ export const useDiscoverRaces = () => {
       }
     } catch (error) {
       console.error('Error fetching races for discovery:', error);
+      setError('Error al cargar las carreras');
       toast.error('Error al cargar las carreras');
       setRaces([]);
     } finally {
@@ -114,6 +117,7 @@ export const useDiscoverRaces = () => {
   return {
     races,
     loading,
+    error,
     fetchRaces,
     refetchRaces: fetchRaces
   };

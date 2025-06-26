@@ -24,8 +24,6 @@ export const HeroSearchSection = ({
   viewMode,
   onViewModeChange
 }: HeroSearchSectionProps) => {
-  const [focusedInput, setFocusedInput] = useState<string | null>(null);
-
   const clearFilter = (filterKey: keyof RaceFilters) => {
     onFiltersChange({ ...filters, [filterKey]: undefined });
   };
@@ -87,8 +85,6 @@ export const HeroSearchSection = ({
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                   className="pl-10 h-12 text-lg border-0 focus:ring-2 focus:ring-[#1E40AF]"
-                  onFocus={() => setFocusedInput('search')}
-                  onBlur={() => setFocusedInput(null)}
                 />
               </div>
 

@@ -136,13 +136,6 @@ const Races = () => {
         {/* Filters */}
         <RaceFiltersComponent filters={filters} onFiltersChange={setFilters} />
 
-        {/* Debug info */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-            <p className="text-sm">Debug: {races.length} carreras cargadas, loading: {loading ? 'sí' : 'no'}, error: {error || 'ninguno'}</p>
-          </div>
-        )}
-
         {/* Error State */}
         {error && !loading && (
           <div className="text-center py-12">

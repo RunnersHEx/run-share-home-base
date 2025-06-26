@@ -8,7 +8,21 @@ export class RaceDiscoveryService {
     
     let query = supabase
       .from('races')
-      .select('*')
+      .select(`
+        *,
+        host_info:profiles!races_host_id_fkey(
+          first_name,
+          last_name,
+          profile_image_url,
+          verification_status,
+          average_rating
+        ),
+        property_info:properties!races_property_id_fkey(
+          title,
+          locality,
+          max_guests
+        )
+      `)
       .eq('is_active', true)
       .order('race_date', { ascending: true });
 
@@ -34,7 +48,8 @@ export class RaceDiscoveryService {
 
     if (filters?.province) {
       console.log('Applying province filter:', filters.province);
-      query = query.ilike('start_location', `%${filters.province}%`);
+      // Search in both start_location and property locality
+      query = query.or(`start_location.ilike.%${filters.province}%,property_info.locality.ilike.%${filters.province}%`);
     }
 
     if (filters?.terrainProfiles && filters.terrainProfiles.length > 0) {
@@ -56,64 +71,19 @@ export class RaceDiscoveryService {
       return [];
     }
 
-    return this.enrichRacesWithHostAndPropertyData(raceData);
+    return this.enrichRacesWithData(raceData);
   }
 
-  private static async enrichRacesWithHostAndPropertyData(raceData: any[]): Promise<Race[]> {
-    const hostIds = [...new Set(raceData.map(race => race.host_id))];
-    const propertyIds = [...new Set(raceData.map(race => race.property_id))];
-
-    console.log('Fetching host profiles for IDs:', hostIds);
-    console.log('Fetching properties for IDs:', propertyIds);
-
-    // Fetch host profiles
-    const { data: hostProfiles, error: hostError } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, profile_image_url, verification_status, average_rating')
-      .in('id', hostIds);
-
-    if (hostError) {
-      console.error('RaceDiscoveryService: Error fetching host profiles:', hostError);
-    }
-
-    // Fetch property data
-    const { data: properties, error: propertyError } = await supabase
-      .from('properties')
-      .select('id, title, locality, max_guests')
-      .in('id', propertyIds);
-
-    if (propertyError) {
-      console.error('RaceDiscoveryService: Error fetching properties:', propertyError);
-    }
-
-    // Create lookup maps
-    const hostMap = new Map(hostProfiles?.map(host => [host.id, host]) || []);
-    const propertyMap = new Map(properties?.map(prop => [prop.id, prop]) || []);
-
+  private static enrichRacesWithData(raceData: any[]): Race[] {
     // Transform and enrich race data
     return raceData.map(race => {
-      const hostProfile = hostMap.get(race.host_id);
-      const property = propertyMap.get(race.property_id);
-
-      console.log(`Processing race: ${race.name}, Location: ${race.start_location}, Host: ${hostProfile?.first_name} ${hostProfile?.last_name}`);
+      console.log(`Processing race: ${race.name}, Location: ${race.start_location}, Host: ${race.host_info?.first_name} ${race.host_info?.last_name}`);
 
       return {
         ...race,
         modalities: Array.isArray(race.modalities) ? race.modalities : [],
         terrain_profile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
-        distances: Array.isArray(race.distances) ? race.distances : [],
-        host_info: hostProfile ? {
-          first_name: hostProfile.first_name,
-          last_name: hostProfile.last_name,
-          profile_image_url: hostProfile.profile_image_url,
-          verification_status: hostProfile.verification_status,
-          average_rating: hostProfile.average_rating || 4.5
-        } : undefined,
-        property_info: property ? {
-          title: property.title,
-          locality: property.locality,
-          max_guests: property.max_guests
-        } : undefined
+        distances: Array.isArray(race.distances) ? race.distances : []
       };
     }) as Race[];
   }
