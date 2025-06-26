@@ -16,17 +16,22 @@ export const useRaces = () => {
   });
 
   const fetchRaces = async (filters?: RaceFilters) => {
-    if (!user) return;
+    if (!user) {
+      console.log('useRaces: No user found, skipping fetch');
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
-      console.log('Fetching races for user:', user.id);
+      console.log('useRaces: Fetching races for user:', user.id);
       const data = await RaceService.fetchHostRaces(user.id, filters);
-      console.log('Fetched races:', data);
+      console.log('useRaces: Fetched races:', data);
       setRaces(data);
     } catch (error) {
-      console.error('Error fetching races:', error);
+      console.error('useRaces: Error fetching races:', error);
       toast.error('Error al cargar las carreras');
+      setRaces([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -39,7 +44,7 @@ export const useRaces = () => {
       const statsData = await RaceService.getRaceStats(user.id);
       setStats(statsData);
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('useRaces: Error fetching stats:', error);
     }
   };
 
@@ -47,9 +52,9 @@ export const useRaces = () => {
     if (!user) return null;
 
     try {
-      console.log('Creating race with data:', raceData);
+      console.log('useRaces: Creating race with data:', raceData);
       const data = await RaceService.createRace(raceData, user.id);
-      console.log('Created race:', data);
+      console.log('useRaces: Created race:', data);
       
       // Immediately refresh races to show the new one
       await fetchRaces();
@@ -57,7 +62,7 @@ export const useRaces = () => {
       toast.success('Carrera creada correctamente');
       return data;
     } catch (error) {
-      console.error('Error creating race:', error);
+      console.error('useRaces: Error creating race:', error);
       toast.error('Error al crear la carrera');
       return null;
     }
@@ -70,7 +75,7 @@ export const useRaces = () => {
       toast.success('Carrera actualizada correctamente');
       return true;
     } catch (error) {
-      console.error('Error updating race:', error);
+      console.error('useRaces: Error updating race:', error);
       toast.error('Error al actualizar la carrera');
       return false;
     }
@@ -84,7 +89,7 @@ export const useRaces = () => {
       toast.success('Carrera eliminada correctamente');
       return true;
     } catch (error) {
-      console.error('Error deleting race:', error);
+      console.error('useRaces: Error deleting race:', error);
       toast.error('Error al eliminar la carrera');
       return false;
     }
@@ -92,7 +97,7 @@ export const useRaces = () => {
 
   // Force refresh function for when user navigates back
   const forceRefresh = async () => {
-    console.log('Force refreshing races...');
+    console.log('useRaces: Force refreshing races...');
     await fetchRaces();
     await fetchStats();
   };
@@ -109,7 +114,7 @@ export const useRaces = () => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden && user) {
-        console.log('Tab became visible, refreshing races');
+        console.log('useRaces: Tab became visible, refreshing races');
         fetchRaces();
       }
     };

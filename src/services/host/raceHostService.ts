@@ -4,168 +4,151 @@ import { Race, RaceFormData, RaceFilters, RaceStats } from "@/types/race";
 
 export class RaceHostService {
   static async fetchHostRaces(hostId: string, filters?: RaceFilters): Promise<Race[]> {
-    console.log('RaceHostService: Fetching races for host:', hostId);
-    
-    let query = supabase
-      .from('races')
-      .select('*')
-      .eq('host_id', hostId)
-      .order('race_date', { ascending: false });
+    try {
+      console.log('RaceHostService: Fetching races for host:', hostId);
+      
+      let query = supabase
+        .from('races')
+        .select(`
+          *,
+          host_info:profiles!races_host_id_fkey(
+            first_name,
+            last_name,
+            profile_image_url,
+            verification_status,
+            average_rating
+          ),
+          property_info:properties!races_property_id_fkey(
+            title,
+            locality,
+            max_guests
+          )
+        `)
+        .eq('host_id', hostId)
+        .eq('is_active', true)
+        .order('race_date', { ascending: true });
 
-    if (filters?.month) {
-      const year = new Date().getFullYear();
-      const monthNum = parseInt(filters.month);
-      const startDate = new Date(year, monthNum - 1, 1).toISOString().split('T')[0];
-      const endDate = new Date(year, monthNum, 0).toISOString().split('T')[0];
-      query = query.gte('race_date', startDate).lte('race_date', endDate);
+      // Apply filters if provided
+      if (filters?.status) {
+        query = query.eq('is_active', filters.status === 'active');
+      }
+      
+      if (filters?.modalities && filters.modalities.length > 0) {
+        query = query.overlaps('modalities', filters.modalities);
+      }
+      
+      if (filters?.distances && filters.distances.length > 0) {
+        query = query.overlaps('distances', filters.distances);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching host races:', error);
+        throw error;
+      }
+
+      console.log('RaceHostService: Retrieved races:', data);
+      return data || [];
+    } catch (error) {
+      console.error('RaceHostService: Error in fetchHostRaces:', error);
+      throw error;
     }
-
-    if (filters?.modality) {
-      query = query.contains('modalities', [filters.modality]);
-    }
-
-    if (filters?.distance) {
-      query = query.contains('distances', [filters.distance]);
-    }
-
-    if (filters?.status) {
-      const isActive = filters.status === 'active';
-      query = query.eq('is_active', isActive);
-    }
-
-    const { data: raceData, error: raceError } = await query;
-
-    if (raceError) {
-      console.error('RaceHostService: Error fetching races:', raceError);
-      throw raceError;
-    }
-
-    if (!raceData || raceData.length === 0) {
-      return [];
-    }
-
-    return this.enrichRacesWithHostAndPropertyData(raceData, hostId);
-  }
-
-  private static async enrichRacesWithHostAndPropertyData(raceData: any[], hostId: string): Promise<Race[]> {
-    // Get host profile and property info separately to avoid join issues
-    const { data: hostProfile, error: hostError } = await supabase
-      .from('profiles')
-      .select('first_name, last_name, profile_image_url, verification_status, average_rating')
-      .eq('id', hostId)
-      .single();
-
-    if (hostError) {
-      console.error('RaceHostService: Error fetching host profile:', hostError);
-    }
-
-    // Get property data for each race
-    const propertyIds = [...new Set(raceData.map(race => race.property_id))];
-    const { data: properties, error: propertyError } = await supabase
-      .from('properties')
-      .select('id, title, locality, max_guests')
-      .in('id', propertyIds);
-
-    if (propertyError) {
-      console.error('RaceHostService: Error fetching properties:', propertyError);
-    }
-
-    // Create property lookup map
-    const propertyMap = new Map(properties?.map(prop => [prop.id, prop]) || []);
-
-    // Type cast the JSON fields to their proper types and add host/property info
-    return raceData.map(race => {
-      const property = propertyMap.get(race.property_id);
-
-      return {
-        ...race,
-        modalities: Array.isArray(race.modalities) ? race.modalities : [],
-        terrain_profile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
-        distances: Array.isArray(race.distances) ? race.distances : [],
-        host_info: hostProfile ? {
-          first_name: hostProfile.first_name,
-          last_name: hostProfile.last_name,
-          profile_image_url: hostProfile.profile_image_url,
-          verification_status: hostProfile.verification_status,
-          average_rating: hostProfile.average_rating || 4.5
-        } : undefined,
-        property_info: property ? {
-          title: property.title,
-          locality: property.locality,
-          max_guests: property.max_guests
-        } : undefined
-      };
-    }) as Race[];
   }
 
   static async createRace(raceData: RaceFormData, hostId: string): Promise<Race> {
-    console.log('RaceHostService: Creating race:', raceData, 'for host:', hostId);
-    
-    const { data, error } = await supabase
-      .from('races')
-      .insert({
-        ...raceData,
-        host_id: hostId
-      })
-      .select()
-      .single();
+    try {
+      console.log('RaceHostService: Creating race:', raceData);
+      
+      const { data, error } = await supabase
+        .from('races')
+        .insert({
+          ...raceData,
+          host_id: hostId,
+          is_active: true,
+          total_bookings: 0
+        })
+        .select()
+        .single();
 
-    if (error) {
-      console.error('RaceHostService: Error creating race:', error);
+      if (error) {
+        console.error('Error creating race:', error);
+        throw error;
+      }
+
+      console.log('RaceHostService: Created race:', data);
+      return data;
+    } catch (error) {
+      console.error('RaceHostService: Error in createRace:', error);
       throw error;
     }
-
-    console.log('RaceHostService: Created race successfully:', data);
-
-    return {
-      ...data,
-      modalities: Array.isArray(data.modalities) ? data.modalities : [],
-      terrain_profile: Array.isArray(data.terrain_profile) ? data.terrain_profile : [],
-      distances: Array.isArray(data.distances) ? data.distances : []
-    } as Race;
   }
 
-  static async updateRace(raceId: string, updates: Partial<RaceFormData>): Promise<void> {
-    const { error } = await supabase
-      .from('races')
-      .update(updates)
-      .eq('id', raceId);
+  static async updateRace(raceId: string, updates: Partial<RaceFormData>): Promise<Race> {
+    try {
+      const { data, error } = await supabase
+        .from('races')
+        .update(updates)
+        .eq('id', raceId)
+        .select()
+        .single();
 
-    if (error) {
+      if (error) {
+        console.error('Error updating race:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('RaceHostService: Error in updateRace:', error);
       throw error;
     }
   }
 
   static async deleteRace(raceId: string): Promise<void> {
-    const { error } = await supabase
-      .from('races')
-      .delete()
-      .eq('id', raceId);
+    try {
+      const { error } = await supabase
+        .from('races')
+        .delete()
+        .eq('id', raceId);
 
-    if (error) {
+      if (error) {
+        console.error('Error deleting race:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('RaceHostService: Error in deleteRace:', error);
       throw error;
     }
   }
 
   static async getRaceStats(hostId: string): Promise<RaceStats> {
-    const { data: races, error } = await supabase
-      .from('races')
-      .select('total_bookings, average_rating')
-      .eq('host_id', hostId);
+    try {
+      // Get total races count
+      const { count: totalRaces } = await supabase
+        .from('races')
+        .select('*', { count: 'exact', head: true })
+        .eq('host_id', hostId)
+        .eq('is_active', true);
 
-    if (error) {
-      throw error;
+      // Get bookings this year (placeholder - would need bookings table)
+      const bookingsThisYear = 0;
+
+      // Get average rating (placeholder - would need reviews table)
+      const averageRating = 0;
+
+      return {
+        totalRaces: totalRaces || 0,
+        bookingsThisYear,
+        averageRating
+      };
+    } catch (error) {
+      console.error('RaceHostService: Error in getRaceStats:', error);
+      return {
+        totalRaces: 0,
+        bookingsThisYear: 0,
+        averageRating: 0
+      };
     }
-
-    const totalRaces = races?.length || 0;
-    const bookingsThisYear = races?.reduce((sum, race) => sum + (race.total_bookings || 0), 0) || 0;
-    const averageRating = races?.length ? 
-      races.reduce((sum, race) => sum + (race.average_rating || 0), 0) / races.length : 0;
-
-    return {
-      totalRaces,
-      bookingsThisYear,
-      averageRating: Math.round(averageRating * 10) / 10
-    };
   }
 }
