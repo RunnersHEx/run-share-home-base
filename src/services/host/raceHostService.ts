@@ -40,13 +40,6 @@ export class RaceHostService {
         .from('races')
         .select(`
           *,
-          host_info:profiles!races_host_id_fkey(
-            first_name,
-            last_name,
-            profile_image_url,
-            verification_status,
-            average_rating
-          ),
           property_info:properties!races_property_id_fkey(
             title,
             locality,
