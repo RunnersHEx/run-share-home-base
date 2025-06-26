@@ -64,13 +64,13 @@ const Header = () => {
                     onClick={() => handleAuthClick("login")}
                     className="text-gray-700 hover:text-blue-600"
                   >
-                    Inicio
+                    Iniciar Sesión
                   </Button>
                   <Button
                     onClick={() => handleAuthClick("register")}
                     className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
-                    Iniciar Sesión
+                    Únete a la Comunidad
                   </Button>
                 </div>
               )}
