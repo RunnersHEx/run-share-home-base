@@ -1,8 +1,18 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Race, RaceFormData, RaceFilters, RaceStats } from "@/types/race";
+import { Race, RaceFormData, RaceFilters, RaceStats, RaceModality, TerrainProfile, RaceDistance } from "@/types/race";
 
 export class RaceHostService {
+  // Helper function to convert database race to typed Race
+  private static convertDatabaseRaceToTyped(dbRace: any): Race {
+    return {
+      ...dbRace,
+      modalities: Array.isArray(dbRace.modalities) ? dbRace.modalities : [],
+      terrain_profile: Array.isArray(dbRace.terrain_profile) ? dbRace.terrain_profile : [],
+      distances: Array.isArray(dbRace.distances) ? dbRace.distances : []
+    };
+  }
+
   static async fetchHostRaces(hostId: string, filters?: RaceFilters): Promise<Race[]> {
     try {
       console.log('RaceHostService: Fetching races for host:', hostId);
@@ -49,7 +59,10 @@ export class RaceHostService {
       }
 
       console.log('RaceHostService: Retrieved races:', data);
-      return data || [];
+      
+      // Convert database races to typed races
+      const typedRaces = (data || []).map(this.convertDatabaseRaceToTyped);
+      return typedRaces;
     } catch (error) {
       console.error('RaceHostService: Error in fetchHostRaces:', error);
       throw error;
@@ -77,7 +90,7 @@ export class RaceHostService {
       }
 
       console.log('RaceHostService: Created race:', data);
-      return data;
+      return this.convertDatabaseRaceToTyped(data);
     } catch (error) {
       console.error('RaceHostService: Error in createRace:', error);
       throw error;
@@ -98,7 +111,7 @@ export class RaceHostService {
         throw error;
       }
 
-      return data;
+      return this.convertDatabaseRaceToTyped(data);
     } catch (error) {
       console.error('RaceHostService: Error in updateRace:', error);
       throw error;
