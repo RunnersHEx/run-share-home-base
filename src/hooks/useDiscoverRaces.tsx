@@ -35,7 +35,17 @@ export const useDiscoverRaces = () => {
     try {
       setLoading(true);
       console.log('Fetching races for discovery with filters:', filters);
-      const data = await RaceService.fetchAllRaces(filters);
+      
+      // Convert province filter to match database field
+      const processedFilters = { ...filters };
+      if (filters?.province) {
+        console.log('Province filter applied:', filters.province);
+        // The province filter should match against start_location in the database
+        processedFilters.province = filters.province;
+      }
+      
+      const data = await RaceService.fetchAllRaces(processedFilters);
+      console.log('Raw race data received:', data);
       
       // Get race images for each race
       const raceImagesPromises = data.map(async (race) => {
@@ -53,31 +63,39 @@ export const useDiscoverRaces = () => {
       const racesWithImages = await Promise.all(raceImagesPromises);
       
       // Transform the data to match the DiscoverRace interface
-      const transformedRaces: DiscoverRace[] = racesWithImages.map(race => ({
-        id: race.id,
-        name: race.name,
-        location: race.start_location || race.property_info?.locality || "Ubicación no especificada",
-        date: race.race_date,
-        daysUntil: Math.ceil((new Date(race.race_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)),
-        modalities: race.modalities || [],
-        distances: race.distances || [],
-        terrainProfile: race.terrain_profile || [],
-        imageUrl: race.imageUrl,
-        host: {
-          id: race.host_id,
-          name: race.host_info ? `${race.host_info.first_name} ${race.host_info.last_name}` : "Host Runner",
-          rating: race.host_info?.average_rating || 4.5,
-          verified: race.host_info?.verification_status === 'approved',
-          imageUrl: race.host_info?.profile_image_url || "/placeholder.svg"
-        },
-        pointsCost: race.points_cost,
-        available: race.is_active,
-        highlights: race.highlights || race.description || "Experiencia única de running",
-        maxGuests: race.property_info?.max_guests
-      }));
+      const transformedRaces: DiscoverRace[] = racesWithImages.map(race => {
+        console.log('Processing race:', race.name, 'Location:', race.start_location);
+        
+        return {
+          id: race.id,
+          name: race.name,
+          location: race.start_location || race.property_info?.locality || "Ubicación no especificada",
+          date: race.race_date,
+          daysUntil: Math.ceil((new Date(race.race_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)),
+          modalities: race.modalities || [],
+          distances: race.distances || [],
+          terrainProfile: race.terrain_profile || [],
+          imageUrl: race.imageUrl,
+          host: {
+            id: race.host_id,
+            name: race.host_info ? `${race.host_info.first_name} ${race.host_info.last_name}` : "Host Runner",
+            rating: race.host_info?.average_rating || 4.5,
+            verified: race.host_info?.verification_status === 'approved',
+            imageUrl: race.host_info?.profile_image_url || "/placeholder.svg"
+          },
+          pointsCost: race.points_cost,
+          available: race.is_active,
+          highlights: race.highlights || race.description || "Experiencia única de running",
+          maxGuests: race.property_info?.max_guests || race.max_guests
+        };
+      });
       
       console.log('Transformed races for discovery:', transformedRaces);
       setRaces(transformedRaces);
+      
+      if (transformedRaces.length === 0) {
+        console.log('No races found with current filters:', processedFilters);
+      }
     } catch (error) {
       console.error('Error fetching races for discovery:', error);
       toast.error('Error al cargar las carreras');
@@ -87,6 +105,7 @@ export const useDiscoverRaces = () => {
   };
 
   useEffect(() => {
+    console.log('useDiscoverRaces: Initial fetch');
     fetchRaces();
   }, []);
 

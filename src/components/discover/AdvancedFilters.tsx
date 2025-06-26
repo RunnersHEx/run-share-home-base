@@ -28,34 +28,35 @@ const spanishProvinces = [
 ];
 
 const months = [
-  { value: "01", label: "Enero" },
-  { value: "02", label: "Febrero" },
-  { value: "03", label: "Marzo" },
-  { value: "04", label: "Abril" },
-  { value: "05", label: "Mayo" },
-  { value: "06", label: "Junio" },
-  { value: "07", label: "Julio" },
-  { value: "08", label: "Agosto" },
-  { value: "09", label: "Septiembre" },
+  { value: "1", label: "Enero" },
+  { value: "2", label: "Febrero" },
+  { value: "3", label: "Marzo" },
+  { value: "4", label: "Abril" },
+  { value: "5", label: "Mayo" },
+  { value: "6", label: "Junio" },
+  { value: "7", label: "Julio" },
+  { value: "8", label: "Agosto" },
+  { value: "9", label: "Septiembre" },
   { value: "10", label: "Octubre" },
   { value: "11", label: "Noviembre" },
   { value: "12", label: "Diciembre" }
 ];
 
 export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }: AdvancedFiltersProps) => {
-  const [pointsRange, setPointsRange] = useState([0, 500]);
-  const [selectedModalities, setSelectedModalities] = useState<RaceModality[]>([]);
-  const [selectedDistances, setSelectedDistances] = useState<RaceDistance[]>([]);
-  const [selectedTerrainProfiles, setSelectedTerrainProfiles] = useState<TerrainProfile[]>([]);
-  const [maxGuests, setMaxGuests] = useState<number>(1);
-  const [selectedProvince, setSelectedProvince] = useState<string>("");
-  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [pointsRange, setPointsRange] = useState<[number, number]>([0, 500]);
+  const [selectedModalities, setSelectedModalities] = useState<RaceModality[]>(filters.modalities || []);
+  const [selectedDistances, setSelectedDistances] = useState<RaceDistance[]>(filters.distances || []);
+  const [selectedTerrainProfiles, setSelectedTerrainProfiles] = useState<TerrainProfile[]>(filters.terrainProfiles || []);
+  const [maxGuests, setMaxGuests] = useState<number>(filters.maxGuests || 1);
+  const [selectedProvince, setSelectedProvince] = useState<string>(filters.province || "");
+  const [selectedMonth, setSelectedMonth] = useState<string>(filters.month || "");
 
   const handleModalityChange = (modality: RaceModality, checked: boolean) => {
     const updated = checked 
       ? [...selectedModalities, modality]
       : selectedModalities.filter(m => m !== modality);
     setSelectedModalities(updated);
+    console.log('Modalities updated:', updated);
   };
 
   const handleDistanceChange = (distance: RaceDistance, checked: boolean) => {
@@ -63,6 +64,7 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
       ? [...selectedDistances, distance] 
       : selectedDistances.filter(d => d !== distance);
     setSelectedDistances(updated);
+    console.log('Distances updated:', updated);
   };
 
   const handleTerrainChange = (terrain: TerrainProfile, checked: boolean) => {
@@ -70,9 +72,11 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
       ? [...selectedTerrainProfiles, terrain]
       : selectedTerrainProfiles.filter(t => t !== terrain);
     setSelectedTerrainProfiles(updated);
+    console.log('Terrain profiles updated:', updated);
   };
 
   const clearAllFilters = () => {
+    console.log('Clearing all filters');
     onFiltersChange({});
     setPointsRange([0, 500]);
     setSelectedModalities([]);
@@ -87,7 +91,7 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
     // Apply all current filter states to the filters with proper type casting
     const newFilters: RaceFilters = {
       ...filters,
-      pointsRange: pointsRange as [number, number],
+      pointsRange: pointsRange,
       modalities: selectedModalities.length > 0 ? selectedModalities : undefined,
       distances: selectedDistances.length > 0 ? selectedDistances : undefined,
       terrainProfiles: selectedTerrainProfiles.length > 0 ? selectedTerrainProfiles : undefined,
@@ -96,6 +100,7 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
       month: selectedMonth || undefined
     };
     
+    console.log('Search triggered with filters:', newFilters);
     onFiltersChange(newFilters);
     
     if (onSearch) {
@@ -125,7 +130,13 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
           <div className="space-y-3">
             <div>
               <Label htmlFor="province">Provincia</Label>
-              <Select value={selectedProvince} onValueChange={setSelectedProvince}>
+              <Select 
+                value={selectedProvince} 
+                onValueChange={(value) => {
+                  console.log('Province selected:', value);
+                  setSelectedProvince(value);
+                }}
+              >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Seleccionar provincia..." />
                 </SelectTrigger>
@@ -159,7 +170,13 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
             
             <div>
               <Label htmlFor="month">Mes</Label>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <Select 
+                value={selectedMonth} 
+                onValueChange={(value) => { 
+                  console.log('Month selected:', value);
+                  setSelectedMonth(value);
+                }}
+              >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Seleccionar mes..." />
                 </SelectTrigger>

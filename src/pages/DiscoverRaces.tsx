@@ -39,15 +39,21 @@ const DiscoverRaces = () => {
   const { races, loading, fetchRaces } = useDiscoverRaces();
 
   const filteredRaces = useMemo(() => {
+    console.log('Filtering races. Total races:', races.length);
+    console.log('Applied filters:', filters);
+    console.log('Search query:', searchQuery);
+
     return races.filter(race => {
       // Text search
       if (searchQuery && !race.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
           !race.location.toLowerCase().includes(searchQuery.toLowerCase())) {
+        console.log(`Race ${race.name} filtered out by text search`);
         return false;
       }
       
       // Province filter
       if (filters.province && !race.location.toLowerCase().includes(filters.province.toLowerCase())) {
+        console.log(`Race ${race.name} filtered out by province. Location: ${race.location}, Filter: ${filters.province}`);
         return false;
       }
       
@@ -56,7 +62,10 @@ const DiscoverRaces = () => {
         const hasMatchingModality = filters.modalities.some(modality => 
           race.modalities.includes(modality)
         );
-        if (!hasMatchingModality) return false;
+        if (!hasMatchingModality) {
+          console.log(`Race ${race.name} filtered out by modality`);
+          return false;
+        }
       }
       
       // Distance filter
@@ -64,23 +73,36 @@ const DiscoverRaces = () => {
         const hasMatchingDistance = filters.distances.some(distance => 
           race.distances.includes(distance)
         );
-        if (!hasMatchingDistance) return false;
+        if (!hasMatchingDistance) {
+          console.log(`Race ${race.name} filtered out by distance`);
+          return false;
+        }
       }
       
       // Month filter
       if (filters.month) {
         const raceMonth = new Date(race.date).getMonth() + 1;
         const filterMonth = parseInt(filters.month);
-        if (raceMonth !== filterMonth) return false;
+        if (raceMonth !== filterMonth) {
+          console.log(`Race ${race.name} filtered out by month. Race month: ${raceMonth}, Filter month: ${filterMonth}`);
+          return false;
+        }
       }
       
       // Max guests filter
       if (filters.maxGuests && race.maxGuests && race.maxGuests < filters.maxGuests) {
+        console.log(`Race ${race.name} filtered out by max guests`);
         return false;
       }
       
       // Only show available races
-      return race.available;
+      if (!race.available) {
+        console.log(`Race ${race.name} filtered out - not available`);
+        return false;
+      }
+
+      console.log(`Race ${race.name} passed all filters`);
+      return true;
     });
   }, [races, searchQuery, filters]);
 
@@ -93,13 +115,22 @@ const DiscoverRaces = () => {
   };
 
   const handleViewDetails = (race: any) => {
+    console.log('Opening race details for:', race.name);
     setSelectedRace(race);
     setShowRaceDetail(true);
   };
 
   const handleSearch = () => {
+    console.log(`Searching races with filters:`, filters);
     toast.success(`Buscando carreras con los filtros aplicados...`);
     fetchRaces(filters);
+  };
+
+  const handleFiltersChange = (newFilters: SearchFilters) => {
+    console.log('Filters changed:', newFilters);
+    setFilters(newFilters);
+    // Auto-search when filters change
+    fetchRaces(newFilters);
   };
 
   if (loading) {
@@ -110,6 +141,8 @@ const DiscoverRaces = () => {
     );
   }
 
+  console.log('Rendering DiscoverRaces. Filtered races:', filteredRaces.length);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Search Section */}
@@ -117,7 +150,7 @@ const DiscoverRaces = () => {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         filters={filters}
-        onFiltersChange={setFilters}
+        onFiltersChange={handleFiltersChange}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
       />
@@ -128,7 +161,7 @@ const DiscoverRaces = () => {
           <div className={`${showFilters ? 'block' : 'hidden'} lg:block w-80 flex-shrink-0`}>
             <AdvancedFilters 
               filters={filters}
-              onFiltersChange={setFilters}
+              onFiltersChange={handleFiltersChange}
               onClose={() => setShowFilters(false)}
               onSearch={handleSearch}
             />
@@ -227,6 +260,7 @@ const DiscoverRaces = () => {
                   onClick={() => {
                     setSearchQuery("");
                     setFilters({});
+                    fetchRaces();
                   }}
                   variant="outline"
                 >

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Race, RaceFormData, RaceFilters, RaceStats, RaceImage } from "@/types/race";
 
@@ -112,25 +111,36 @@ export class RaceService {
       .eq('is_active', true)
       .order('race_date', { ascending: true });
 
+    // Apply filters
     if (filters?.month) {
       const year = new Date().getFullYear();
       const monthNum = parseInt(filters.month);
       const startDate = new Date(year, monthNum - 1, 1).toISOString().split('T')[0];
       const endDate = new Date(year, monthNum, 0).toISOString().split('T')[0];
+      console.log('Applying month filter:', filters.month, 'Date range:', startDate, 'to', endDate);
       query = query.gte('race_date', startDate).lte('race_date', endDate);
     }
 
     if (filters?.modalities && filters.modalities.length > 0) {
       // Use overlap operator for array matching
+      console.log('Applying modalities filter:', filters.modalities);
       query = query.overlaps('modalities', filters.modalities);
     }
 
     if (filters?.distances && filters.distances.length > 0) {
+      console.log('Applying distances filter:', filters.distances);
       query = query.overlaps('distances', filters.distances);
     }
 
     if (filters?.province) {
+      console.log('Applying province filter:', filters.province);
+      // Use ilike for case-insensitive partial matching on start_location
       query = query.ilike('start_location', `%${filters.province}%`);
+    }
+
+    if (filters?.terrainProfiles && filters.terrainProfiles.length > 0) {
+      console.log('Applying terrain profiles filter:', filters.terrainProfiles);
+      query = query.overlaps('terrain_profile', filters.terrainProfiles);
     }
 
     const { data: raceData, error: raceError } = await query;
@@ -140,15 +150,20 @@ export class RaceService {
       throw raceError;
     }
 
-    console.log('RaceService: Raw race data from database:', raceData);
+    console.log('RaceService: Raw race data from database:', raceData?.length, 'races found');
+    console.log('RaceService: Sample race data:', raceData?.[0]);
 
     if (!raceData || raceData.length === 0) {
+      console.log('No races found in database');
       return [];
     }
 
     // Get unique host IDs and property IDs for separate queries
     const hostIds = [...new Set(raceData.map(race => race.host_id))];
     const propertyIds = [...new Set(raceData.map(race => race.property_id))];
+
+    console.log('Fetching host profiles for IDs:', hostIds);
+    console.log('Fetching properties for IDs:', propertyIds);
 
     // Fetch host profiles
     const { data: hostProfiles, error: hostError } = await supabase
@@ -170,6 +185,9 @@ export class RaceService {
       console.error('RaceService: Error fetching properties:', propertyError);
     }
 
+    console.log('Host profiles fetched:', hostProfiles?.length);
+    console.log('Properties fetched:', properties?.length);
+
     // Create lookup maps
     const hostMap = new Map(hostProfiles?.map(host => [host.id, host]) || []);
     const propertyMap = new Map(properties?.map(prop => [prop.id, prop]) || []);
@@ -178,6 +196,8 @@ export class RaceService {
     const processedRaces = raceData.map(race => {
       const hostProfile = hostMap.get(race.host_id);
       const property = propertyMap.get(race.property_id);
+
+      console.log(`Processing race: ${race.name}, Location: ${race.start_location}, Host: ${hostProfile?.first_name} ${hostProfile?.last_name}`);
 
       return {
         ...race,
@@ -199,7 +219,7 @@ export class RaceService {
       };
     }) as Race[];
 
-    console.log('RaceService: Processed all races:', processedRaces);
+    console.log('RaceService: Processed all races:', processedRaces.length, 'races');
     return processedRaces;
   }
 
