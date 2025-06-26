@@ -10,14 +10,14 @@ export class RaceDiscoveryService {
       .from('races')
       .select(`
         *,
-        host_info:profiles(
+        profiles!races_host_id_fkey(
           first_name,
           last_name,
           profile_image_url,
           verification_status,
           average_rating
         ),
-        property_info:properties(
+        properties!races_property_id_fkey(
           title,
           locality,
           max_guests
@@ -77,10 +77,12 @@ export class RaceDiscoveryService {
   private static enrichRacesWithData(raceData: any[]): Race[] {
     // Transform and enrich race data
     return raceData.map(race => {
-      console.log(`Processing race: ${race.name}, Location: ${race.start_location}, Host: ${race.host_info?.first_name} ${race.host_info?.last_name}`);
+      console.log(`Processing race: ${race.name}, Location: ${race.start_location}, Host: ${race.profiles?.first_name} ${race.profiles?.last_name}`);
 
       return {
         ...race,
+        host_info: race.profiles,
+        property_info: race.properties,
         modalities: Array.isArray(race.modalities) ? race.modalities : [],
         terrain_profile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
         distances: Array.isArray(race.distances) ? race.distances : []
