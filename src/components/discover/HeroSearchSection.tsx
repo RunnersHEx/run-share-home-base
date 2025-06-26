@@ -32,6 +32,36 @@ export const HeroSearchSection = ({
 
   const hasActiveFilters = Object.values(filters).some(value => value !== undefined && value !== '');
 
+  // Helper function to handle modality changes
+  const handleModalityChange = (value: string) => {
+    if (!value) {
+      const { modalities, ...rest } = filters;
+      onFiltersChange(rest);
+    } else {
+      onFiltersChange({ ...filters, modalities: [value as any] });
+    }
+  };
+
+  // Helper function to handle distance changes
+  const handleDistanceChange = (value: string) => {
+    if (!value) {
+      const { distances, ...rest } = filters;
+      onFiltersChange(rest);
+    } else {
+      onFiltersChange({ ...filters, distances: [value as any] });
+    }
+  };
+
+  // Helper function to get current modality value
+  const getCurrentModality = () => {
+    return filters.modalities && filters.modalities.length > 0 ? filters.modalities[0] : '';
+  };
+
+  // Helper function to get current distance value
+  const getCurrentDistance = () => {
+    return filters.distances && filters.distances.length > 0 ? filters.distances[0] : '';
+  };
+
   return (
     <div className="bg-gradient-to-br from-[#1E40AF] to-[#059669] text-white py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -88,8 +118,8 @@ export const HeroSearchSection = ({
                 </Select>
 
                 <Select
-                  value={filters.modality || ''}
-                  onValueChange={(value) => onFiltersChange({ ...filters, modality: value as any || undefined })}
+                  value={getCurrentModality()}
+                  onValueChange={handleModalityChange}
                 >
                   <SelectTrigger className="w-44 h-12 border-0">
                     <SelectValue placeholder="Modalidad" />
@@ -101,8 +131,8 @@ export const HeroSearchSection = ({
                 </Select>
 
                 <Select
-                  value={filters.distance || ''}
-                  onValueChange={(value) => onFiltersChange({ ...filters, distance: value as any || undefined })}
+                  value={getCurrentDistance()}
+                  onValueChange={handleDistanceChange}
                 >
                   <SelectTrigger className="w-44 h-12 border-0">
                     <SelectValue placeholder="Distancia" />
@@ -158,22 +188,22 @@ export const HeroSearchSection = ({
                 </Badge>
               )}
               
-              {filters.modality && (
+              {filters.modalities && filters.modalities.length > 0 && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  {filters.modality === 'road' ? 'Ruta/Asfalto' : 'Trail/Montaña'}
+                  {filters.modalities[0] === 'road' ? 'Ruta/Asfalto' : 'Trail/Montaña'}
                   <X 
                     className="w-3 h-3 ml-1 cursor-pointer" 
-                    onClick={() => clearFilter('modality')}
+                    onClick={() => clearFilter('modalities')}
                   />
                 </Badge>
               )}
               
-              {filters.distance && (
+              {filters.distances && filters.distances.length > 0 && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  {filters.distance.replace('_', ' ').toUpperCase()}
+                  {filters.distances[0].replace('_', ' ').toUpperCase()}
                   <X 
                     className="w-3 h-3 ml-1 cursor-pointer" 
-                    onClick={() => clearFilter('distance')}
+                    onClick={() => clearFilter('distances')}
                   />
                 </Badge>
               )}

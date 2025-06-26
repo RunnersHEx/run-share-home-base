@@ -1,5 +1,6 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ import { useDiscoverRaces } from "@/hooks/useDiscoverRaces";
 import { toast } from "sonner";
 
 const DiscoverRaces = () => {
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [showFilters, setShowFilters] = useState(false);
@@ -37,6 +39,45 @@ const DiscoverRaces = () => {
   
   // Use the new discover races hook
   const { races, loading, fetchRaces } = useDiscoverRaces();
+
+  // Load filters from URL parameters on component mount
+  useEffect(() => {
+    const urlFilters: SearchFilters = {};
+    
+    const query = searchParams.get('q');
+    const province = searchParams.get('province');
+    const month = searchParams.get('month');
+    const modality = searchParams.get('modality');
+    const distance = searchParams.get('distance');
+    
+    if (query) {
+      setSearchQuery(query);
+    }
+    
+    if (province) {
+      urlFilters.province = province;
+    }
+    
+    if (month) {
+      urlFilters.month = month;
+    }
+    
+    if (modality) {
+      urlFilters.modalities = [modality as any];
+    }
+    
+    if (distance) {
+      urlFilters.distances = [distance as any];
+    }
+
+    console.log('DiscoverRaces: Loading filters from URL:', urlFilters);
+    
+    if (Object.keys(urlFilters).length > 0) {
+      setFilters(urlFilters);
+      // Trigger search with URL filters
+      fetchRaces(urlFilters);
+    }
+  }, [searchParams, fetchRaces]);
 
   const filteredRaces = useMemo(() => {
     console.log('Filtering races. Total races:', races.length);
