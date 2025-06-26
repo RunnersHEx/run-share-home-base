@@ -5,11 +5,30 @@ import { Race, RaceFormData, RaceFilters, RaceStats, RaceModality, TerrainProfil
 export class RaceHostService {
   // Helper function to convert database race to typed Race
   private static convertDatabaseRaceToTyped(dbRace: any): Race {
+    console.log('Converting database race:', dbRace);
+    
+    // Safely parse JSON fields
+    const parseJsonField = (field: any): any[] => {
+      if (Array.isArray(field)) return field;
+      if (typeof field === 'string') {
+        try {
+          const parsed = JSON.parse(field);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+      if (field && typeof field === 'object') {
+        return Array.isArray(field) ? field : [];
+      }
+      return [];
+    };
+
     return {
       ...dbRace,
-      modalities: Array.isArray(dbRace.modalities) ? dbRace.modalities : [],
-      terrain_profile: Array.isArray(dbRace.terrain_profile) ? dbRace.terrain_profile : [],
-      distances: Array.isArray(dbRace.distances) ? dbRace.distances : []
+      modalities: parseJsonField(dbRace.modalities) as RaceModality[],
+      terrain_profile: parseJsonField(dbRace.terrain_profile) as TerrainProfile[],
+      distances: parseJsonField(dbRace.distances) as RaceDistance[]
     };
   }
 
@@ -62,6 +81,7 @@ export class RaceHostService {
       
       // Convert database races to typed races
       const typedRaces = (data || []).map(this.convertDatabaseRaceToTyped);
+      console.log('RaceHostService: Converted races:', typedRaces);
       return typedRaces;
     } catch (error) {
       console.error('RaceHostService: Error in fetchHostRaces:', error);

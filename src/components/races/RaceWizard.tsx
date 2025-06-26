@@ -52,31 +52,40 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
+    console.log('Submitting race data:', formData);
+    
     try {
-      console.log('Submitting race data:', formData);
-      
       // Validate required fields
       if (!formData.name || !formData.race_date || !formData.property_id) {
         toast.error('Por favor completa todos los campos obligatorios');
+        setIsSubmitting(false);
         return;
       }
 
       if (!formData.modalities || formData.modalities.length === 0) {
         toast.error('Por favor selecciona al menos una modalidad');
+        setIsSubmitting(false);
         return;
       }
 
       if (!formData.distances || formData.distances.length === 0) {
         toast.error('Por favor selecciona al menos una distancia');
+        setIsSubmitting(false);
         return;
       }
 
+      console.log('Creating race with validated data:', formData);
       const result = await createRace(formData as RaceFormData);
+      
       if (result) {
+        console.log('Race created successfully:', result);
         toast.success('¡Carrera creada exitosamente!');
         onSuccess();
       } else {
+        console.log('Race creation failed');
         toast.error('Error al crear la carrera. Por favor intenta de nuevo.');
       }
     } catch (error) {
@@ -88,7 +97,12 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
   };
 
   const updateFormData = (stepData: Partial<RaceFormData>) => {
-    setFormData(prev => ({ ...prev, ...stepData }));
+    console.log('Updating form data with:', stepData);
+    setFormData(prev => {
+      const updated = { ...prev, ...stepData };
+      console.log('Updated form data:', updated);
+      return updated;
+    });
   };
 
   const CurrentStepComponent = STEPS[currentStep - 1].component;
@@ -110,6 +124,13 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
         return false;
     }
   };
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Current form data:', formData);
+    console.log('Current step:', currentStep);
+    console.log('Step valid:', isStepValid());
+  }, [formData, currentStep]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
