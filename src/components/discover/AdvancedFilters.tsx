@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -307,7 +308,7 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
               </Label>
               <Slider
                 value={pointsRange}
-                onValueChange={setPointsRange}
+                onValueChange={(value) => setPointsRange([value[0], value[1]])}
                 max={500}
                 min={0}
                 step={25}
