@@ -136,6 +136,8 @@ const PropertyWizard = ({ onClose, propertyId, initialData }: PropertyWizardProp
           <AmenitiesStep 
             formData={formData} 
             updateFormData={updateFormData}
+            acknowledgedImportantNote={acknowledgedImportantNote}
+            setAcknowledgedImportantNote={setAcknowledgedImportantNote}
           />
         );
       case 4:

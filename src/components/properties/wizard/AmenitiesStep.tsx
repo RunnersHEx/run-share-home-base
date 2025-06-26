@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,6 +22,8 @@ import {
 interface AmenitiesStepProps {
   formData: PropertyFormData;
   updateFormData: (updates: Partial<PropertyFormData>) => void;
+  acknowledgedImportantNote: boolean;
+  setAcknowledgedImportantNote: (acknowledged: boolean) => void;
 }
 
 const AMENITIES = [
@@ -40,9 +41,12 @@ const AMENITIES = [
   { id: "running_area", label: "Zona segura para correr", icon: Trees }
 ];
 
-const AmenitiesStep = ({ formData, updateFormData }: AmenitiesStepProps) => {
-  const [acknowledgedImportantNote, setAcknowledgedImportantNote] = useState(false);
-
+const AmenitiesStep = ({ 
+  formData, 
+  updateFormData, 
+  acknowledgedImportantNote, 
+  setAcknowledgedImportantNote 
+}: AmenitiesStepProps) => {
   const handleAmenityChange = (amenityId: string, checked: boolean) => {
     const currentAmenities = formData.amenities || [];
     
