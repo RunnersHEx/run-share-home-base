@@ -36,30 +36,7 @@ export const useDiscoverRaces = () => {
       setLoading(true);
       console.log('Fetching races for discovery with filters:', filters);
       
-      // Process filters to ensure correct data types
-      const processedFilters = { ...filters };
-      
-      if (filters?.province) {
-        console.log('Province filter applied:', filters.province);
-        processedFilters.province = filters.province;
-      }
-      
-      if (filters?.modalities && filters.modalities.length > 0) {
-        console.log('Modalities filter applied:', filters.modalities);
-        processedFilters.modalities = filters.modalities;
-      }
-      
-      if (filters?.distances && filters.distances.length > 0) {
-        console.log('Distances filter applied:', filters.distances);
-        processedFilters.distances = filters.distances;
-      }
-      
-      if (filters?.month) {
-        console.log('Month filter applied:', filters.month);
-        processedFilters.month = filters.month;
-      }
-      
-      const data = await RaceService.fetchAllRaces(processedFilters);
+      const data = await RaceService.fetchAllRaces(filters);
       console.log('Raw race data received:', data.length, 'races');
       
       if (data.length === 0) {
@@ -115,7 +92,7 @@ export const useDiscoverRaces = () => {
       setRaces(transformedRaces);
       
       if (transformedRaces.length === 0) {
-        console.log('No races found with current filters:', processedFilters);
+        console.log('No races found with current filters:', filters);
         toast.info('No se encontraron carreras con los filtros aplicados');
       } else {
         console.log(`Found ${transformedRaces.length} races matching filters`);

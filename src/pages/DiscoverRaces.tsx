@@ -1,27 +1,13 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { 
-  Search, 
-  MapPin, 
-  Calendar, 
-  Filter, 
-  Grid3X3, 
-  Map as MapIcon,
-  Star,
-  Clock,
-  Trophy,
-  Heart
-} from "lucide-react";
 import { HeroSearchSection } from "@/components/discover/HeroSearchSection";
-import { AdvancedFilters } from "@/components/discover/AdvancedFilters";
+import { AdvancedFilters } from "@/components/discover/filters/AdvancedFilters";
 import { RaceCard } from "@/components/discover/RaceCard";
 import { RaceDetailModal } from "@/components/discover/RaceDetailModal";
+import { ResultsHeader } from "@/components/discover/search/ResultsHeader";
+import { EmptyState } from "@/components/discover/search/EmptyState";
+import { MapView } from "@/components/discover/search/MapView";
 import { RaceFilters as SearchFilters } from "@/types/race";
 import { useDiscoverRaces } from "@/hooks/useDiscoverRaces";
 import { toast } from "sonner";
@@ -37,7 +23,6 @@ const DiscoverRaces = () => {
   const [selectedRace, setSelectedRace] = useState<any>(null);
   const [showRaceDetail, setShowRaceDetail] = useState(false);
   
-  // Use the new discover races hook
   const { races, loading, fetchRaces } = useDiscoverRaces();
 
   // Load filters from URL parameters on component mount
@@ -74,7 +59,6 @@ const DiscoverRaces = () => {
     
     if (Object.keys(urlFilters).length > 0) {
       setFilters(urlFilters);
-      // Trigger search with URL filters
       fetchRaces(urlFilters);
     }
   }, [searchParams, fetchRaces]);
@@ -170,8 +154,13 @@ const DiscoverRaces = () => {
   const handleFiltersChange = (newFilters: SearchFilters) => {
     console.log('Filters changed:', newFilters);
     setFilters(newFilters);
-    // Auto-search when filters change
     fetchRaces(newFilters);
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setFilters({});
+    fetchRaces();
   };
 
   if (loading) {
@@ -186,7 +175,6 @@ const DiscoverRaces = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Search Section */}
       <HeroSearchSection 
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -210,58 +198,15 @@ const DiscoverRaces = () => {
 
           {/* Main Content */}
           <div className="flex-1">
-            {/* Results Header */}
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-4">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {filteredRaces.length} carreras encontradas
-                </h2>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="lg:hidden"
-                >
-                  <Filter className="w-4 h-4 mr-2" />
-                  Filtros
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {/* View Mode Toggle */}
-                <div className="flex border rounded-lg p-1">
-                  <Button
-                    variant={viewMode === "grid" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setViewMode("grid")}
-                    className="px-3"
-                  >
-                    <Grid3X3 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "map" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setViewMode("map")}
-                    className="px-3"
-                  >
-                    <MapIcon className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                {/* Sort Dropdown */}
-                <select 
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E40AF]"
-                >
-                  <option value="relevance">Más relevante</option>
-                  <option value="date">Fecha más próxima</option>
-                  <option value="points">Menor costo puntos</option>
-                  <option value="rating">Mejor valorado</option>
-                </select>
-              </div>
-            </div>
+            <ResultsHeader
+              resultsCount={filteredRaces.length}
+              showFilters={showFilters}
+              onToggleFilters={() => setShowFilters(!showFilters)}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+            />
 
             {/* Results Grid */}
             {viewMode === "grid" ? (
@@ -277,37 +222,12 @@ const DiscoverRaces = () => {
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow p-4">
-                <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <MapIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600">Vista de mapa en desarrollo</p>
-                  </div>
-                </div>
-              </div>
+              <MapView />
             )}
 
             {/* Empty State */}
             {filteredRaces.length === 0 && (
-              <div className="text-center py-12">
-                <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  No se encontraron carreras
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Prueba ajustando tus filtros de búsqueda para encontrar más opciones
-                </p>
-                <Button 
-                  onClick={() => {
-                    setSearchQuery("");
-                    setFilters({});
-                    fetchRaces();
-                  }}
-                  variant="outline"
-                >
-                  Limpiar filtros
-                </Button>
-              </div>
+              <EmptyState onClearFilters={handleClearFilters} />
             )}
           </div>
         </div>
