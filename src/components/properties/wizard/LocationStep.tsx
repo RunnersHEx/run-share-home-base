@@ -1,105 +1,167 @@
 
 import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, ArrowLeft, ArrowRight } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
+import { PropertyFormData } from "@/types/property";
+
+// Spanish provinces
+const SPANISH_PROVINCES = [
+  "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz", "Barcelona", 
+  "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real", "Córdoba", 
+  "Cuenca", "Girona", "Granada", "Guadalajara", "Guipúzcoa", "Huelva", "Huesca", 
+  "Jaén", "La Coruña", "La Rioja", "Las Palmas", "León", "Lleida", "Lugo", "Madrid", 
+  "Málaga", "Murcia", "Navarra", "Ourense", "Palencia", "Pontevedra", "Salamanca", 
+  "Santa Cruz de Tenerife", "Segovia", "Sevilla", "Soria", "Tarragona", "Teruel", 
+  "Toledo", "Valencia", "Valladolid", "Vizcaya", "Zamora", "Zaragoza"
+];
 
 interface LocationStepProps {
-  formData: any;
-  onUpdate: (data: any) => void;
+  formData: PropertyFormData;
+  onUpdate: (data: Partial<PropertyFormData>) => void;
   onNext: () => void;
   onPrev: () => void;
 }
 
 const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps) => {
-  const handleInputChange = (field: string, value: string | string[]) => {
-    onUpdate({ [field]: value });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showProvinces, setShowProvinces] = useState(false);
+
+  const filteredProvinces = SPANISH_PROVINCES.filter(province =>
+    province.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleProvinceSelect = (province: string) => {
+    const newProvinces = formData.provinces.includes(province)
+      ? formData.provinces.filter(p => p !== province)
+      : [...formData.provinces, province];
+    
+    onUpdate({ provinces: newProvinces });
   };
 
-  const handleNext = () => {
-    if (!formData.full_address || !formData.locality) {
-      return;
-    }
-    onNext();
+  const canProceed = () => {
+    return formData.provinces.length > 0 && 
+           formData.locality.trim() !== "" && 
+           formData.full_address.trim() !== "";
   };
 
   return (
     <div className="space-y-6">
-      <div className="text-center mb-6">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <MapPin className="h-8 w-8 text-blue-600" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Ubicación de tu Propiedad</h2>
-        <p className="text-gray-600">
-          Indica dónde se encuentra tu propiedad para que los runners puedan encontrarla fácilmente.
-        </p>
-      </div>
-
       <Card>
-        <CardContent className="p-6 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="full_address">Dirección (solo calle sin Nº. La dirección exacta se la proporcionará el Host al Guest cuando hagan Match y nunca antes) *</Label>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MapPin className="h-5 w-5" />
+            <span>Ubicación de tu propiedad</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Province Selection */}
+          <div>
+            <Label htmlFor="provinces">Provincia(s) *</Label>
+            <div className="relative">
+              <div className="flex items-center border rounded-lg px-3 py-2 cursor-pointer" 
+                   onClick={() => setShowProvinces(!showProvinces)}>
+                <Search className="h-4 w-4 mr-2 text-gray-400" />
+                <span className="text-gray-600">
+                  {formData.provinces.length > 0 
+                    ? `${formData.provinces.length} provincia(s) seleccionada(s)`
+                    : "Selecciona provincia(s)"}
+                </span>
+              </div>
+              
+              {showProvinces && (
+                <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="p-2">
+                    <Input
+                      placeholder="Buscar provincia..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="max-h-40 overflow-y-auto">
+                    {filteredProvinces.map(province => (
+                      <div
+                        key={province}
+                        className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                          formData.provinces.includes(province) ? 'bg-blue-50 text-blue-600' : ''
+                        }`}
+                        onClick={() => handleProvinceSelect(province)}
+                      >
+                        {province}
+                        {formData.provinces.includes(province) && (
+                          <span className="ml-2 text-blue-600">✓</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {formData.provinces.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {formData.provinces.map(province => (
+                  <span
+                    key={province}
+                    className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                  >
+                    {province}
+                    <button
+                      onClick={() => handleProvinceSelect(province)}
+                      className="ml-1 hover:text-blue-600"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* City/Locality */}
+          <div>
+            <Label htmlFor="locality">Ciudad/Localidad *</Label>
             <Input
-              id="full_address"
-              placeholder="Calle Principal"
-              value={formData.full_address || ''}
-              onChange={(e) => handleInputChange('full_address', e.target.value)}
-              required
+              id="locality"
+              value={formData.locality}
+              onChange={(e) => onUpdate({ locality: e.target.value })}
+              placeholder="Ej: Valencia, Barcelona, Madrid..."
+              className="mt-1"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="locality">Ciudad/Localidad *</Label>
-              <Input
-                id="locality"
-                placeholder="Madrid"
-                value={formData.locality || ''}
-                onChange={(e) => handleInputChange('locality', e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="provinces">Provincia</Label>
-              <Input
-                id="provinces"
-                placeholder="Madrid"
-                value={formData.provinces?.[0] || ''}
-                onChange={(e) => handleInputChange('provinces', [e.target.value])}
-              />
-            </div>
+          {/* Full Address */}
+          <div>
+            <Label htmlFor="full_address">Dirección completa *</Label>
+            <Input
+              id="full_address"
+              value={formData.full_address}
+              onChange={(e) => onUpdate({ full_address: e.target.value })}
+              placeholder="Calle, número, código postal..."
+              className="mt-1"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Esta información será visible solo para guests confirmados
+            </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="runner_instructions">Describe si existen zonas cercanas a tu casa para correr (Opcional)</Label>
-            <Textarea
-              id="runner_instructions"
-              placeholder="Describe las mejores rutas cercanas, parques, senderos o cualquier información útil para correr en la zona..."
-              value={formData.runner_instructions || ''}
-              onChange={(e) => handleInputChange('runner_instructions', e.target.value)}
-              rows={4}
+          {/* Running Areas Description */}
+          <div>
+            <Label htmlFor="running_description">Describe si existen zonas cercanas a tu casa para correr (Opcional)</Label>
+            <textarea
+              id="running_description"
+              value={formData.description || ''}
+              onChange={(e) => onUpdate({ description: e.target.value })}
+              placeholder="Ej: Parque del Retiro a 5 minutos andando, circuito de running de 3km..."
+              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows={3}
             />
           </div>
         </CardContent>
       </Card>
-
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onPrev}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Anterior
-        </Button>
-        <Button 
-          onClick={handleNext}
-          disabled={!formData.full_address || !formData.locality}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          Continuar
-          <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
-      </div>
     </div>
   );
 };

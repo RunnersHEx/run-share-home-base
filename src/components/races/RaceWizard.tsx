@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -11,6 +11,7 @@ import { ExperienceStep } from "./wizard/ExperienceStep";
 import { PhotosStep } from "./wizard/PhotosStep";
 import { RaceFormData } from "@/types/race";
 import { useRaces } from "@/hooks/useRaces";
+import { toast } from "sonner";
 
 interface RaceWizardProps {
   onClose: () => void;
@@ -32,7 +33,7 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
     terrain_profile: [],
     distances: [],
     has_wave_starts: false,
-    points_cost: 0,
+    points_cost: 100, // Default points cost
     max_guests: 1
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,12 +54,34 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      console.log('Submitting race data:', formData);
+      
+      // Validate required fields
+      if (!formData.name || !formData.race_date || !formData.property_id) {
+        toast.error('Por favor completa todos los campos obligatorios');
+        return;
+      }
+
+      if (!formData.modalities || formData.modalities.length === 0) {
+        toast.error('Por favor selecciona al menos una modalidad');
+        return;
+      }
+
+      if (!formData.distances || formData.distances.length === 0) {
+        toast.error('Por favor selecciona al menos una distancia');
+        return;
+      }
+
       const result = await createRace(formData as RaceFormData);
       if (result) {
+        toast.success('¡Carrera creada exitosamente!');
         onSuccess();
+      } else {
+        toast.error('Error al crear la carrera. Por favor intenta de nuevo.');
       }
     } catch (error) {
       console.error('Error creating race:', error);
+      toast.error('Error al crear la carrera. Verifica que todos los campos estén completos.');
     } finally {
       setIsSubmitting(false);
     }
@@ -117,6 +140,8 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
             <CurrentStepComponent
               formData={formData}
               onUpdate={updateFormData}
+              onNext={handleNext}
+              onPrev={handlePrevious}
             />
 
             <div className="flex justify-between mt-8 pt-6 border-t">

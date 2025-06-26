@@ -116,10 +116,10 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
               id="points_cost"
               type="number"
               min="1"
-              value={formData.points_cost || ''}
-              onChange={(e) => onUpdate({ points_cost: parseInt(e.target.value) || 0 })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="100"
+              value={formData.points_cost || 100}
+              readOnly
+              disabled
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
             />
             <p className="text-sm text-gray-500 mt-1">
               El sistema asignará automáticamente los puntos del costo de carrera según oferta-demanda
@@ -144,32 +144,22 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
               id="max_guests"
               type="number"
               min="1"
-              max="20"
+              max="4"
               value={formData.max_guests || ''}
-              onChange={(e) => onUpdate({ max_guests: parseInt(e.target.value) || 1 })}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 1;
+                const limitedValue = Math.min(Math.max(value, 1), 4);
+                onUpdate({ max_guests: limitedValue });
+              }}
               className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="2"
             />
             <p className="text-sm text-gray-500 mt-1">
-              Considera la capacidad de tu propiedad y tu disponibilidad como anfitrión
+              Considera la capacidad de tu propiedad y tu disponibilidad como anfitrión (máximo 4 guests)
             </p>
           </div>
         </CardContent>
       </Card>
-
-      {/* Navigation Buttons */}
-      <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={onPrev}>
-          Anterior
-        </Button>
-        <Button 
-          onClick={onNext} 
-          disabled={!canProceed()}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          Continuar
-        </Button>
-      </div>
     </div>
   );
 };
