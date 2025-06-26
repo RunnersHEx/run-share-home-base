@@ -75,12 +75,52 @@ export class RaceDiscoveryService {
       }
 
       // Transformar los datos para asegurar que tienen el formato correcto
-      return raceData.map(race => ({
-        ...race,
-        modalities: Array.isArray(race.modalities) ? race.modalities : [],
-        terrain_profile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
-        distances: Array.isArray(race.distances) ? race.distances : []
-      })) as Race[];
+      const transformedRaces = raceData.map(race => {
+        // Manejar host_info que puede venir como error o datos válidos
+        let hostInfo = null;
+        if (race.host_info && typeof race.host_info === 'object' && !('error' in race.host_info)) {
+          hostInfo = race.host_info;
+        }
+
+        // Manejar property_info que puede venir como error o datos válidos  
+        let propertyInfo = null;
+        if (race.property_info && typeof race.property_info === 'object' && !('error' in race.property_info)) {
+          propertyInfo = race.property_info;
+        }
+
+        return {
+          id: race.id,
+          host_id: race.host_id,
+          property_id: race.property_id,
+          name: race.name,
+          description: race.description,
+          race_date: race.race_date,
+          registration_deadline: race.registration_deadline,
+          modalities: Array.isArray(race.modalities) ? race.modalities : [],
+          terrain_profile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
+          distances: Array.isArray(race.distances) ? race.distances : [],
+          has_wave_starts: race.has_wave_starts,
+          start_location: race.start_location,
+          distance_from_property: race.distance_from_property,
+          official_website: race.official_website,
+          registration_cost: race.registration_cost,
+          points_cost: race.points_cost,
+          max_guests: race.max_guests,
+          highlights: race.highlights,
+          local_tips: race.local_tips,
+          weather_notes: race.weather_notes,
+          is_active: race.is_active,
+          total_bookings: race.total_bookings,
+          average_rating: race.average_rating,
+          created_at: race.created_at,
+          updated_at: race.updated_at,
+          host_info: hostInfo,
+          property_info: propertyInfo
+        };
+      });
+
+      console.log('RaceDiscoveryService: Transformed races successfully:', transformedRaces.length);
+      return transformedRaces as Race[];
 
     } catch (error) {
       console.error('RaceDiscoveryService: Error in fetchAllRaces:', error);
