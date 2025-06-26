@@ -10,10 +10,24 @@ const RacesSection = () => {
   const navigate = useNavigate();
   const { races, loading, forceRefresh } = useRaces();
 
-  // Force refresh when component mounts to ensure we have latest data
+  // Force refresh when component mounts and when returning to this section
   useEffect(() => {
+    console.log('RacesSection mounted, forcing refresh...');
     forceRefresh();
+  }, []);
+
+  // Additional refresh when window gains focus (user returns to tab)
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('Window gained focus, refreshing races...');
+      forceRefresh();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [forceRefresh]);
+
+  console.log('RacesSection render - races:', races, 'loading:', loading);
 
   if (loading) {
     return (
@@ -25,8 +39,6 @@ const RacesSection = () => {
       </Card>
     );
   }
-
-  console.log('RacesSection - races:', races, 'length:', races.length);
 
   return (
     <Card>
@@ -66,27 +78,47 @@ const RacesSection = () => {
         ) : (
           <div className="space-y-4">
             {races.map((race) => (
-              <div key={race.id} className="border rounded-lg p-4">
+              <div key={race.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg text-gray-900">
                       {race.name}
                     </h3>
-                    <div className="flex items-center text-gray-600 mt-1">
-                      <span>{race.start_location}</span>
-                    </div>
+                    {race.start_location && (
+                      <div className="flex items-center text-gray-600 mt-1">
+                        <span>{race.start_location}</span>
+                      </div>
+                    )}
                     <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
                       <div className="flex items-center">
-                        <span>{new Date(race.race_date).toLocaleDateString()}</span>
+                        <span>{new Date(race.race_date).toLocaleDateString('es-ES')}</span>
                       </div>
-                      <span>•</span>
-                      <span>{race.distances?.join(', ')}</span>
+                      {race.distances && race.distances.length > 0 && (
+                        <>
+                          <span>•</span>
+                          <span>{race.distances.join(', ')}</span>
+                        </>
+                      )}
+                      {race.modalities && race.modalities.length > 0 && (
+                        <>
+                          <span>•</span>
+                          <span className="capitalize">{race.modalities.join(', ')}</span>
+                        </>
+                      )}
                     </div>
+                    {race.description && (
+                      <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+                        {race.description}
+                      </p>
+                    )}
                   </div>
-                  <div className="ml-4">
+                  <div className="ml-4 flex flex-col space-y-2">
                     <Button variant="outline" size="sm">
                       Editar
                     </Button>
+                    <div className="text-xs text-gray-500 text-center">
+                      {race.points_cost} puntos
+                    </div>
                   </div>
                 </div>
               </div>

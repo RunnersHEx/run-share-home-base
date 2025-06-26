@@ -22,9 +22,8 @@ export const PhotosStep = ({ formData, onUpdate }: PhotosStepProps) => {
   const [images, setImages] = useState<ImagePreview[]>([]);
 
   const categories = [
-    { value: 'route', label: 'Fotos del Recorrido', description: 'Puntos destacados de la ruta' },
     { value: 'elevation', label: 'Perfil de Elevación', description: 'Gráficos o fotos de desniveles' },
-    { value: 'landscape', label: 'Paisajes Destacados', description: 'Vistas panorámicas' },
+    { value: 'landscape', label: 'Fotos del recorrido/Paisajes destacados', description: 'Vistas panorámicas y puntos destacados de la ruta' },
     { value: 'finish', label: 'Meta y Llegada', description: 'Área de meta y celebración' },
     { value: 'atmosphere', label: 'Ambiente', description: 'Espíritu y ambiente de la carrera' }
   ];

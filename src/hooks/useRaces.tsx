@@ -94,6 +94,7 @@ export const useRaces = () => {
   const forceRefresh = async () => {
     console.log('Force refreshing races...');
     await fetchRaces();
+    await fetchStats();
   };
 
   useEffect(() => {
