@@ -7,14 +7,30 @@ export class RaceDiscoveryService {
     console.log('RaceDiscoveryService: Fetching all races with filters:', filters);
     
     try {
-      // Primero obtener las carreras básicas
+      // Construir la consulta base con joins para obtener toda la información de una vez
       let query = supabase
         .from('races')
-        .select('*')
+        .select(`
+          *,
+          host_info:profiles!races_host_id_fkey(
+            id,
+            first_name,
+            last_name,
+            profile_image_url,
+            verification_status,
+            average_rating
+          ),
+          property_info:properties!races_property_id_fkey(
+            id,
+            title,
+            locality,
+            max_guests
+          )
+        `)
         .eq('is_active', true)
         .order('race_date', { ascending: true });
 
-      // Apply filters
+      // Aplicar filtros
       if (filters?.month) {
         const year = new Date().getFullYear();
         const monthNum = parseInt(filters.month);
@@ -58,62 +74,17 @@ export class RaceDiscoveryService {
         return [];
       }
 
-      // Ahora enriquecer con datos de host y property por separado
-      return await this.enrichRacesWithRelatedData(raceData);
+      // Transformar los datos para asegurar que tienen el formato correcto
+      return raceData.map(race => ({
+        ...race,
+        modalities: Array.isArray(race.modalities) ? race.modalities : [],
+        terrain_profile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
+        distances: Array.isArray(race.distances) ? race.distances : []
+      })) as Race[];
+
     } catch (error) {
       console.error('RaceDiscoveryService: Error in fetchAllRaces:', error);
       throw error;
     }
-  }
-
-  private static async enrichRacesWithRelatedData(raceData: any[]): Promise<Race[]> {
-    console.log('Enriching races with related data...');
-    
-    // Obtener todos los host_ids y property_ids únicos
-    const hostIds = [...new Set(raceData.map(race => race.host_id).filter(Boolean))];
-    const propertyIds = [...new Set(raceData.map(race => race.property_id).filter(Boolean))];
-
-    console.log('Fetching data for hosts:', hostIds.length, 'properties:', propertyIds.length);
-
-    // Obtener datos de hosts
-    const { data: hostData, error: hostError } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, profile_image_url, verification_status, average_rating')
-      .in('id', hostIds);
-
-    if (hostError) {
-      console.error('Error fetching host data:', hostError);
-    }
-
-    // Obtener datos de properties
-    const { data: propertyData, error: propertyError } = await supabase
-      .from('properties')
-      .select('id, title, locality, max_guests')
-      .in('id', propertyIds);
-
-    if (propertyError) {
-      console.error('Error fetching property data:', propertyError);
-    }
-
-    // Crear mapas para búsqueda rápida
-    const hostMap = new Map((hostData || []).map(host => [host.id, host]));
-    const propertyMap = new Map((propertyData || []).map(property => [property.id, property]));
-
-    // Enriquecer las carreras con los datos relacionados
-    return raceData.map(race => {
-      const hostInfo = hostMap.get(race.host_id);
-      const propertyInfo = propertyMap.get(race.property_id);
-
-      console.log(`Processing race: ${race.name}, Host: ${hostInfo?.first_name} ${hostInfo?.last_name}, Property: ${propertyInfo?.title}`);
-
-      return {
-        ...race,
-        host_info: hostInfo || null,
-        property_info: propertyInfo || null,
-        modalities: Array.isArray(race.modalities) ? race.modalities : [],
-        terrain_profile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
-        distances: Array.isArray(race.distances) ? race.distances : []
-      };
-    }) as Race[];
   }
 }

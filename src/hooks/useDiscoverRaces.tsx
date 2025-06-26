@@ -47,7 +47,7 @@ export const useDiscoverRaces = () => {
         return;
       }
       
-      // Get race images for each race
+      // Obtener imágenes para cada carrera
       const raceImagesPromises = data.map(async (race) => {
         try {
           const images = await RaceService.getRaceImages(race.id);
@@ -61,7 +61,7 @@ export const useDiscoverRaces = () => {
 
       const racesWithImages = await Promise.all(raceImagesPromises);
       
-      // Transform the data to match the DiscoverRace interface
+      // Transformar los datos para que coincidan con la interfaz DiscoverRace
       const transformedRaces: DiscoverRace[] = racesWithImages.map(race => {
         console.log('Processing race:', race.name, 'Location:', race.start_location, 'Modalities:', race.modalities, 'Distances:', race.distances);
         
@@ -101,7 +101,8 @@ export const useDiscoverRaces = () => {
       }
     } catch (error) {
       console.error('Error fetching races for discovery:', error);
-      setError('Error al cargar las carreras');
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      setError(`Error al cargar las carreras: ${errorMessage}`);
       toast.error('Error al cargar las carreras');
       setRaces([]);
     } finally {
