@@ -10,14 +10,14 @@ export class RaceDiscoveryService {
       .from('races')
       .select(`
         *,
-        host_info:profiles!races_host_id_fkey(
+        host_info:profiles(
           first_name,
           last_name,
           profile_image_url,
           verification_status,
           average_rating
         ),
-        property_info:properties!races_property_id_fkey(
+        property_info:properties(
           title,
           locality,
           max_guests
@@ -38,23 +38,23 @@ export class RaceDiscoveryService {
 
     if (filters?.modalities && filters.modalities.length > 0) {
       console.log('Applying modalities filter:', filters.modalities);
-      query = query.overlaps('modalities', filters.modalities);
+      query = query.contains('modalities', filters.modalities);
     }
 
     if (filters?.distances && filters.distances.length > 0) {
       console.log('Applying distances filter:', filters.distances);
-      query = query.overlaps('distances', filters.distances);
+      query = query.contains('distances', filters.distances);
     }
 
     if (filters?.province) {
       console.log('Applying province filter:', filters.province);
-      // Search in both start_location and property locality
-      query = query.or(`start_location.ilike.%${filters.province}%,property_info.locality.ilike.%${filters.province}%`);
+      // Search in start_location
+      query = query.ilike('start_location', `%${filters.province}%`);
     }
 
     if (filters?.terrainProfiles && filters.terrainProfiles.length > 0) {
       console.log('Applying terrain profiles filter:', filters.terrainProfiles);
-      query = query.overlaps('terrain_profile', filters.terrainProfiles);
+      query = query.contains('terrain_profile', filters.terrainProfiles);
     }
 
     const { data: raceData, error: raceError } = await query;

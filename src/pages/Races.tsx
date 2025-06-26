@@ -185,7 +185,7 @@ const Races = () => {
                 <CardHeader>
                   <div className="flex justify-between items-start mb-2">
                     <CardTitle className="text-lg line-clamp-2">{race.name}</CardTitle>
-                    <Badge variant={race.is_active ? "default" : "secondary"}>
+                    <Badge variant={race.is_active ? "default" : "secondary"} className={race.is_active ? "bg-green-100 text-green-800" : ""}>
                       {race.is_active ? "Activa" : "Inactiva"}
                     </Badge>
                   </div>
@@ -202,7 +202,7 @@ const Races = () => {
                 </CardHeader>
                 
                 <CardContent>
-                  {/* Modalities */}
+                  {/* Modalities with colors */}
                   <div className="flex flex-wrap gap-1 mb-3">
                     {race.modalities?.map((modality) => (
                       <Badge key={modality} className={getModalityBadgeColor(modality)}>
@@ -211,7 +211,7 @@ const Races = () => {
                     ))}
                   </div>
                   
-                  {/* Distances */}
+                  {/* Distances with colors */}
                   <div className="flex flex-wrap gap-1 mb-4">
                     {race.distances?.slice(0, 3).map((distance) => (
                       <Badge key={distance} className={getDistanceBadgeColor(distance)}>
