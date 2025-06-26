@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +39,7 @@ const PropertyWizard = ({ onClose, propertyId, initialData }: PropertyWizardProp
   const [currentStep, setCurrentStep] = useState(1);
   const [photos, setPhotos] = useState<PhotoPreview[]>([]);
   const [acknowledgedImportantNote, setAcknowledgedImportantNote] = useState(false);
+  const [acceptedCancellationPolicy, setAcceptedCancellationPolicy] = useState(false);
   const [formData, setFormData] = useState<PropertyFormData>({
     title: initialData?.title || "",
     description: initialData?.description || "",
@@ -54,7 +54,7 @@ const PropertyWizard = ({ onClose, propertyId, initialData }: PropertyWizardProp
     house_rules: initialData?.house_rules || "",
     check_in_instructions: initialData?.check_in_instructions || "",
     runner_instructions: initialData?.runner_instructions || "",
-    cancellation_policy: initialData?.cancellation_policy || "flexible"
+    cancellation_policy: initialData?.cancellation_policy || "firm"
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -141,7 +141,20 @@ const PropertyWizard = ({ onClose, propertyId, initialData }: PropertyWizardProp
           />
         );
       case 4:
-        return <RulesStep formData={formData} onUpdate={updateFormData} onNext={nextStep} onPrev={prevStep} />;
+        return (
+          <RulesStep 
+            formData={formData} 
+            onUpdate={(data) => {
+              updateFormData(data);
+              // Check if cancellation policy was accepted
+              if (data.cancellation_policy === "firm") {
+                setAcceptedCancellationPolicy(true);
+              }
+            }} 
+            onNext={nextStep} 
+            onPrev={prevStep} 
+          />
+        );
       case 5:
         return <PhotosStep formData={formData} updateFormData={updateFormData} photos={photos} setPhotos={setPhotos} />;
       default:
@@ -156,10 +169,9 @@ const PropertyWizard = ({ onClose, propertyId, initialData }: PropertyWizardProp
       case 2:
         return formData.provinces.length > 0 && formData.locality.trim() !== "" && formData.full_address.trim() !== "";
       case 3:
-        // En el paso 3, debe haber confirmado la nota importante
         return acknowledgedImportantNote;
       case 4:
-        return true;
+        return acceptedCancellationPolicy;
       case 5:
         return true;
       default:

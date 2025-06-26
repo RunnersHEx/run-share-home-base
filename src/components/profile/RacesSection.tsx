@@ -4,10 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRaces } from "@/hooks/useRaces";
+import { useEffect } from "react";
 
 const RacesSection = () => {
   const navigate = useNavigate();
-  const { races, loading } = useRaces();
+  const { races, loading, forceRefresh } = useRaces();
+
+  // Force refresh when component mounts to ensure we have latest data
+  useEffect(() => {
+    forceRefresh();
+  }, []);
 
   if (loading) {
     return (
@@ -19,6 +25,8 @@ const RacesSection = () => {
       </Card>
     );
   }
+
+  console.log('RacesSection - races:', races, 'length:', races.length);
 
   return (
     <Card>
@@ -38,7 +46,7 @@ const RacesSection = () => {
         </div>
       </CardHeader>
       <CardContent>
-        {races.length === 0 ? (
+        {!races || races.length === 0 ? (
           <div className="text-center py-12">
             <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">

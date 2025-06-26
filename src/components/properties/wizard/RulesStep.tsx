@@ -1,9 +1,8 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PropertyFormData } from "@/types/property";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Shield, Key, Coffee, Info } from "lucide-react";
@@ -16,6 +15,8 @@ interface RulesStepProps {
 }
 
 const RulesStep = ({ formData, onUpdate, onNext, onPrev }: RulesStepProps) => {
+  const [acceptedPolicy, setAcceptedPolicy] = useState(false);
+  
   const commonRules = [
     "No mascotas",
     "No beber",
@@ -39,6 +40,25 @@ const RulesStep = ({ formData, onUpdate, onNext, onPrev }: RulesStepProps) => {
   const isRuleSelected = (rule: string) => {
     const currentRules = formData.house_rules || '';
     return currentRules.includes(rule);
+  };
+
+  // Get additional rules (not in common rules)
+  const getAdditionalRules = () => {
+    const currentRules = formData.house_rules || '';
+    const rulesArray = currentRules.split('\n').filter(r => r.trim() !== '');
+    return rulesArray.filter(rule => !commonRules.includes(rule)).join('\n');
+  };
+
+  const handleAdditionalRulesChange = (additionalRules: string) => {
+    const selectedCommonRules = commonRules.filter(rule => isRuleSelected(rule));
+    const allRules = [...selectedCommonRules];
+    
+    if (additionalRules.trim()) {
+      const additionalRulesArray = additionalRules.split('\n').filter(r => r.trim() !== '');
+      allRules.push(...additionalRulesArray);
+    }
+    
+    onUpdate({ house_rules: allRules.join('\n') });
   };
 
   return (
@@ -71,9 +91,9 @@ const RulesStep = ({ formData, onUpdate, onNext, onPrev }: RulesStepProps) => {
             <Label htmlFor="custom_rules">Si quieres añadir alguna norma más, escríbela aquí:</Label>
             <Textarea
               id="custom_rules"
-              value={formData.house_rules || ''}
-              onChange={(e) => onUpdate({ house_rules: e.target.value })}
-              placeholder="Escribe aquí cualquier regla adicional..."
+              value={getAdditionalRules()}
+              onChange={(e) => handleAdditionalRulesChange(e.target.value)}
+              placeholder=""
               className="mt-1"
               rows={3}
             />
@@ -96,7 +116,7 @@ const RulesStep = ({ formData, onUpdate, onNext, onPrev }: RulesStepProps) => {
               id="checkin_instructions"
               value={formData.check_in_instructions || ''}
               onChange={(e) => onUpdate({ check_in_instructions: e.target.value })}
-              placeholder="Ej: Llaves en el buzón, código de entrada, horario de llegada..."
+              placeholder=""
               className="mt-1"
               rows={3}
             />
@@ -132,25 +152,29 @@ const RulesStep = ({ formData, onUpdate, onNext, onPrev }: RulesStepProps) => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Info className="h-5 w-5" />
-            <span>Política de Cancelación</span>
+            <span>Política de Cancelación Firme</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div>
-            <Label htmlFor="cancellation_policy">Política de cancelación</Label>
-            <Select 
-              value={formData.cancellation_policy} 
-              onValueChange={(value) => onUpdate({ cancellation_policy: value })}
-            >
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Selecciona una política" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="flexible">Flexible - Cancelación gratuita hasta 24h antes</SelectItem>
-                <SelectItem value="moderate">Moderada - Cancelación gratuita hasta 5 días antes</SelectItem>
-                <SelectItem value="strict">Estricta - Cancelación gratuita hasta 14 días antes</SelectItem>
-              </SelectContent>
-            </Select>
+        <CardContent className="space-y-4">
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-700">
+              <strong>Política de Cancelación:</strong> Reembolso total de los créditos si se cancela con 60 días de antelación. 
+              Si la reserva se realiza con menos de 60 días y se cancelara se perderían los créditos.
+            </p>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="accept_policy"
+              checked={acceptedPolicy}
+              onCheckedChange={(checked) => {
+                setAcceptedPolicy(checked as boolean);
+                onUpdate({ cancellation_policy: "firm" });
+              }}
+            />
+            <Label htmlFor="accept_policy" className="text-sm font-medium">
+              Acepto la política de cancelación
+            </Label>
           </div>
         </CardContent>
       </Card>
