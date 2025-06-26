@@ -3,24 +3,21 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Star, Trophy, Target, TrendingUp, Plus, RefreshCw } from "lucide-react";
+import { Calendar, MapPin, Users, Star, Trophy, Target, TrendingUp, Plus, RefreshCw, AlertCircle } from "lucide-react";
 import { useRaces } from "@/hooks/useRaces";
 import { RaceFilters } from "@/types/race";
 import { RaceWizard } from "@/components/races/RaceWizard";
 import { RaceFiltersComponent } from "@/components/races/RaceFiltersComponent";
 
 const Races = () => {
-  const { races, loading, stats, forceRefresh } = useRaces();
+  const { races, loading, error, stats, forceRefresh } = useRaces();
   const [showWizard, setShowWizard] = useState(false);
   const [filters, setFilters] = useState<RaceFilters>({});
 
   // Auto-refresh when component mounts or when user navigates back
   useEffect(() => {
     console.log('Races page mounted, current races:', races);
-    if (races.length === 0 && !loading) {
-      console.log('No races found, forcing refresh...');
-      forceRefresh();
-    }
+    forceRefresh();
   }, []);
 
   const formatDate = (dateString: string) => {
@@ -48,17 +45,25 @@ const Races = () => {
     return colors[distance as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
+  const handleCreateRace = () => {
+    console.log('Opening race wizard...');
+    setShowWizard(true);
+  };
+
+  const handleRaceCreated = () => {
+    console.log('Race created, refreshing...');
+    setShowWizard(false);
+    // Force refresh after creating race
+    setTimeout(() => {
+      forceRefresh();
+    }, 500);
+  };
+
   if (showWizard) {
     return (
       <RaceWizard 
         onClose={() => setShowWizard(false)}
-        onSuccess={() => {
-          setShowWizard(false);
-          // Force refresh after creating race
-          setTimeout(() => {
-            forceRefresh();
-          }, 500);
-        }}
+        onSuccess={handleRaceCreated}
       />
     );
   }
@@ -82,7 +87,7 @@ const Races = () => {
               {loading ? 'Cargando...' : 'Actualizar'}
             </Button>
             <Button 
-              onClick={() => setShowWizard(true)}
+              onClick={handleCreateRace}
               className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
               size="lg"
             >
@@ -134,17 +139,33 @@ const Races = () => {
         {/* Debug info */}
         {process.env.NODE_ENV === 'development' && (
           <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-            <p className="text-sm">Debug: {races.length} carreras cargadas, loading: {loading ? 'sí' : 'no'}</p>
+            <p className="text-sm">Debug: {races.length} carreras cargadas, loading: {loading ? 'sí' : 'no'}, error: {error || 'ninguno'}</p>
           </div>
         )}
 
-        {/* Races Grid */}
-        {loading ? (
+        {/* Error State */}
+        {error && !loading && (
+          <div className="text-center py-12">
+            <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Error al cargar carreras</h3>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <Button onClick={forceRefresh} variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reintentar
+            </Button>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#1E40AF] mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando carreras...</p>
           </div>
-        ) : races.length === 0 ? (
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && races.length === 0 && (
           <div className="text-center py-12">
             <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
@@ -154,14 +175,17 @@ const Races = () => {
               Crea tu primera carrera y comienza a compartir experiencias únicas con runners de todo el mundo
             </p>
             <Button 
-              onClick={() => setShowWizard(true)}
+              onClick={handleCreateRace}
               className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
             >
               <Plus className="w-5 h-5 mr-2" />
               Crear Primera Carrera
             </Button>
           </div>
-        ) : (
+        )}
+
+        {/* Races Grid */}
+        {!loading && !error && races.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {races.map((race) => (
               <Card key={race.id} className="hover:shadow-lg transition-shadow">

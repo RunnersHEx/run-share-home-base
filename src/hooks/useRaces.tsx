@@ -8,7 +8,8 @@ import { RaceService } from "@/services/raceService";
 export const useRaces = () => {
   const { user } = useAuth();
   const [races, setRaces] = useState<Race[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalRaces: 0,
     bookingsThisYear: 0,
@@ -18,21 +19,31 @@ export const useRaces = () => {
   const fetchRaces = async (filters?: RaceFilters) => {
     if (!user) {
       console.log('useRaces: No user found, skipping fetch');
-      setLoading(false);
       setRaces([]);
+      setLoading(false);
+      setError(null);
       return;
     }
 
     try {
       setLoading(true);
+      setError(null);
       console.log('useRaces: Fetching races for user:', user.id);
+      
       const data = await RaceService.fetchHostRaces(user.id, filters);
       console.log('useRaces: Fetched races:', data);
-      setRaces(data || []);
+      
+      if (Array.isArray(data)) {
+        setRaces(data);
+      } else {
+        console.warn('useRaces: Received non-array data:', data);
+        setRaces([]);
+      }
     } catch (error) {
       console.error('useRaces: Error fetching races:', error);
+      setError('Error al cargar las carreras');
+      setRaces([]);
       toast.error('Error al cargar las carreras');
-      setRaces([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -52,6 +63,7 @@ export const useRaces = () => {
   const createRace = async (raceData: RaceFormData) => {
     if (!user) {
       console.log('useRaces: No user found for createRace');
+      toast.error('Usuario no autenticado');
       return null;
     }
 
@@ -89,7 +101,7 @@ export const useRaces = () => {
       }
     } catch (error) {
       console.error('useRaces: Error creating race:', error);
-      toast.error('Error al crear la carrera');
+      toast.error('Error al crear la carrera. Por favor intenta de nuevo.');
       return null;
     }
   };
@@ -138,26 +150,16 @@ export const useRaces = () => {
     } else {
       console.log('useRaces: No user, clearing races');
       setRaces([]);
+      setStats({ totalRaces: 0, bookingsThisYear: 0, averageRating: 0 });
       setLoading(false);
+      setError(null);
     }
-  }, [user]);
-
-  // Add visibility change listener to refresh when user comes back to tab
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && user) {
-        console.log('useRaces: Tab became visible, refreshing races');
-        fetchRaces();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [user]);
 
   return {
     races,
     loading,
+    error,
     stats,
     fetchRaces,
     createRace,

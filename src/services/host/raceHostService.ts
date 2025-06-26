@@ -80,7 +80,7 @@ export class RaceHostService {
       console.log('RaceHostService: Retrieved races:', data);
       
       // Convert database races to typed races
-      const typedRaces = (data || []).map(this.convertDatabaseRaceToTyped);
+      const typedRaces = (data || []).map(race => RaceHostService.convertDatabaseRaceToTyped(race));
       console.log('RaceHostService: Converted races:', typedRaces);
       return typedRaces;
     } catch (error) {
@@ -110,7 +110,7 @@ export class RaceHostService {
       }
 
       console.log('RaceHostService: Created race:', data);
-      return this.convertDatabaseRaceToTyped(data);
+      return RaceHostService.convertDatabaseRaceToTyped(data);
     } catch (error) {
       console.error('RaceHostService: Error in createRace:', error);
       throw error;
@@ -131,7 +131,7 @@ export class RaceHostService {
         throw error;
       }
 
-      return this.convertDatabaseRaceToTyped(data);
+      return RaceHostService.convertDatabaseRaceToTyped(data);
     } catch (error) {
       console.error('RaceHostService: Error in updateRace:', error);
       throw error;

@@ -1,14 +1,14 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Trophy, RefreshCw } from "lucide-react";
+import { Plus, Trophy, RefreshCw, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRaces } from "@/hooks/useRaces";
 import { useEffect, useState } from "react";
 
 const RacesSection = () => {
   const navigate = useNavigate();
-  const { races, loading, forceRefresh } = useRaces();
+  const { races, loading, error, forceRefresh } = useRaces();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Force refresh when component mounts and when returning to this section
@@ -37,7 +37,12 @@ const RacesSection = () => {
     }
   };
 
-  console.log('RacesSection render - races:', races, 'loading:', loading);
+  const handleAddRace = () => {
+    console.log('Navigating to races page...');
+    navigate("/races");
+  };
+
+  console.log('RacesSection render - races:', races, 'loading:', loading, 'error:', error);
 
   if (loading) {
     return (
@@ -45,6 +50,36 @@ const RacesSection = () => {
         <CardContent className="p-8 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando carreras...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Trophy className="h-6 w-6 text-orange-600" />
+            <span>Mis Carreras</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Error al cargar carreras
+            </h3>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <Button 
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              variant="outline"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Reintentar
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -69,7 +104,7 @@ const RacesSection = () => {
               Actualizar
             </Button>
             <Button 
-              onClick={() => navigate("/races")}
+              onClick={handleAddRace}
               className="bg-orange-600 hover:bg-orange-700"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -89,7 +124,7 @@ const RacesSection = () => {
               Comparte tu conocimiento local sobre carreras en tu ciudad
             </p>
             <Button 
-              onClick={() => navigate("/races")}
+              onClick={handleAddRace}
               className="bg-orange-600 hover:bg-orange-700"
             >
               <Plus className="h-4 w-4 mr-2" />
