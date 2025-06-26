@@ -135,16 +135,16 @@ const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps)
 
           {/* Full Address */}
           <div>
-            <Label htmlFor="full_address">Dirección completa *</Label>
+            <Label htmlFor="full_address">Dirección (solo la calle o avenida sin número) *</Label>
             <Input
               id="full_address"
               value={formData.full_address}
               onChange={(e) => onUpdate({ full_address: e.target.value })}
-              placeholder="Calle, número, código postal..."
+              placeholder="Calle, avenida..."
               className="mt-1"
             />
             <p className="text-sm text-gray-500 mt-1">
-              Esta información será visible solo para guests confirmados
+              La dirección completa se la proporcionará el Host al Guest una vez hecho el Match por el canal de mensajería privado
             </p>
           </div>
 

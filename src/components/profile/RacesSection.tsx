@@ -13,7 +13,7 @@ const RacesSection = () => {
   // Force refresh when component mounts to ensure we have latest data
   useEffect(() => {
     forceRefresh();
-  }, []);
+  }, [forceRefresh]);
 
   if (loading) {
     return (

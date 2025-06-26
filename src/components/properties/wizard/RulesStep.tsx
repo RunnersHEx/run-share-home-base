@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PropertyFormData } from "@/types/property";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Shield, Key, Coffee, Info } from "lucide-react";
+import { Shield, Key, Info } from "lucide-react";
 
 interface RulesStepProps {
   formData: PropertyFormData;
@@ -20,6 +20,7 @@ const RulesStep = ({ formData, onUpdate, onNext, onPrev }: RulesStepProps) => {
   const commonRules = [
     "No mascotas",
     "No beber",
+    "No fumar",
     "Silencio después de las 24h",
     "No usar nada sin previo permiso al Host"
   ];
@@ -112,37 +113,6 @@ const RulesStep = ({ formData, onUpdate, onNext, onPrev }: RulesStepProps) => {
         <CardContent>
           <div>
             <Label htmlFor="checkin_instructions">Check-in: Una vez hecho el Match con tu Host, procederéis a hablar entre vosotros.</Label>
-            <Textarea
-              id="checkin_instructions"
-              value={formData.check_in_instructions || ''}
-              onChange={(e) => onUpdate({ check_in_instructions: e.target.value })}
-              placeholder=""
-              className="mt-1"
-              rows={3}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Runner Instructions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Coffee className="h-5 w-5" />
-            <span>Instrucciones para Runners</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div>
-            <Label htmlFor="runner_instructions">Instrucciones específicas para runners (opcional)</Label>
-            <Textarea
-              id="runner_instructions"
-              value={formData.runner_instructions || ''}
-              onChange={(e) => onUpdate({ runner_instructions: e.target.value })}
-              placeholder="Ej: Mejor hora para correr, rutas recomendadas, dónde dejar material de running..."
-              className="mt-1"
-              rows={3}
-            />
           </div>
         </CardContent>
       </Card>
@@ -159,7 +129,7 @@ const RulesStep = ({ formData, onUpdate, onNext, onPrev }: RulesStepProps) => {
           <div className="bg-gray-50 p-4 rounded-lg">
             <p className="text-sm text-gray-700">
               <strong>Política de Cancelación:</strong> Reembolso total de los créditos si se cancela con 60 días de antelación. 
-              Si la reserva se realiza con menos de 60 días y se cancelara se perderían los créditos.
+              Si la reserva se realiza con menos de 60 días y se cancela se perderán los créditos.
             </p>
           </div>
           

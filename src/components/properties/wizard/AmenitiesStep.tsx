@@ -8,7 +8,6 @@ import {
   Wifi, 
   Car, 
   Utensils, 
-  Tv, 
   Waves, 
   Wind, 
   Coffee,
@@ -16,7 +15,9 @@ import {
   Shirt,
   Shield,
   MapPin,
-  Trees
+  Trees,
+  ShoppingCart,
+  Activity
 } from "lucide-react";
 
 interface AmenitiesStepProps {
@@ -30,15 +31,22 @@ const AMENITIES = [
   { id: "wifi", label: "WiFi", icon: Wifi },
   { id: "parking", label: "Estacionamiento", icon: Car },
   { id: "kitchen", label: "Cocina completa", icon: Utensils },
-  { id: "tv", label: "Televisión", icon: Tv },
   { id: "pool", label: "Piscina", icon: Waves },
-  { id: "air_conditioning", label: "Aire acondicionado", icon: Wind },
+  { id: "air_conditioning", label: "Aire acondicionado/calefacción", icon: Wind },
   { id: "coffee_machine", label: "Cafetera", icon: Coffee },
-  { id: "hot_water", label: "Agua caliente", icon: Bath },
   { id: "washing_machine", label: "Lavadora", icon: Shirt },
-  { id: "security", label: "Seguridad 24h", icon: Shield },
   { id: "public_transport", label: "Cerca de transporte público", icon: MapPin },
-  { id: "running_area", label: "Zona segura para correr", icon: Trees }
+  { id: "running_area", label: "Zona segura para correr", icon: Trees },
+  { id: "supermarket", label: "Cerca de supermercado", icon: ShoppingCart }
+];
+
+const RUNNER_FACILITIES = [
+  { id: "stretching_mat", label: "Colchoneta para estirar", icon: Activity },
+  { id: "massage_gun", label: "Pistola para auto-masaje", icon: Activity },
+  { id: "foam_roller", label: "Roller foam", icon: Activity },
+  { id: "resistance_band", label: "Goma larga para estiramientos", icon: Activity },
+  { id: "mini_bands", label: "Minibands para fortalecimiento", icon: Activity },
+  { id: "golf_ball", label: "Pelota de golf para fascia plantar", icon: Activity }
 ];
 
 const AmenitiesStep = ({ 
@@ -93,6 +101,41 @@ const AmenitiesStep = ({
                     className="flex-1 cursor-pointer font-medium"
                   >
                     {amenity.label}
+                  </Label>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Runner Facilities Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Facilidades para el corredor</CardTitle>
+          <p className="text-gray-600">
+            Selecciona las facilidades específicas para runners que tienes disponibles
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {RUNNER_FACILITIES.map((facility) => {
+              const IconComponent = facility.icon;
+              const isChecked = formData.amenities?.includes(facility.id) || false;
+              
+              return (
+                <div key={facility.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                  <Checkbox
+                    id={facility.id}
+                    checked={isChecked}
+                    onCheckedChange={(checked) => handleAmenityChange(facility.id, checked as boolean)}
+                  />
+                  <IconComponent className="h-5 w-5 text-gray-600" />
+                  <Label 
+                    htmlFor={facility.id} 
+                    className="flex-1 cursor-pointer font-medium"
+                  >
+                    {facility.label}
                   </Label>
                 </div>
               );
