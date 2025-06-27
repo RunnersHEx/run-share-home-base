@@ -79,8 +79,8 @@ export class RaceDiscoveryService {
         // Manejar host_info que puede venir como error o datos válidos
         let hostInfo = null;
         if (race.host_info && 
-            race.host_info !== null && 
             typeof race.host_info === 'object' && 
+            !Array.isArray(race.host_info) &&
             !('error' in race.host_info)) {
           hostInfo = race.host_info;
         }
@@ -88,8 +88,8 @@ export class RaceDiscoveryService {
         // Manejar property_info que puede venir como error o datos válidos  
         let propertyInfo = null;
         if (race.property_info && 
-            race.property_info !== null && 
             typeof race.property_info === 'object' && 
+            !Array.isArray(race.property_info) &&
             !('error' in race.property_info)) {
           propertyInfo = race.property_info;
         }
