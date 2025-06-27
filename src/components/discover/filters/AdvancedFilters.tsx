@@ -17,7 +17,6 @@ interface AdvancedFiltersProps {
 }
 
 export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }: AdvancedFiltersProps) => {
-  const [pointsRange, setPointsRange] = useState<[number, number]>([0, 500]);
   const [selectedModalities, setSelectedModalities] = useState<RaceModality[]>(filters.modalities || []);
   const [selectedDistances, setSelectedDistances] = useState<RaceDistance[]>(filters.distances || []);
   const [selectedTerrainProfiles, setSelectedTerrainProfiles] = useState<TerrainProfile[]>(filters.terrainProfiles || []);
@@ -52,7 +51,6 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
   const clearAllFilters = () => {
     console.log('Clearing all filters');
     onFiltersChange({});
-    setPointsRange([0, 500]);
     setSelectedModalities([]);
     setSelectedDistances([]);
     setSelectedTerrainProfiles([]);
@@ -64,7 +62,6 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
   const handleSearch = () => {
     const newFilters: RaceFilters = {
       ...filters,
-      pointsRange: pointsRange,
       modalities: selectedModalities.length > 0 ? selectedModalities : undefined,
       distances: selectedDistances.length > 0 ? selectedDistances : undefined,
       terrainProfiles: selectedTerrainProfiles.length > 0 ? selectedTerrainProfiles : undefined,
@@ -114,8 +111,6 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
         <Separator />
 
         <AccommodationFilters
-          pointsRange={pointsRange}
-          onPointsRangeChange={setPointsRange}
           maxGuests={maxGuests}
           onMaxGuestsChange={setMaxGuests}
         />

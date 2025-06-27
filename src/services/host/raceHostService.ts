@@ -40,7 +40,7 @@ export class RaceHostService {
         .from('races')
         .select(`
           *,
-          property_info:properties!races_property_id_fkey(
+          property_info:properties!races_property_id_properties_fkey(
             title,
             locality,
             max_guests

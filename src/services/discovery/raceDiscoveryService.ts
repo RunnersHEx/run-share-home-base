@@ -63,6 +63,11 @@ export class RaceDiscoveryService {
         query = query.overlaps('terrain_profile', filters.terrainProfiles);
       }
 
+      if (filters?.maxGuests) {
+        console.log('Applying max guests filter:', filters.maxGuests);
+        query = query.gte('max_guests', filters.maxGuests);
+      }
+
       const { data: raceData, error: raceError } = await query;
 
       if (raceError) {

@@ -86,7 +86,6 @@ export interface RaceFilters {
   province?: string;
   maxGuests?: number;
   terrainProfiles?: TerrainProfile[];
-  pointsRange?: [number, number];
 }
 
 export interface RaceStats {
