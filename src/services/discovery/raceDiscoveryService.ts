@@ -78,13 +78,19 @@ export class RaceDiscoveryService {
       const transformedRaces = raceData.map(race => {
         // Manejar host_info que puede venir como error o datos válidos
         let hostInfo = null;
-        if (race.host_info && typeof race.host_info === 'object' && !('error' in race.host_info)) {
+        if (race.host_info && 
+            race.host_info !== null && 
+            typeof race.host_info === 'object' && 
+            !('error' in race.host_info)) {
           hostInfo = race.host_info;
         }
 
         // Manejar property_info que puede venir como error o datos válidos  
         let propertyInfo = null;
-        if (race.property_info && typeof race.property_info === 'object' && !('error' in race.property_info)) {
+        if (race.property_info && 
+            race.property_info !== null && 
+            typeof race.property_info === 'object' && 
+            !('error' in race.property_info)) {
           propertyInfo = race.property_info;
         }
 
