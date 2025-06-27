@@ -7,12 +7,12 @@ export class RaceDiscoveryService {
     console.log('RaceDiscoveryService: Fetching all races with filters:', filters);
     
     try {
-      // Construir la consulta base con joins para obtener toda la información de una vez
+      // Construir la consulta base con joins usando los nombres correctos de foreign keys
       let query = supabase
         .from('races')
         .select(`
           *,
-          host_info:profiles!races_host_id_fkey(
+          host_info:profiles!races_host_id_profiles_fkey(
             id,
             first_name,
             last_name,
@@ -20,7 +20,7 @@ export class RaceDiscoveryService {
             verification_status,
             average_rating
           ),
-          property_info:properties!races_property_id_fkey(
+          property_info:properties!races_property_id_properties_fkey(
             id,
             title,
             locality,
@@ -42,12 +42,14 @@ export class RaceDiscoveryService {
 
       if (filters?.modalities && filters.modalities.length > 0) {
         console.log('Applying modalities filter:', filters.modalities);
-        query = query.contains('modalities', filters.modalities);
+        // Usar overlaps para arrays JSONB
+        query = query.overlaps('modalities', filters.modalities);
       }
 
       if (filters?.distances && filters.distances.length > 0) {
         console.log('Applying distances filter:', filters.distances);
-        query = query.contains('distances', filters.distances);
+        // Usar overlaps para arrays JSONB
+        query = query.overlaps('distances', filters.distances);
       }
 
       if (filters?.province) {
@@ -57,7 +59,8 @@ export class RaceDiscoveryService {
 
       if (filters?.terrainProfiles && filters.terrainProfiles.length > 0) {
         console.log('Applying terrain profiles filter:', filters.terrainProfiles);
-        query = query.contains('terrain_profile', filters.terrainProfiles);
+        // Usar overlaps para arrays JSONB
+        query = query.overlaps('terrain_profile', filters.terrainProfiles);
       }
 
       const { data: raceData, error: raceError } = await query;
@@ -76,23 +79,31 @@ export class RaceDiscoveryService {
 
       // Transformar los datos para asegurar que tienen el formato correcto
       const transformedRaces = raceData.map(race => {
-        // Manejar host_info que puede venir como error o datos válidos
+        // Manejar host_info que puede venir como array, objeto o null
         let hostInfo = null;
         if (race.host_info && 
             typeof race.host_info === 'object' && 
-            !Array.isArray(race.host_info) &&
-            !('error' in race.host_info)) {
+            !Array.isArray(race.host_info)) {
           hostInfo = race.host_info;
         }
 
-        // Manejar property_info que puede venir como error o datos válidos  
+        // Manejar property_info que puede venir como array, objeto o null
         let propertyInfo = null;
         if (race.property_info && 
             typeof race.property_info === 'object' && 
-            !Array.isArray(race.property_info) &&
-            !('error' in race.property_info)) {
+            !Array.isArray(race.property_info)) {
           propertyInfo = race.property_info;
         }
+
+        // Asegurar que los arrays JSONB sean arrays JavaScript válidos
+        const modalities = Array.isArray(race.modalities) ? race.modalities : 
+                          (race.modalities && typeof race.modalities === 'object' ? Object.values(race.modalities) : []);
+        
+        const distances = Array.isArray(race.distances) ? race.distances : 
+                         (race.distances && typeof race.distances === 'object' ? Object.values(race.distances) : []);
+        
+        const terrainProfile = Array.isArray(race.terrain_profile) ? race.terrain_profile : 
+                              (race.terrain_profile && typeof race.terrain_profile === 'object' ? Object.values(race.terrain_profile) : []);
 
         return {
           id: race.id,
@@ -102,9 +113,9 @@ export class RaceDiscoveryService {
           description: race.description,
           race_date: race.race_date,
           registration_deadline: race.registration_deadline,
-          modalities: Array.isArray(race.modalities) ? race.modalities : [],
-          terrain_profile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
-          distances: Array.isArray(race.distances) ? race.distances : [],
+          modalities: modalities,
+          terrain_profile: terrainProfile,
+          distances: distances,
           has_wave_starts: race.has_wave_starts,
           start_location: race.start_location,
           distance_from_property: race.distance_from_property,

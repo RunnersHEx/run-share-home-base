@@ -618,7 +618,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "races_property_id_fkey"
+            foreignKeyName: "races_host_id_profiles_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "races_property_id_properties_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"

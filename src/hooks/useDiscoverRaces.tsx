@@ -65,32 +65,39 @@ export const useDiscoverRaces = () => {
       const transformedRaces: DiscoverRace[] = racesWithImages.map(race => {
         console.log('Processing race:', race.name, 'Location:', race.start_location, 'Modalities:', race.modalities, 'Distances:', race.distances);
         
+        // Calcular días hasta la carrera
+        const raceDate = new Date(race.race_date);
+        const today = new Date();
+        const daysUntil = Math.ceil((raceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
         return {
           id: race.id,
           name: race.name,
           location: race.start_location || race.property_info?.locality || "Ubicación no especificada",
           date: race.race_date,
-          daysUntil: Math.ceil((new Date(race.race_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)),
-          modalities: Array.isArray(race.modalities) ? race.modalities : [],
-          distances: Array.isArray(race.distances) ? race.distances : [],
-          terrainProfile: Array.isArray(race.terrain_profile) ? race.terrain_profile : [],
+          daysUntil: daysUntil,
+          modalities: race.modalities || [],
+          distances: race.distances || [],
+          terrainProfile: race.terrain_profile || [],
           imageUrl: race.imageUrl,
           host: {
             id: race.host_id,
-            name: race.host_info ? `${race.host_info.first_name} ${race.host_info.last_name}` : "Host Runner",
+            name: race.host_info ? `${race.host_info.first_name || ''} ${race.host_info.last_name || ''}`.trim() : "Host Runner",
             rating: race.host_info?.average_rating || 4.5,
             verified: race.host_info?.verification_status === 'approved',
             imageUrl: race.host_info?.profile_image_url || "/placeholder.svg"
           },
-          pointsCost: race.points_cost,
+          pointsCost: race.points_cost || 0,
           available: race.is_active,
           highlights: race.highlights || race.description || "Experiencia única de running",
-          maxGuests: race.property_info?.max_guests || race.max_guests
+          maxGuests: race.property_info?.max_guests || race.max_guests || 1
         };
       });
       
       console.log('Transformed races for discovery:', transformedRaces.length, 'races');
-      console.log('Sample transformed race:', transformedRaces[0]);
+      if (transformedRaces.length > 0) {
+        console.log('Sample transformed race:', transformedRaces[0]);
+      }
       setRaces(transformedRaces);
       
       if (transformedRaces.length === 0) {
@@ -103,7 +110,7 @@ export const useDiscoverRaces = () => {
       console.error('Error fetching races for discovery:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       setError(`Error al cargar las carreras: ${errorMessage}`);
-      toast.error('Error al cargar las carreras');
+      toast.error('Error al cargar las carreras. Por favor, inténtalo de nuevo.');
       setRaces([]);
     } finally {
       setLoading(false);
