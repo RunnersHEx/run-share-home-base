@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import RoleSelectionForm from "./forms/RoleSelectionForm";
 import LoginForm from "./forms/LoginForm";
 import VerificationRequiredModal from "./VerificationRequiredModal";
 import { X } from "lucide-react";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface AuthModalIntegratedProps {
   isOpen: boolean;
@@ -283,6 +284,15 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
     <>
       <Dialog open={isOpen} onOpenChange={resetAndClose}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogTitle className="sr-only">
+            {getTitle()}
+          </DialogTitle>
+          <VisuallyHidden>
+            <DialogDescription>
+              {getSubtitle()}
+            </DialogDescription>
+          </VisuallyHidden>
+          
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <img 

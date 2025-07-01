@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Set up auth state change listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
         console.log('AuthProvider: Auth state changed:', {
           event,
           userId: newSession?.user?.id || 'none',
@@ -71,8 +71,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userEmail: session?.user?.email || 'none'
           });
           
-          setSession(session);
-          setUser(session?.user ?? null);
+          // Only set if no session is already set by the listener
+          if (!session) {
+            setSession(session);
+            setUser(session?.user ?? null);
+          }
         }
       } catch (error) {
         console.error('AuthProvider: Exception getting initial session:', error);
