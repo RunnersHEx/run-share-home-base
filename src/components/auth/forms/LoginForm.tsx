@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LoginFormProps {
   onSubmit: (data: { email: string; password: string }) => Promise<void>;
@@ -21,6 +22,12 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('LoginForm: Submitting login with email:', formData.email);
+    
+    if (!formData.email || !formData.password) {
+      console.error('LoginForm: Missing email or password');
+      return;
+    }
+
     try {
       await onSubmit(formData);
     } catch (error) {
@@ -28,14 +35,8 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
     }
   };
 
-  const handlePasswordReset = () => {
-    // TODO: Implement password reset functionality
-    console.log("Password reset clicked");
-  };
-
   const handleGoogleSignIn = async () => {
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -47,7 +48,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
         console.error('Error with Google sign in:', error);
       }
     } catch (error) {
-      console.error('Error importing supabase:', error);
+      console.error('Error with Google sign in:', error);
     }
   };
 
@@ -97,20 +98,13 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
           </div>
         </div>
 
-        <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+        <Button 
+          type="submit" 
+          className="w-full bg-blue-600 hover:bg-blue-700" 
+          disabled={isLoading || !formData.email || !formData.password}
+        >
           {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
         </Button>
-
-        <div className="text-center">
-          <Button 
-            type="button"
-            variant="link" 
-            className="text-blue-600"
-            onClick={handlePasswordReset}
-          >
-            ¿Olvidaste tu contraseña?
-          </Button>
-        </div>
       </form>
 
       <div className="relative">

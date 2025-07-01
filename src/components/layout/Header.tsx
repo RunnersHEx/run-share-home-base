@@ -11,18 +11,11 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 const Header = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const { isAdmin } = useAdminAuth();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Force re-render when user state changes
-  useEffect(() => {
-    setIsAuthenticated(!!user);
-    console.log('Header: User state changed:', user?.email || 'None');
-  }, [user]);
 
   const handleAuthModal = (mode: "login" | "register") => {
     setAuthMode(mode);
@@ -32,7 +25,6 @@ const Header = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      setIsAuthenticated(false);
       toast.success("Sesión cerrada correctamente");
       navigate("/");
     } catch (error) {
@@ -43,6 +35,30 @@ const Header = () => {
   const handleAdminClick = () => {
     navigate('/admin');
   };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    toast.success("¡Sesión iniciada correctamente!");
+  };
+
+  if (loading) {
+    return (
+      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <img 
+                src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
+                alt="Runners Home Exchange" 
+                className="h-10 w-auto"
+              />
+            </div>
+            <div>Cargando...</div>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <>
@@ -70,7 +86,7 @@ const Header = () => {
 
             {/* User Actions */}
             <div className="flex items-center space-x-4">
-              {isAuthenticated && user ? (
+              {user ? (
                 <>
                   <NotificationBell />
                   <UserProfile />
@@ -122,6 +138,7 @@ const Header = () => {
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
           onModeChange={setAuthMode}
+          onSuccess={handleAuthSuccess}
         />
       )}
     </>

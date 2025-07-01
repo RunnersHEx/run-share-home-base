@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,9 +16,10 @@ interface AuthModalIntegratedProps {
   onClose: () => void;
   mode: "login" | "register";
   onModeChange: (mode: "login" | "register") => void;
+  onSuccess?: () => void;
 }
 
-const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalIntegratedProps) => {
+const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }: AuthModalIntegratedProps) => {
   const { signUp, signIn } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -109,13 +109,13 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
         }
       } else {
         toast.success("¡Cuenta creada exitosamente!");
+        resetForm();
         onClose();
+        if (onSuccess) onSuccess();
         
         setTimeout(() => {
           setShowVerificationModal(true);
         }, 1000);
-        
-        resetForm();
       }
     } catch (error) {
       console.error('Error in final submit:', error);
@@ -132,16 +132,10 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     try {
       await signIn(loginData.email, loginData.password);
       console.log('AuthModal: Login successful');
-      toast.success("¡Has iniciado sesión correctamente!");
       
-      // Close modal immediately after successful login
-      onClose();
       resetForm();
-      
-      // Force a small delay to ensure state propagation
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
+      onClose();
+      if (onSuccess) onSuccess();
       
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);
