@@ -67,7 +67,7 @@ export const useRaceBooking = (race: DiscoverRace) => {
     updated_at: new Date().toISOString()
   };
 
-  // Mock property data with ALL required properties
+  // Mock property data with ALL required properties including optional approval_status
   const propertyForBooking: Property = {
     id: `property_${race.host.id}`,
     owner_id: race.host.id,
@@ -88,6 +88,7 @@ export const useRaceBooking = (race: DiscoverRace) => {
     runner_instructions: null,
     cancellation_policy: 'flexible',
     is_active: true,
+    approval_status: 'approved', // Add the optional field
     total_bookings: 0,
     average_rating: 0,
     points_earned: 0,

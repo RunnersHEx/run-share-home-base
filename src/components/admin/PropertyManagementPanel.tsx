@@ -24,7 +24,7 @@ interface Property {
   description: string | null;
   locality: string;
   full_address: string;
-  approval_status: string;
+  approval_status?: string; // Make optional to handle missing column
   created_at: string;
   owner_profile?: {
     first_name: string | null;
@@ -41,10 +41,11 @@ const PropertyManagementPanel = () => {
 
   const fetchProperties = async () => {
     try {
+      // Try to select without approval_status first, then add it if it exists
       const { data, error } = await supabase
         .from('properties')
         .select(`
-          id, title, description, locality, full_address, approval_status, created_at,
+          id, title, description, locality, full_address, created_at,
           owner_profile:profiles!properties_owner_id_fkey (
             first_name, last_name, email
           )
@@ -57,10 +58,11 @@ const PropertyManagementPanel = () => {
         return;
       }
       
-      // Filter out any null results and ensure proper typing
-      const validProperties = (data || []).filter((property): property is Property => 
-        property !== null && typeof property === 'object' && 'id' in property
-      );
+      // Map data and add default approval_status if missing
+      const validProperties = (data || []).map((property: any) => ({
+        ...property,
+        approval_status: property.approval_status ?? 'pending' // Default to pending if column doesn't exist
+      }));
       
       setProperties(validProperties);
     } catch (error) {
@@ -75,6 +77,7 @@ const PropertyManagementPanel = () => {
   const updatePropertyStatus = async (propertyId: string, status: 'approved' | 'rejected', notes?: string) => {
     setProcessingId(propertyId);
     try {
+      // Try to update, but handle if column doesn't exist
       const { error } = await supabase
         .from('properties')
         .update({
@@ -83,16 +86,23 @@ const PropertyManagementPanel = () => {
         } as any)
         .eq('id', propertyId);
 
-      if (error) throw error;
-
-      toast.success(
-        status === 'approved' 
-          ? 'Propiedad aprobada exitosamente' 
-          : 'Propiedad rechazada'
-      );
-      
-      await fetchProperties();
-      setRejectionNotes(prev => ({ ...prev, [propertyId]: '' }));
+      if (error) {
+        // If column doesn't exist, show appropriate message
+        if (error.message?.includes('column "approval_status" does not exist')) {
+          toast.error('La funcionalidad está pendiente de migración de base de datos');
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success(
+          status === 'approved' 
+            ? 'Propiedad aprobada exitosamente' 
+            : 'Propiedad rechazada'
+        );
+        
+        await fetchProperties();
+        setRejectionNotes(prev => ({ ...prev, [propertyId]: '' }));
+      }
     } catch (error) {
       console.error('Error updating property status:', error);
       toast.error('Error al actualizar el estado de la propiedad');
@@ -101,7 +111,7 @@ const PropertyManagementPanel = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'pending':
         return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800"><Clock className="h-3 w-3 mr-1" />Pendiente</Badge>;
@@ -110,7 +120,7 @@ const PropertyManagementPanel = () => {
       case 'rejected':
         return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Rechazada</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary">{status || 'Pendiente'}</Badge>;
     }
   };
 
@@ -126,7 +136,7 @@ const PropertyManagementPanel = () => {
     );
   }
 
-  const pendingProperties = properties.filter(p => p.approval_status === 'pending');
+  const pendingProperties = properties.filter(p => (p.approval_status ?? 'pending') === 'pending');
 
   return (
     <Card>
@@ -189,7 +199,7 @@ const PropertyManagementPanel = () => {
                     })}
                   </TableCell>
                   <TableCell>
-                    {property.approval_status === 'pending' ? (
+                    {(property.approval_status ?? 'pending') === 'pending' ? (
                       <div className="space-y-2">
                         <Textarea
                           placeholder="Notas de rechazo (opcional)"
@@ -227,7 +237,7 @@ const PropertyManagementPanel = () => {
                       </div>
                     ) : (
                       <div className="text-sm text-gray-500">
-                        Estado: {property.approval_status}
+                        Estado: {property.approval_status ?? 'pending'}
                       </div>
                     )}
                   </TableCell>

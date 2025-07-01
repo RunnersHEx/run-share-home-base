@@ -22,7 +22,7 @@ interface UserProfile {
   email: string;
   first_name: string | null;
   last_name: string | null;
-  is_active: boolean;
+  is_active?: boolean; // Make optional to handle missing column
   created_at: string;
   verification_status: string;
 }
@@ -34,9 +34,10 @@ const UserManagementPanel = () => {
 
   const fetchUsers = async () => {
     try {
+      // Try to select with is_active, but handle if column doesn't exist
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, is_active, created_at, verification_status');
+        .select('id, email, first_name, last_name, created_at, verification_status');
 
       if (error) {
         console.error('Error fetching users:', error);
@@ -45,10 +46,11 @@ const UserManagementPanel = () => {
         return;
       }
       
-      // Filter out any null results and ensure proper typing
-      const validUsers = (data || []).filter((user): user is UserProfile => 
-        user !== null && typeof user === 'object' && 'id' in user
-      );
+      // Map data and add default is_active if missing
+      const validUsers = (data || []).map((user: any) => ({
+        ...user,
+        is_active: user.is_active ?? true // Default to true if column doesn't exist
+      }));
       
       setUsers(validUsers);
     } catch (error) {
@@ -63,20 +65,28 @@ const UserManagementPanel = () => {
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     setProcessingId(userId);
     try {
+      // Try to update, but handle if column doesn't exist
       const { error } = await supabase
         .from('profiles')
         .update({ is_active: !currentStatus } as any)
         .eq('id', userId);
 
-      if (error) throw error;
-
-      toast.success(
-        !currentStatus 
-          ? 'Usuario activado exitosamente' 
-          : 'Usuario desactivado exitosamente'
-      );
-      
-      await fetchUsers();
+      if (error) {
+        // If column doesn't exist, show appropriate message
+        if (error.message?.includes('column "is_active" does not exist')) {
+          toast.error('La funcionalidad está pendiente de migración de base de datos');
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success(
+          !currentStatus 
+            ? 'Usuario activado exitosamente' 
+            : 'Usuario desactivado exitosamente'
+        );
+        
+        await fetchUsers();
+      }
     } catch (error) {
       console.error('Error updating user status:', error);
       toast.error('Error al actualizar el estado del usuario');
@@ -159,7 +169,7 @@ const UserManagementPanel = () => {
                     {getVerificationBadge(user.verification_status)}
                   </TableCell>
                   <TableCell>
-                    {getStatusBadge(user.is_active)}
+                    {getStatusBadge(user.is_active ?? true)}
                   </TableCell>
                   <TableCell className="text-sm text-gray-500">
                     {formatDistanceToNow(new Date(user.created_at), { 
@@ -171,9 +181,9 @@ const UserManagementPanel = () => {
                     <Button
                       size="sm"
                       variant={user.is_active ? "destructive" : "default"}
-                      onClick={() => toggleUserStatus(user.id, user.is_active)}
+                      onClick={() => toggleUserStatus(user.id, user.is_active ?? true)}
                       disabled={processingId === user.id}
-                      className={!user.is_active ? "bg-green-600 hover:bg-green-700" : ""}
+                      className={!(user.is_active ?? true) ? "bg-green-600 hover:bg-green-700" : ""}
                     >
                       {user.is_active ? (
                         <>

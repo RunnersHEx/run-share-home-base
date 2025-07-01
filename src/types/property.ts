@@ -19,7 +19,7 @@ export interface Property {
   runner_instructions: string | null;
   cancellation_policy: string;
   is_active: boolean;
-  approval_status: string;
+  approval_status?: string; // Make optional to handle transition
   total_bookings: number;
   average_rating: number;
   points_earned: number;

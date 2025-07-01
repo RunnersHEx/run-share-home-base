@@ -18,6 +18,7 @@ export class PropertyService {
 
     return data?.map(property => ({
       ...property,
+      approval_status: property.approval_status ?? 'pending', // Handle optional field
       images: property.property_images || []
     })) || [];
   }
@@ -32,7 +33,12 @@ export class PropertyService {
       .single();
 
     if (error) throw error;
-    return data;
+    
+    // Add default approval_status if missing
+    return {
+      ...data,
+      approval_status: data.approval_status ?? 'pending'
+    };
   }
 
   static async updateProperty(id: string, updates: Partial<Property>, userId: string): Promise<void> {
