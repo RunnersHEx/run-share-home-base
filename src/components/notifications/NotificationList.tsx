@@ -1,11 +1,10 @@
-
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { CheckCircle, AlertCircle, Info, MarkAsRead } from "lucide-react";
+import { CheckCircle, AlertCircle, Info, CheckCheck } from "lucide-react";
 
 interface NotificationListProps {
   onClose: () => void;
@@ -51,7 +50,7 @@ const NotificationList = ({ onClose }: NotificationListProps) => {
             onClick={handleMarkAllAsRead}
             className="text-xs hover:bg-blue-50 flex items-center gap-1"
           >
-            <MarkAsRead className="h-3 w-3" />
+            <CheckCheck className="h-3 w-3" />
             Marcar todas como leídas ({unreadCount})
           </Button>
         )}
