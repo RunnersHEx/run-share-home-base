@@ -1,86 +1,101 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
-import AuthModalIntegrated from "@/components/auth/AuthModalIntegrated";
-import UserProfile from "@/components/common/UserProfile";
+import { NotificationBell } from "../notifications/NotificationBell";
+import { UserProfile } from "../common/UserProfile";
+import { AuthModalIntegrated } from "../auth/AuthModalIntegrated";
+import { LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 const Header = () => {
-  const { user } = useAuth();
-  const { isAdmin } = useAdminAuth();
-  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
-  const handleAuthClick = (mode: "login" | "register") => {
+  const handleAuthModal = (mode: "login" | "register") => {
     setAuthMode(mode);
     setShowAuthModal(true);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Sesión cerrada correctamente");
+    } catch (error) {
+      toast.error("Error al cerrar sesión");
+    }
   };
 
   return (
     <>
       <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
             {/* Logo */}
-            <div 
-              className="flex items-center space-x-2 cursor-pointer"
-              onClick={() => navigate("/")}
-            >
+            <div className="flex items-center space-x-2">
               <img 
                 src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
-                alt="RunnersHEx" 
-                className="h-8 w-8"
+                alt="Runners Home Exchange" 
+                className="h-10 w-auto"
               />
-              <span className="font-bold text-xl text-gray-900">RunnersHEx</span>
             </div>
 
-            {/* Navigation - Solo para usuarios autenticados */}
-            {user && (
-              <nav className="hidden md:flex items-center space-x-8">
-                <button
-                  onClick={() => navigate("/")}
-                  className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-                >
-                  Inicio
-                </button>
-                <button
-                  onClick={() => navigate("/discover")}
-                  className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-                >
-                  Descubrir Carreras
-                </button>
-                {isAdmin && (
-                  <button
-                    onClick={() => navigate("/admin")}
-                    className="text-destructive hover:text-destructive/80 font-medium transition-colors"
-                  >
-                    Panel Admin
-                  </button>
-                )}
-              </nav>
-            )}
+            {/* Navigation */}
+            <nav className="hidden md:flex items-center space-x-8">
+              <a href="/" className="text-gray-700 hover:text-runner-blue-600 font-medium">
+                Inicio
+              </a>
+              <a href="/discover" className="text-gray-700 hover:text-runner-blue-600 font-medium">
+                Descubrir Carreras
+              </a>
+              {user && (
+                <>
+                  <a href="/profile" className="text-gray-700 hover:text-runner-blue-600 font-medium">
+                    Mi Perfil
+                  </a>
+                  <a href="/properties" className="text-gray-700 hover:text-runner-blue-600 font-medium">
+                    Mis Propiedades
+                  </a>
+                  <a href="/races" className="text-gray-700 hover:text-runner-blue-600 font-medium">
+                    Mis Carreras
+                  </a>
+                  <a href="/bookings" className="text-gray-700 hover:text-runner-blue-600 font-medium">
+                    Mis Reservas
+                  </a>
+                </>
+              )}
+            </nav>
 
-            {/* Right side */}
+            {/* User Actions */}
             <div className="flex items-center space-x-4">
               {user ? (
-                <UserProfile />
-              ) : (
-                <div className="flex items-center space-x-3">
+                <>
+                  <NotificationBell />
+                  <UserProfile />
                   <Button
-                    variant="ghost"
-                    onClick={() => handleAuthClick("login")}
-                    className="text-gray-700 hover:text-blue-600"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="flex items-center space-x-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Cerrar Sesión</span>
+                  </Button>
+                </>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleAuthModal("login")}
                   >
                     Iniciar Sesión
                   </Button>
                   <Button
-                    onClick={() => handleAuthClick("register")}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => handleAuthModal("register")}
+                    className="bg-runner-blue-600 hover:bg-runner-blue-700"
                   >
-                    Únete a la Comunidad
+                    Registrarse
                   </Button>
                 </div>
               )}
@@ -89,12 +104,13 @@ const Header = () => {
         </div>
       </header>
 
-      <AuthModalIntegrated
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        mode={authMode}
-        onModeChange={setAuthMode}
-      />
+      {showAuthModal && (
+        <AuthModalIntegrated
+          mode={authMode}
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
     </>
   );
 };
