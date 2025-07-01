@@ -10,10 +10,14 @@ import {
   TrendingUp, 
   TrendingDown, 
   Calendar,
-  Users,
   Home,
   Trophy,
-  Gift
+  Gift,
+  Plus,
+  Star,
+  X,
+  User,
+  Shield
 } from "lucide-react";
 
 interface PointsTransaction {
@@ -83,22 +87,50 @@ const PointsSystemSection = () => {
       icon: Home,
       title: "Ser Host",
       description: "Gana puntos cada vez que hospedas a un corredor",
-      points: "Variable según reserva",
+      points: "+ 30 Puntos por noche",
       color: "text-green-600"
     },
     {
-      icon: Users,
-      title: "Referir Amigos",
-      description: "Invita corredores y gana puntos por cada registro",
-      points: "50 puntos por referido",
+      icon: Plus,
+      title: "Agregar propiedad",
+      description: "Por agregar tu propiedad y ser revisada correctamente",
+      points: "+ 40 puntos",
       color: "text-blue-600"
     },
     {
       icon: Trophy,
-      title: "Completar Experiencias",
-      description: "Bonus por completar intercambios exitosos",
-      points: "20 puntos bonus",
+      title: "Agregar carreras",
+      description: "Por cada carrera agregada y aprobada",
+      points: "+ 25 puntos",
       color: "text-yellow-600"
+    },
+    {
+      icon: Star,
+      title: "Rating 5 estrellas",
+      description: "Por cada reseña valorada con 5*",
+      points: "+ 15 puntos",
+      color: "text-orange-600"
+    },
+    {
+      icon: User,
+      title: "Perfil completado",
+      description: "Completa tu perfil desde \"Mi inicio\"",
+      points: "+ 25 puntos",
+      color: "text-purple-600"
+    },
+    {
+      icon: Shield,
+      title: "Verificación de identidad",
+      description: "Adjunta los documentos requeridos y espera a ser verificado correctamente",
+      points: "+ 40 puntos",
+      color: "text-indigo-600"
+    },
+    {
+      icon: X,
+      title: "Cancelación reserva como host",
+      description: "Si el Host cancela la reserva con menos de 60 días de antelación",
+      points: "- 30 puntos",
+      color: "text-red-600"
     }
   ];
 
@@ -107,15 +139,8 @@ const PointsSystemSection = () => {
       icon: Calendar,
       title: "Reservar Estancias",
       description: "Usa puntos para reservar alojamiento con hosts",
-      points: "80-200 puntos/noche",
+      points: "25-70 puntos/noche",
       color: "text-red-600"
-    },
-    {
-      icon: Trophy,
-      title: "Experiencias Premium",
-      description: "Accede a carreras exclusivas y experiencias especiales",
-      points: "100-300 puntos",
-      color: "text-purple-600"
     }
   ];
 
@@ -190,9 +215,8 @@ const PointsSystemSection = () => {
               <div className="p-4 bg-yellow-50 rounded-lg">
                 <h4 className="font-medium text-yellow-800 mb-2">💡 Puntos Clave</h4>
                 <ul className="text-sm text-yellow-700 space-y-1">
-                  <li>• Los puntos de suscripción se renuevan anualmente</li>
+                  <li>• Los 100 puntos de suscripción se renuevan anualmente</li>
                   <li>• Puntos ganados por hosting no expiran</li>
-                  <li>• Sistema justo: 1 punto ≈ €1 en valor</li>
                   <li>• Fomenta intercambios auténticos entre corredores</li>
                 </ul>
               </div>

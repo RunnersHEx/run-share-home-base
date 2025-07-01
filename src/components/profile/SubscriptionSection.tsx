@@ -139,7 +139,7 @@ const SubscriptionSection = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold text-lg">{subscription.plan_name}</h3>
-                  <p className="text-gray-600">Plan Anual - €79/año</p>
+                  <p className="text-gray-600">Plan Anual - €59/año</p>
                 </div>
                 {getStatusBadge(subscription.status)}
               </div>
@@ -178,13 +178,13 @@ const SubscriptionSection = () => {
                   Accede a la red global de corredores con nuestra membresía anual
                 </p>
                 <div className="space-y-2 text-sm text-gray-600 mb-6">
-                  <p>✓ 1200 puntos anuales incluidos</p>
-                  <p>✓ Acceso a toda la red de hosts</p>
+                  <p>✓ 100 puntos nuevo suscriptor</p>
+                  <p>✓ Acceso a toda la red de hosts y sus carreras</p>
                   <p>✓ Sistema de intercambio justo</p>
                   <p>✓ Experiencias auténticas</p>
                 </div>
                 <div className="text-center mb-4">
-                  <span className="text-3xl font-bold text-blue-600">€79</span>
+                  <span className="text-3xl font-bold text-blue-600">€59</span>
                   <span className="text-gray-600">/año</span>
                 </div>
                 <Button onClick={handleSubscribe} className="bg-blue-600 hover:bg-blue-700">
