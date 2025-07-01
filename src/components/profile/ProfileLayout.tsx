@@ -13,7 +13,9 @@ import {
   Shield, 
   BarChart3, 
   Trash2,
-  Calendar
+  Calendar,
+  CreditCard,
+  Coins
 } from "lucide-react";
 
 interface ProfileLayoutProps {
@@ -32,6 +34,8 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
     { id: "properties", label: "Mi Propiedad", icon: Home },
     { id: "races", label: "Mis Carreras", icon: Trophy },
     { id: "bookings", label: "Solicitudes", icon: Calendar },
+    { id: "subscription", label: "Mi Suscripción", icon: CreditCard },
+    { id: "points", label: "Sistema de Puntos", icon: Coins },
     { id: "verification", label: "Verificación", icon: Shield },
     { id: "stats", label: "Estadísticas", icon: BarChart3 },
     { id: "delete-account", label: "Eliminar Cuenta", icon: Trash2 },
@@ -88,7 +92,7 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
                     <Button
                       key={section.id}
                       variant={activeSection === section.id ? "default" : "ghost"}
-                      className={`w-full justify-start ${
+                      className={`w-full justify-start text-sm ${
                         activeSection === section.id 
                           ? "bg-blue-600 text-white" 
                           : "text-gray-700 hover:bg-gray-100"

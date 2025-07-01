@@ -12,6 +12,8 @@ import DeleteAccountSection from "@/components/profile/DeleteAccountSection";
 import PropertiesSection from "@/components/profile/PropertiesSection";
 import RacesSection from "@/components/profile/RacesSection";
 import BookingsSection from "@/components/profile/BookingsSection";
+import SubscriptionSection from "@/components/profile/SubscriptionSection";
+import PointsSystemSection from "@/components/profile/PointsSystemSection";
 
 const Profile = () => {
   const { user, loading } = useAuth();
@@ -53,6 +55,10 @@ const Profile = () => {
         return <RacesSection />;
       case "bookings":
         return <BookingsSection />;
+      case "subscription":
+        return <SubscriptionSection />;
+      case "points":
+        return <PointsSystemSection />;
       case "verification":
         return <VerificationSection />;
       case "stats":
