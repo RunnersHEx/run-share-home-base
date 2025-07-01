@@ -28,23 +28,23 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
         <div className="container mx-auto px-4 py-16 lg:py-24">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl lg:text-7xl font-bold text-white mb-6 animate-fade-in drop-shadow-2xl">
-              Conecta • Viaja • <span className="text-runner-orange-400">Corre</span>
+              <span className="text-runner-blue-500">Conecta</span> • <span className="text-runner-blue-500">Viaja</span> • <span className="text-white/60">Corre</span>
             </h1>
-            <p className="text-xl lg:text-2xl text-white mb-8 animate-fade-in drop-shadow-lg font-medium">
-              La plataforma que conecta corredores locales con corredores que viajan a carreras, 
+            <p className="text-xl lg:text-2xl text-white mb-8 animate-fade-in drop-shadow-lg font-medium max-w-3xl mx-auto leading-relaxed">
+              La plataforma que conecta corredores locales con corredores que viajan a carreras,<br />
               ofreciendo alojamiento auténtico y experiencia compartida por gasto cero
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in">
               <Button 
                 onClick={() => onAuthModal("register")}
-                className="bg-runner-orange-500 hover:bg-runner-orange-600 text-white text-lg px-8 py-4 font-semibold shadow-2xl"
+                className="bg-runner-orange-500/80 hover:bg-runner-orange-600/90 text-white text-lg px-8 py-4 font-semibold shadow-2xl backdrop-blur-sm"
               >
                 Únete a la Comunidad
               </Button>
               <Button 
                 onClick={() => onAuthModal("login")}
-                className="bg-white/20 backdrop-blur-sm text-white border-2 border-white/50 hover:bg-white/30 text-lg px-8 py-4 font-semibold"
+                className="bg-runner-blue-500 hover:bg-runner-blue-600 text-white text-lg px-8 py-4 font-semibold border-0"
               >
                 Iniciar Sesión
               </Button>
