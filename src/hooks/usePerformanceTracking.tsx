@@ -69,7 +69,7 @@ export const initWebVitalsTracking = () => {
           ttfb: navEntry.responseStart - navEntry.requestStart,
           download: navEntry.responseEnd - navEntry.responseStart,
           dom: navEntry.domContentLoadedEventEnd - navEntry.responseEnd,
-          total: navEntry.loadEventEnd - navEntry.navigationStart
+          total: navEntry.loadEventEnd - navEntry.fetchStart
         };
         
         console.log('Navigation metrics:', metrics);
