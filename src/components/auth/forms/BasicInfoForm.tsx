@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Eye, EyeOff, Check, X } from "lucide-react";
+import { User, Mail, Lock, Phone, Calendar, Eye, EyeOff } from "lucide-react";
 
 interface BasicInfoFormProps {
   onSubmit: (data: any) => void;
@@ -25,195 +25,233 @@ const BasicInfoForm = ({ onSubmit, initialData, isLoading }: BasicInfoFormProps)
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Validaciones de contraseña en tiempo real
-  const passwordValidations = {
-    minLength: formData.password.length >= 8,
-    hasUppercase: /[A-Z]/.test(formData.password),
-    hasNumber: /\d/.test(formData.password),
-    hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
-  };
-
-  const isPasswordValid = Object.values(passwordValidations).every(Boolean);
-  const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword !== "";
-
-  const isFormValid = formData.firstName && 
-                     formData.lastName && 
-                     formData.email && 
-                     formData.phone && 
-                     formData.birthDate && 
-                     isPasswordValid && 
-                     passwordsMatch;
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid) {
+    
+    // Validaciones básicas
+    if (formData.password !== formData.confirmPassword) {
+      alert("Las contraseñas no coinciden");
       return;
     }
+    
+    if (formData.password.length < 8) {
+      alert("La contraseña debe tener al menos 8 caracteres");
+      return;
+    }
+    
     onSubmit(formData);
   };
 
-  const ValidationIcon = ({ isValid }: { isValid: boolean }) => (
-    isValid ? <Check className="h-4 w-4 text-green-500" /> : <X className="h-4 w-4 text-red-500" />
-  );
+  const handleGoogleSignUp = async () => {
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+      
+      if (error) {
+        console.error('Error with Google sign up:', error);
+      }
+    } catch (error) {
+      console.error('Error importing supabase:', error);
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Información Personal</h3>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="firstName">Nombre *</Label>
-          <Input
-            id="firstName"
-            placeholder="Tu nombre"
-            value={formData.firstName}
-            onChange={(e) => handleInputChange("firstName", e.target.value)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="lastName">Apellidos *</Label>
-          <Input
-            id="lastName"
-            placeholder="Tus apellidos"
-            value={formData.lastName}
-            onChange={(e) => handleInputChange("lastName", e.target.value)}
-            required
-          />
-        </div>
+    <div className="space-y-6">
+      <div className="text-center mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">Información Personal</h3>
+        <p className="text-sm text-gray-600">Completa tus datos básicos</p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email *</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="tu@email.com"
-          value={formData.email}
-          onChange={(e) => handleInputChange("email", e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="password">Contraseña *</Label>
-        <div className="relative">
-          <Input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            placeholder="Tu contraseña"
-            value={formData.password}
-            onChange={(e) => handleInputChange("password", e.target.value)}
-            required
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-0 top-0 h-full px-3"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </Button>
-        </div>
-        
-        {/* Validaciones de contraseña en tiempo real */}
-        <div className="space-y-1 text-sm">
-          <div className="flex items-center space-x-2">
-            <ValidationIcon isValid={passwordValidations.minLength} />
-            <span className={passwordValidations.minLength ? "text-green-600" : "text-red-600"}>
-              Mínimo 8 caracteres
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <ValidationIcon isValid={passwordValidations.hasUppercase} />
-            <span className={passwordValidations.hasUppercase ? "text-green-600" : "text-red-600"}>
-              Al menos una letra mayúscula
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <ValidationIcon isValid={passwordValidations.hasNumber} />
-            <span className={passwordValidations.hasNumber ? "text-green-600" : "text-red-600"}>
-              Al menos un número
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <ValidationIcon isValid={passwordValidations.hasSpecial} />
-            <span className={passwordValidations.hasSpecial ? "text-green-600" : "text-red-600"}>
-              Al menos un carácter especial
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirmar Contraseña *</Label>
-        <div className="relative">
-          <Input
-            id="confirmPassword"
-            type={showConfirmPassword ? "text" : "password"}
-            placeholder="Confirma tu contraseña"
-            value={formData.confirmPassword}
-            onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-            required
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-0 top-0 h-full px-3"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-          >
-            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </Button>
-        </div>
-        {formData.confirmPassword && (
-          <div className="flex items-center space-x-2 text-sm">
-            <ValidationIcon isValid={passwordsMatch} />
-            <span className={passwordsMatch ? "text-green-600" : "text-red-600"}>
-              Las contraseñas coinciden
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="phone">Teléfono *</Label>
-          <Input
-            id="phone"
-            type="tel"
-            placeholder="+34 123 456 789"
-            value={formData.phone}
-            onChange={(e) => handleInputChange("phone", e.target.value)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="birthDate">Fecha de Nacimiento *</Label>
-          <Input
-            id="birthDate"
-            type="date"
-            value={formData.birthDate}
-            onChange={(e) => handleInputChange("birthDate", e.target.value)}
-            required
-          />
-        </div>
-      </div>
-
-      <Button 
-        type="submit" 
-        className="w-full bg-blue-600 hover:bg-blue-700" 
-        disabled={isLoading || !isFormValid}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleGoogleSignUp}
+        className="w-full mb-4"
+        disabled={isLoading}
       >
-        {isLoading ? "Guardando..." : "Continuar"}
-        <ArrowRight className="h-4 w-4 ml-2" />
+        <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+          <path
+            fill="currentColor"
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+          />
+          <path
+            fill="currentColor"
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+          />
+          <path
+            fill="currentColor"
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+          />
+          <path
+            fill="currentColor"
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+          />
+        </svg>
+        Registrarse con Google
       </Button>
-    </form>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-white px-2 text-muted-foreground">O completa el formulario</span>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">Nombre *</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                id="firstName"
+                placeholder="Tu nombre"
+                className="pl-10"
+                value={formData.firstName}
+                onChange={(e) => handleChange("firstName", e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Apellidos *</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                id="lastName"
+                placeholder="Tus apellidos"
+                className="pl-10"
+                value={formData.lastName}
+                onChange={(e) => handleChange("lastName", e.target.value)}
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">Email *</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="tu@email.com"
+              className="pl-10"
+              value={formData.email}
+              onChange={(e) => handleChange("email", e.target.value)}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Contraseña *</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Mínimo 8 caracteres"
+              className="pl-10 pr-10"
+              value={formData.password}
+              onChange={(e) => handleChange("password", e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirmar Contraseña *</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Repite tu contraseña"
+              className="pl-10 pr-10"
+              value={formData.confirmPassword}
+              onChange={(e) => handleChange("confirmPassword", e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="phone">Teléfono</Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+34 123 456 789"
+                className="pl-10"
+                value={formData.phone}
+                onChange={(e) => handleChange("phone", e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="birthDate">Fecha de Nacimiento *</Label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                id="birthDate"
+                type="date"
+                className="pl-10"
+                value={formData.birthDate}
+                onChange={(e) => handleChange("birthDate", e.target.value)}
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <Button 
+          type="submit" 
+          className="w-full bg-blue-600 hover:bg-blue-700"
+          disabled={isLoading}
+        >
+          {isLoading ? "Procesando..." : "Continuar"}
+        </Button>
+      </form>
+    </div>
   );
 };
 
