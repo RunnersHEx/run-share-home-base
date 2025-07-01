@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Mail, Lock, Phone, Calendar, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Lock, Phone, Calendar, Eye, EyeOff, Check, X } from "lucide-react";
 
 interface BasicInfoFormProps {
   onSubmit: (data: any) => void;
@@ -25,6 +25,14 @@ const BasicInfoForm = ({ onSubmit, initialData, isLoading }: BasicInfoFormProps)
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Validaciones de contraseña
+  const passwordValidations = {
+    minLength: formData.password.length >= 8,
+    hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password),
+    hasUppercase: /[A-Z]/.test(formData.password),
+    hasNumber: /\d/.test(formData.password)
+  };
+
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -38,8 +46,10 @@ const BasicInfoForm = ({ onSubmit, initialData, isLoading }: BasicInfoFormProps)
       return;
     }
     
-    if (formData.password.length < 8) {
-      alert("La contraseña debe tener al menos 8 caracteres");
+    // Validar todos los requisitos de contraseña
+    if (!passwordValidations.minLength || !passwordValidations.hasSpecialChar || 
+        !passwordValidations.hasUppercase || !passwordValidations.hasNumber) {
+      alert("La contraseña debe cumplir todos los requisitos de seguridad");
       return;
     }
     
@@ -181,6 +191,42 @@ const BasicInfoForm = ({ onSubmit, initialData, isLoading }: BasicInfoFormProps)
                 <Eye className="h-4 w-4" />
               )}
             </button>
+          </div>
+          
+          {/* Requisitos de contraseña */}
+          <div className="mt-2 space-y-1">
+            <div className={`flex items-center text-sm ${passwordValidations.minLength ? 'text-green-600' : 'text-red-600'}`}>
+              {passwordValidations.minLength ? (
+                <Check className="h-3 w-3 mr-2" />
+              ) : (
+                <X className="h-3 w-3 mr-2" />
+              )}
+              Mínimo 8 caracteres
+            </div>
+            <div className={`flex items-center text-sm ${passwordValidations.hasSpecialChar ? 'text-green-600' : 'text-red-600'}`}>
+              {passwordValidations.hasSpecialChar ? (
+                <Check className="h-3 w-3 mr-2" />
+              ) : (
+                <X className="h-3 w-3 mr-2" />
+              )}
+              1 carácter especial (!@#$%^&*)
+            </div>
+            <div className={`flex items-center text-sm ${passwordValidations.hasUppercase ? 'text-green-600' : 'text-red-600'}`}>
+              {passwordValidations.hasUppercase ? (
+                <Check className="h-3 w-3 mr-2" />
+              ) : (
+                <X className="h-3 w-3 mr-2" />
+              )}
+              Una mayúscula
+            </div>
+            <div className={`flex items-center text-sm ${passwordValidations.hasNumber ? 'text-green-600' : 'text-red-600'}`}>
+              {passwordValidations.hasNumber ? (
+                <Check className="h-3 w-3 mr-2" />
+              ) : (
+                <X className="h-3 w-3 mr-2" />
+              )}
+              Un número
+            </div>
           </div>
         </div>
 
