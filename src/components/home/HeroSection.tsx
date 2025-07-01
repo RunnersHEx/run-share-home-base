@@ -30,7 +30,7 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
             <h1 className="text-5xl lg:text-7xl font-bold text-white mb-6 animate-fade-in drop-shadow-2xl">
               <span className="text-runner-blue-500">Conecta</span> • <span className="text-runner-orange-500">Viaja</span> • <span className="text-blue-400/60">Corre</span>
             </h1>
-            <p className="text-xl lg:text-2xl text-white mb-8 animate-fade-in drop-shadow-lg font-medium max-w-6xl mx-auto leading-relaxed">
+            <p className="text-xl lg:text-2xl text-white mb-8 animate-fade-in drop-shadow-lg font-medium max-w-4xl mx-auto leading-relaxed">
               La plataforma que conecta corredores locales con corredores que viajan a carreras,<br />
               ofreciendo alojamiento auténtico y experiencia compartida por gasto cero
             </p>
