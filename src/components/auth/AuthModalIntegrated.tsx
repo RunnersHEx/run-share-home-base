@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -46,10 +47,10 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
   });
 
   const handleStepSubmit = (stepData: any) => {
-    console.log('Handling step submit:', currentStep, stepData);
+    console.log('AuthModal: Handling step submit:', currentStep, stepData);
     setFormData(prev => {
       const newData = { ...prev, ...stepData };
-      console.log('Updated form data:', newData);
+      console.log('AuthModal: Updated form data:', newData);
       return newData;
     });
     
@@ -65,13 +66,23 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
   };
 
   const handleFinalSubmit = async (finalData: typeof formData) => {
+    console.log('AuthModal: Starting final submit with data:', finalData);
+    
     setIsLoading(true);
-    console.log('Final submit with data:', finalData);
     
     try {
-      if (!finalData.email || !finalData.password) {
+      if (!finalData.email?.trim() || !finalData.password) {
         toast.error("Email y contraseña son requeridos");
-        setIsLoading(false);
+        return;
+      }
+
+      if (finalData.password !== finalData.confirmPassword) {
+        toast.error("Las contraseñas no coinciden");
+        return;
+      }
+
+      if (finalData.password.length < 6) {
+        toast.error("La contraseña debe tener al menos 6 caracteres");
         return;
       }
 
@@ -92,57 +103,69 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
         isGuest: finalData.isGuest
       };
 
-      console.log('Calling signUp with userData:', userData);
+      console.log('AuthModal: Calling signUp with email:', finalData.email);
       
-      const { error } = await signUp(finalData.email, finalData.password, userData);
+      const { error } = await signUp(finalData.email.trim(), finalData.password, userData);
       
       if (error) {
-        console.error('SignUp error:', error);
+        console.error('AuthModal: SignUp error:', error);
+        
+        // Handle specific error messages
         if (error.message?.includes('User already registered')) {
           toast.error("Este email ya está registrado. Intenta iniciar sesión.");
         } else if (error.message?.includes('Invalid email')) {
           toast.error("El formato del email no es válido");
         } else if (error.message?.includes('Password')) {
           toast.error("La contraseña no cumple los requisitos mínimos");
+        } else if (error.message?.includes('Email rate limit exceeded')) {
+          toast.error("Demasiados intentos. Espera un momento antes de intentar de nuevo.");
         } else {
           toast.error(error.message || "Error al crear la cuenta");
         }
       } else {
-        toast.success("¡Cuenta creada exitosamente!");
+        console.log('AuthModal: SignUp successful');
+        toast.success("¡Cuenta creada exitosamente! Revisa tu email para verificar tu cuenta.");
         resetForm();
         onClose();
         if (onSuccess) onSuccess();
         
+        // Show verification modal after a short delay
         setTimeout(() => {
           setShowVerificationModal(true);
         }, 1000);
       }
-    } catch (error) {
-      console.error('Error in final submit:', error);
-      toast.error("Error inesperado al crear la cuenta");
+    } catch (error: any) {
+      console.error('AuthModal: Error in final submit:', error);
+      toast.error(error.message || "Error inesperado al crear la cuenta");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleLoginSubmit = async (loginData: { email: string; password: string }) => {
-    setIsLoading(true);
     console.log('AuthModal: Attempting login with email:', loginData.email);
+    
+    setIsLoading(true);
     
     try {
       await signIn(loginData.email, loginData.password);
       console.log('AuthModal: Login successful');
       
+      toast.success("¡Sesión iniciada correctamente!");
       resetForm();
       onClose();
       if (onSuccess) onSuccess();
       
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);
-      if (error.message?.includes('Invalid login credentials') || error.message?.includes('Invalid credentials')) {
+      
+      // Handle specific error messages
+      if (error.message?.includes('Invalid login credentials')) {
         toast.error("Email o contraseña incorrectos");
       } else if (error.message?.includes('Email not confirmed')) {
-        toast.error("Por favor confirma tu email para iniciar sesión");
+        toast.error("Por favor confirma tu email antes de iniciar sesión");
+      } else if (error.message?.includes('Too many requests')) {
+        toast.error("Demasiados intentos. Espera un momento antes de intentar de nuevo.");
       } else {
         toast.error(error.message || "Error al iniciar sesión");
       }

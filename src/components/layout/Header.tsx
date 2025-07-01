@@ -17,17 +17,26 @@ const Header = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
+  // Debug user state
+  useEffect(() => {
+    console.log('Header: User state changed:', user?.email || 'No user');
+    console.log('Header: Loading state:', loading);
+  }, [user, loading]);
+
   const handleAuthModal = (mode: "login" | "register") => {
+    console.log('Header: Opening auth modal in mode:', mode);
     setAuthMode(mode);
     setShowAuthModal(true);
   };
 
   const handleSignOut = async () => {
+    console.log('Header: Starting sign out');
     try {
       await signOut();
       toast.success("Sesión cerrada correctamente");
       navigate("/");
     } catch (error) {
+      console.error('Header: Sign out error:', error);
       toast.error("Error al cerrar sesión");
     }
   };
@@ -37,8 +46,9 @@ const Header = () => {
   };
 
   const handleAuthSuccess = () => {
+    console.log('Header: Auth success callback');
     setShowAuthModal(false);
-    toast.success("¡Sesión iniciada correctamente!");
+    // Don't show toast here as it's already shown in the auth modal
   };
 
   if (loading) {
@@ -53,7 +63,7 @@ const Header = () => {
                 className="h-10 w-auto"
               />
             </div>
-            <div>Cargando...</div>
+            <div className="text-gray-500">Cargando...</div>
           </div>
         </div>
       </header>

@@ -18,25 +18,44 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
     password: ""
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('LoginForm: Submitting login with email:', formData.email);
     
-    if (!formData.email || !formData.password) {
+    if (submitting) return; // Prevent double submission
+    
+    console.log('LoginForm: Starting form submission');
+    console.log('LoginForm: Email:', formData.email);
+    console.log('LoginForm: Password length:', formData.password?.length || 0);
+    
+    if (!formData.email?.trim() || !formData.password) {
       console.error('LoginForm: Missing email or password');
       return;
     }
 
+    setSubmitting(true);
+    
     try {
-      await onSubmit(formData);
+      console.log('LoginForm: Calling onSubmit with data');
+      await onSubmit({
+        email: formData.email.trim(),
+        password: formData.password
+      });
+      console.log('LoginForm: onSubmit completed successfully');
     } catch (error) {
-      console.error('LoginForm: Error during login:', error);
+      console.error('LoginForm: Error during form submission:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    if (submitting) return;
+    
+    setSubmitting(true);
     try {
+      console.log('LoginForm: Starting Google sign in');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -45,12 +64,18 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
       });
       
       if (error) {
-        console.error('Error with Google sign in:', error);
+        console.error('LoginForm: Google sign in error:', error);
+      } else {
+        console.log('LoginForm: Google sign in initiated');
       }
     } catch (error) {
-      console.error('Error with Google sign in:', error);
+      console.error('LoginForm: Google sign in exception:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  const isFormDisabled = isLoading || submitting || !formData.email?.trim() || !formData.password;
 
   return (
     <div className="space-y-4">
@@ -66,6 +91,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
               className="pl-10"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              disabled={submitting}
               required
             />
           </div>
@@ -82,12 +108,14 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
               className="pl-10 pr-10"
               value={formData.password}
               onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              disabled={submitting}
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              disabled={submitting}
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -101,9 +129,9 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
         <Button 
           type="submit" 
           className="w-full bg-blue-600 hover:bg-blue-700" 
-          disabled={isLoading || !formData.email || !formData.password}
+          disabled={isFormDisabled}
         >
-          {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+          {submitting ? "Iniciando sesión..." : "Iniciar Sesión"}
         </Button>
       </form>
 
@@ -121,7 +149,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
         variant="outline"
         onClick={handleGoogleSignIn}
         className="w-full"
-        disabled={isLoading}
+        disabled={submitting}
       >
         <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
           <path
