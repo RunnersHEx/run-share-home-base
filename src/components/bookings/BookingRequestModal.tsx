@@ -1,16 +1,16 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar, Users, Phone, Clock, MessageSquare, AlertTriangle, Trophy } from "lucide-react";
 import { BookingFormData } from "@/types/booking";
 import { Race } from "@/types/race";
 import { Property } from "@/types/property";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { StayDetailsSection } from "./sections/StayDetailsSection";
+import { MessageSection } from "./sections/MessageSection";
+import { SpecialRequestsSection } from "./sections/SpecialRequestsSection";
+import { BookingSummarySection } from "./sections/BookingSummarySection";
 
 interface BookingRequestModalProps {
   isOpen: boolean;
@@ -90,221 +90,34 @@ const BookingRequestModal = ({ isOpen, onClose, onSubmit, race, property }: Book
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Sección 1 - Detalles de Estancia */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calendar className="w-5 h-5" />
-                <span>Detalles de tu Estancia</span>
-              </CardTitle>
-              <CardDescription>Define las fechas y detalles de tu visita</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="check_in_date">Fecha de Check-in</Label>
-                  <input
-                    id="check_in_date"
-                    type="date"
-                    value={formData.check_in_date || ''}
-                    onChange={(e) => setFormData({ ...formData, check_in_date: e.target.value })}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                    placeholder="dd/mm/yyyy"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="check_out_date">Fecha de Check-out</Label>
-                  <input
-                    id="check_out_date"
-                    type="date"
-                    value={formData.check_out_date || ''}
-                    onChange={(e) => setFormData({ ...formData, check_out_date: e.target.value })}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                    placeholder="dd/mm/yyyy"
-                  />
-                </div>
-              </div>
+          <StayDetailsSection 
+            formData={formData}
+            setFormData={setFormData}
+            property={property}
+            race={race}
+          />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="guests_count">Número de Guests</Label>
-                  <select
-                    id="guests_count"
-                    value={formData.guests_count || 1}
-                    onChange={(e) => setFormData({ ...formData, guests_count: parseInt(e.target.value) })}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    {Array.from({ length: Math.min(property.max_guests, race.max_guests) }, (_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1} {i === 0 ? 'guest' : 'guests'}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Máximo permitido: {Math.min(property.max_guests, race.max_guests)} guests
-                  </p>
-                </div>
-                <div>
-                  <Label htmlFor="estimated_arrival_time">Hora Estimada de Llegada</Label>
-                  <input
-                    id="estimated_arrival_time"
-                    type="time"
-                    value={formData.estimated_arrival_time || ''}
-                    onChange={(e) => setFormData({ ...formData, estimated_arrival_time: e.target.value })}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
+          <MessageSection 
+            formData={formData}
+            setFormData={setFormData}
+          />
 
-              <div>
-                <Label htmlFor="guest_phone">Teléfono de Contacto Directo</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    id="guest_phone"
-                    type="tel"
-                    value={formData.guest_phone || ''}
-                    onChange={(e) => setFormData({ ...formData, guest_phone: e.target.value })}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="+34 600 000 000"
-                    required
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <SpecialRequestsSection 
+            formData={formData}
+            setFormData={setFormData}
+          />
 
-          {/* Sección 2 - Mensaje Personal */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <MessageSquare className="w-5 h-5" />
-                <span>Mensaje Personal al Host</span>
-              </CardTitle>
-              <CardDescription>
-                Cuéntale al host sobre ti y por qué quieres vivir esta experiencia
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={formData.request_message || ''}
-                onChange={(e) => setFormData({ ...formData, request_message: e.target.value })}
-                placeholder="Cuéntale al host sobre ti: ¿Por qué quieres correr esta carrera? ¿Qué esperas de la experiencia? ¿Cuál es tu experiencia en running? ¿Tienes alguna pregunta específica?"
-                className="min-h-[120px]"
-                maxLength={500}
-                required
-              />
-              <p className="text-sm text-gray-500 mt-2">
-                {(formData.request_message || '').length}/500 caracteres
-              </p>
-              <div className="mt-3 text-sm text-gray-600">
-                <p className="font-medium mb-1">Sugerencias de qué incluir:</p>
-                <ul className="list-disc list-inside space-y-1 text-xs">
-                  <li>Tu experiencia en running y por qué te apasiona</li>
-                  <li>Motivación específica para esta carrera</li>
-                  <li>Qué esperas aprender de la experiencia local</li>
-                  <li>Preguntas sobre la carrera o la zona</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
+          <BookingSummarySection
+            formData={formData}
+            race={race}
+            property={property}
+            agreedToTerms={agreedToTerms}
+            setAgreedToTerms={setAgreedToTerms}
+            userPointsBalance={userPointsBalance}
+            calculateStayDuration={calculateStayDuration}
+            formatDate={formatDate}
+          />
 
-          {/* Sección 3 - Solicitudes Especiales */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Solicitudes Especiales</CardTitle>
-              <CardDescription>Información adicional que el host debería conocer</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={formData.special_requests || ''}
-                onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
-                placeholder="Ej: Restricciones dietéticas, necesidad de desayuno temprano, solicitud de transporte, alergias, etc."
-                className="min-h-[80px]"
-                maxLength={300}
-              />
-              <p className="text-sm text-gray-500 mt-2">
-                {(formData.special_requests || '').length}/300 caracteres
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Sección 4 - Resumen y Confirmación */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Trophy className="w-5 h-5" />
-                <span>Resumen de la Reserva</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-600">Carrera</p>
-                  <p className="font-medium">{race.name}</p>
-                  <p className="text-sm text-gray-500">{formatDate(race.race_date)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Propiedad</p>
-                  <p className="font-medium">{property.title}</p>
-                  <p className="text-sm text-gray-500">{property.locality}</p>
-                </div>
-                {formData.check_in_date && formData.check_out_date && (
-                  <>
-                    <div>
-                      <p className="text-sm text-gray-600">Estancia</p>
-                      <p className="font-medium">
-                        {calculateStayDuration()} {calculateStayDuration() === 1 ? 'noche' : 'noches'}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {formatDate(formData.check_in_date)} - {formatDate(formData.check_out_date)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Guests</p>
-                      <p className="font-medium">{formData.guests_count} {formData.guests_count === 1 ? 'guest' : 'guests'}</p>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center text-lg font-semibold">
-                  <span>Costo Total:</span>
-                  <span className="text-blue-600">{race.points_cost} puntos</span>
-                </div>
-                <div className="flex justify-between items-center text-sm text-gray-600 mt-1">
-                  <span>Tu balance actual:</span>
-                  <span>{userPointsBalance} puntos</span>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="terms"
-                  checked={agreedToTerms}
-                  onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
-                />
-                <Label htmlFor="terms" className="text-sm">
-                  Acepto los términos y condiciones y la política de cancelación
-                </Label>
-              </div>
-
-              {userPointsBalance < race.points_cost && (
-                <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <p className="text-sm text-red-700">
-                    No tienes suficientes puntos para esta reserva. Necesitas {race.points_cost - userPointsBalance} puntos más.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Botones de Acción */}
           <div className="flex justify-between pt-6">
             <Button variant="outline" onClick={onClose} disabled={loading}>
               Cancelar

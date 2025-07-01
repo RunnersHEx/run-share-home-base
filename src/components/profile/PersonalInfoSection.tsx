@@ -1,20 +1,18 @@
-import { useState, useRef, useEffect } from "react";
+
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useProfile } from "@/hooks/useProfile";
-import { Camera, Save, Edit, X } from "lucide-react";
-import { toast } from "sonner";
+import { Save, Edit, X } from "lucide-react";
+import { ProfileAvatarSection } from "./personal/ProfileAvatarSection";
+import { BasicInfoFields } from "./personal/BasicInfoFields";
+import { EmergencyContactFields } from "./personal/EmergencyContactFields";
 
 const PersonalInfoSection = () => {
-  const { profile, updateProfile, uploadAvatar } = useProfile();
+  const { profile, updateProfile } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     first_name: profile?.first_name || '',
@@ -50,45 +48,6 @@ const PersonalInfoSection = () => {
     setIsEditing(false);
   };
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('La imagen debe ser menor a 5MB');
-      return;
-    }
-
-    setIsUploadingAvatar(true);
-    try {
-      console.log('Uploading new avatar from PersonalInfoSection...');
-      const avatarUrl = await uploadAvatar(file);
-      if (avatarUrl) {
-        console.log('Avatar uploaded successfully:', avatarUrl);
-        toast.success('Foto de perfil actualizada correctamente');
-        
-        // No necesitamos recargar la página, el hook ya actualiza el estado
-        // La imagen se actualizará automáticamente cuando el perfil se refresqué
-      }
-    } catch (error) {
-      console.error('Error uploading avatar:', error);
-      toast.error('Error al subir la foto de perfil');
-    } finally {
-      setIsUploadingAvatar(false);
-      // Reset input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
-
-  const getInitials = () => {
-    const first = profile?.first_name?.charAt(0) || '';
-    const last = profile?.last_name?.charAt(0) || '';
-    return `${first}${last}`.toUpperCase();
-  };
-
-  // Update form data when profile changes
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -134,7 +93,6 @@ const PersonalInfoSection = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Mensaje de ayuda cuando no está editando */}
         {!isEditing && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-700">
@@ -143,131 +101,21 @@ const PersonalInfoSection = () => {
           </div>
         )}
 
-        {/* Avatar - ahora con mejor key para forzar re-render */}
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Avatar 
-              className="h-20 w-20"
-              key={profile?.profile_image_url || 'no-image'} // Force re-render when image changes
-            >
-              <AvatarImage 
-                src={profile?.profile_image_url || ''} 
-                alt="Foto de perfil corriendo"
-                className="object-cover"
-              />
-              <AvatarFallback className="bg-blue-600 text-white text-xl">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
-            <Button
-              size="sm"
-              className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 p-0"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploadingAvatar}
-            >
-              <Camera className="h-4 w-4" />
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              className="hidden"
-            />
-          </div>
-          <div>
-            <h3 className="font-semibold text-lg">Foto de Perfil Corriendo</h3>
-            <p className="text-sm text-gray-600">
-              Foto tuya corriendo o con medalla de finisher donde se te reconozca. JPG, PNG o GIF. Máximo 5MB.
-            </p>
-            <p className="text-xs text-blue-700 mt-1">
-              Esta foto también se usa como "Foto en Carrera" en tu verificación de identidad.
-            </p>
-            {isUploadingAvatar && (
-              <p className="text-sm text-blue-600 mt-2">Subiendo foto...</p>
-            )}
-          </div>
-        </div>
+        <ProfileAvatarSection profile={profile} />
 
-        {/* Información básica */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="first_name">Nombre</Label>
-            <Input
-              id="first_name"
-              value={isEditing ? formData.first_name : (profile?.first_name || '')}
-              onChange={(e) => handleInputChange('first_name', e.target.value)}
-              disabled={!isEditing}
-              className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-              placeholder={isEditing ? "Ingresa tu nombre" : "No especificado"}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="last_name">Apellidos</Label>
-            <Input
-              id="last_name"
-              value={isEditing ? formData.last_name : (profile?.last_name || '')}
-              onChange={(e) => handleInputChange('last_name', e.target.value)}
-              disabled={!isEditing}
-              className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-              placeholder={isEditing ? "Ingresa tus apellidos" : "No especificado"}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Teléfono</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={isEditing ? formData.phone : (profile?.phone || '')}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              disabled={!isEditing}
-              className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-              placeholder={isEditing ? "Ingresa tu teléfono" : "No especificado"}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="birth_date">Fecha de Nacimiento</Label>
-            <Input
-              id="birth_date"
-              type="date"
-              value={isEditing ? formData.birth_date : (profile?.birth_date || '')}
-              onChange={(e) => handleInputChange('birth_date', e.target.value)}
-              disabled={!isEditing}
-              className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-              placeholder={isEditing ? "dd/mm/yyyy" : "No especificado"}
-            />
-          </div>
-        </div>
+        <BasicInfoFields 
+          formData={formData}
+          profile={profile}
+          isEditing={isEditing}
+          handleInputChange={handleInputChange}
+        />
 
-        {/* Contacto de emergencia */}
-        <div className="space-y-4">
-          <h4 className="font-semibold text-gray-900">Contacto de Emergencia</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="emergency_contact_name">Nombre del Contacto</Label>
-              <Input
-                id="emergency_contact_name"
-                value={isEditing ? formData.emergency_contact_name : (profile?.emergency_contact_name || '')}
-                onChange={(e) => handleInputChange('emergency_contact_name', e.target.value)}
-                disabled={!isEditing}
-                className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-                placeholder={isEditing ? "Nombre del contacto de emergencia" : "No especificado"}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="emergency_contact_phone">Teléfono del Contacto</Label>
-              <Input
-                id="emergency_contact_phone"
-                type="tel"
-                value={isEditing ? formData.emergency_contact_phone : (profile?.emergency_contact_phone || '')}
-                onChange={(e) => handleInputChange('emergency_contact_phone', e.target.value)}
-                disabled={!isEditing}
-                className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
-                placeholder={isEditing ? "Teléfono del contacto" : "No especificado"}
-              />
-            </div>
-          </div>
-        </div>
+        <EmergencyContactFields 
+          formData={formData}
+          profile={profile}
+          isEditing={isEditing}
+          handleInputChange={handleInputChange}
+        />
       </CardContent>
     </Card>
   );
