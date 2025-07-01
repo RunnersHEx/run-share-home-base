@@ -11,6 +11,7 @@ export const useAdminAuth = () => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
+        console.log('useAdminAuth: No user found');
         setIsAdmin(false);
         setLoading(false);
         return;
@@ -21,12 +22,13 @@ export const useAdminAuth = () => {
         const adminEmail = 'runnershomeexchange@gmail.com';
         const userIsAdmin = user.email === adminEmail;
         
-        console.log('Checking admin status for:', user.email);
-        console.log('Is admin?', userIsAdmin);
+        console.log('useAdminAuth: Checking admin status for:', user.email);
+        console.log('useAdminAuth: Admin email:', adminEmail);
+        console.log('useAdminAuth: Is admin?', userIsAdmin);
         
         setIsAdmin(userIsAdmin);
       } catch (error) {
-        console.error('Error checking admin status:', error);
+        console.error('useAdminAuth: Error checking admin status:', error);
         setIsAdmin(false);
       } finally {
         setLoading(false);

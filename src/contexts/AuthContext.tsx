@@ -46,10 +46,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Get initial session
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setSession(session);
-      setLoading(false);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+        } else {
+          console.log('Initial session:', session?.user?.email || 'No session');
+          setUser(session?.user ?? null);
+          setSession(session);
+        }
+      } catch (error) {
+        console.error('Error in getSession:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     getSession();
@@ -57,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth event:', event);
+        console.log('Auth event:', event, 'User:', session?.user?.email || 'None');
         setUser(session?.user ?? null);
         setSession(session);
         setLoading(false);
@@ -208,21 +218,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    console.log('AuthContext: Attempting signIn for email:', email);
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
 
     if (error) {
+      console.error('AuthContext: SignIn error:', error);
       throw error;
     }
+    
+    console.log('AuthContext: SignIn successful for user:', data.user?.email);
   };
 
   const signOut = async () => {
+    console.log('AuthContext: Signing out user:', user?.email);
     const { error } = await supabase.auth.signOut();
     if (error) {
+      console.error('AuthContext: SignOut error:', error);
       throw error;
     }
+    console.log('AuthContext: SignOut successful');
   };
 
   const resetPassword = async (email: string) => {

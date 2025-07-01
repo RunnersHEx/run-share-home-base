@@ -20,7 +20,12 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+    console.log('LoginForm: Submitting login with email:', formData.email);
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      console.error('LoginForm: Error during login:', error);
+    }
   };
 
   const handlePasswordReset = () => {

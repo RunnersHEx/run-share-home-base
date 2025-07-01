@@ -142,14 +142,20 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
 
   const handleLoginSubmit = async (loginData: { email: string; password: string }) => {
     setIsLoading(true);
+    console.log('AuthModal: Attempting login with email:', loginData.email);
+    
     try {
       await signIn(loginData.email, loginData.password);
+      console.log('AuthModal: Login successful');
       toast.success("¡Has iniciado sesión correctamente!");
       onClose();
+      resetForm();
     } catch (error: any) {
-      console.error('Login error:', error);
-      if (error.message?.includes('Invalid credentials')) {
+      console.error('AuthModal: Login error:', error);
+      if (error.message?.includes('Invalid login credentials') || error.message?.includes('Invalid credentials')) {
         toast.error("Email o contraseña incorrectos");
+      } else if (error.message?.includes('Email not confirmed')) {
+        toast.error("Por favor confirma tu email para iniciar sesión");
       } else {
         toast.error(error.message || "Error al iniciar sesión");
       }
