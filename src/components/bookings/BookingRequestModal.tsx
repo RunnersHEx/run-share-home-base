@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -64,8 +63,8 @@ const BookingRequestModal = ({ isOpen, onClose, onSubmit, race, property }: Book
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'long',
+      day: '2-digit',
+      month: '2-digit',
       year: 'numeric'
     });
   };
@@ -111,6 +110,7 @@ const BookingRequestModal = ({ isOpen, onClose, onSubmit, race, property }: Book
                     onChange={(e) => setFormData({ ...formData, check_in_date: e.target.value })}
                     className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
+                    placeholder="dd/mm/yyyy"
                   />
                 </div>
                 <div>
@@ -122,6 +122,7 @@ const BookingRequestModal = ({ isOpen, onClose, onSubmit, race, property }: Book
                     onChange={(e) => setFormData({ ...formData, check_out_date: e.target.value })}
                     className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
+                    placeholder="dd/mm/yyyy"
                   />
                 </div>
               </div>

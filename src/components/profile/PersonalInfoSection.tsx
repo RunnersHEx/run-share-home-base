@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -235,6 +234,7 @@ const PersonalInfoSection = () => {
               onChange={(e) => handleInputChange('birth_date', e.target.value)}
               disabled={!isEditing}
               className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}
+              placeholder={isEditing ? "dd/mm/yyyy" : "No especificado"}
             />
           </div>
         </div>

@@ -76,6 +76,7 @@ export const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoS
                 type="date"
                 value={formData.race_date || ""}
                 onChange={(e) => onUpdate({ race_date: e.target.value })}
+                placeholder="dd/mm/yyyy"
               />
             </div>
 
@@ -86,6 +87,7 @@ export const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoS
                 type="date"
                 value={formData.registration_deadline || ""}
                 onChange={(e) => onUpdate({ registration_deadline: e.target.value })}
+                placeholder="dd/mm/yyyy"
               />
             </div>
           </div>
