@@ -49,22 +49,6 @@ const Header = () => {
               <a href="/discover" className="text-gray-700 hover:text-runner-blue-600 font-medium">
                 Descubrir Carreras
               </a>
-              {user && (
-                <>
-                  <a href="/profile" className="text-gray-700 hover:text-runner-blue-600 font-medium">
-                    Mi Perfil
-                  </a>
-                  <a href="/properties" className="text-gray-700 hover:text-runner-blue-600 font-medium">
-                    Mis Propiedades
-                  </a>
-                  <a href="/races" className="text-gray-700 hover:text-runner-blue-600 font-medium">
-                    Mis Carreras
-                  </a>
-                  <a href="/bookings" className="text-gray-700 hover:text-runner-blue-600 font-medium">
-                    Mis Reservas
-                  </a>
-                </>
-              )}
             </nav>
 
             {/* User Actions */}
