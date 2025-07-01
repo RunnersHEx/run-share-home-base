@@ -21,9 +21,13 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
       {/* Hero Content */}
       <div className="relative z-10 container mx-auto px-4 text-center text-white">
         <div className="max-w-4xl mx-auto">
-          {/* Main Headline */}
+          {/* Main Headline with specific colors */}
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-            Conecta • Viaja • Corre
+            <span className="text-blue-400">Conecta</span>
+            <span className="text-white"> • </span>
+            <span className="text-orange-400">Viaja</span>
+            <span className="text-white"> • </span>
+            <span className="text-blue-400">Corre</span>
           </h1>
 
           {/* Subtitle */}
@@ -32,21 +36,20 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
             ofreciendo alojamiento auténtico y experiencia compartida por gasto cero
           </p>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons - matching the image colors */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               size="lg"
               onClick={() => onAuthModal("register")}
-              className="bg-runner-orange-500 hover:bg-runner-orange-600 text-white font-semibold px-8 py-4 text-lg rounded-full shadow-2xl transform hover:scale-105 transition-all duration-200"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-4 text-lg rounded-lg shadow-lg"
             >
               Únete a la Comunidad
             </Button>
             
             <Button
               size="lg"
-              variant="outline"
               onClick={() => onAuthModal("login")}
-              className="border-2 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm font-semibold px-8 py-4 text-lg rounded-full"
+              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-4 text-lg rounded-lg shadow-lg"
             >
               Iniciar Sesión
             </Button>
