@@ -23,7 +23,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (submitting) return; // Prevent double submission
+    if (submitting || isLoading) return; // Prevent double submission
     
     console.log('LoginForm: Starting form submission');
     console.log('LoginForm: Email:', formData.email);
@@ -51,7 +51,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
   };
 
   const handleGoogleSignIn = async () => {
-    if (submitting) return;
+    if (submitting || isLoading) return;
     
     setSubmitting(true);
     try {
@@ -91,7 +91,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
               className="pl-10"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              disabled={submitting}
+              disabled={submitting || isLoading}
               required
             />
           </div>
@@ -108,14 +108,14 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
               className="pl-10 pr-10"
               value={formData.password}
               onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-              disabled={submitting}
+              disabled={submitting || isLoading}
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-              disabled={submitting}
+              disabled={submitting || isLoading}
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -149,7 +149,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
         variant="outline"
         onClick={handleGoogleSignIn}
         className="w-full"
-        disabled={submitting}
+        disabled={submitting || isLoading}
       >
         <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
           <path

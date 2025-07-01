@@ -33,6 +33,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log('AuthProvider: Initializing auth state');
+    
+    let sessionSet = false;  // Flag para evitar duplicación
 
     // Set up auth state change listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -46,6 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(newSession);
         setUser(newSession?.user ?? null);
         setLoading(false);
+        sessionSet = true;  // Marcar que la sesión ya fue establecida
         
         if (event === 'SIGNED_IN' && newSession?.user) {
           console.log('AuthProvider: User signed in successfully');
@@ -64,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (error) {
           console.error('AuthProvider: Error getting initial session:', error);
+          setLoading(false);
         } else {
           console.log('AuthProvider: Initial session:', {
             hasSession: !!session,
@@ -71,15 +75,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userEmail: session?.user?.email || 'none'
           });
           
-          // FIXED: Only set if session exists AND no session is already set by the listener
-          if (session && !session) {
+          // FIXED: Solo establecer si hay sesión Y no se ha establecido ya por el listener
+          if (session && !sessionSet) {
             setSession(session);
             setUser(session?.user ?? null);
           }
+          
+          // Siempre establecer loading en false
+          setLoading(false);
         }
       } catch (error) {
         console.error('AuthProvider: Exception getting initial session:', error);
-      } finally {
         setLoading(false);
       }
     };
@@ -131,16 +137,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
+      console.log('AuthProvider: SignUp response:', {
+        success: !error,
+        userId: data.user?.id || 'none',
+        email: data.user?.email || 'none',
+        confirmed: !!data.user?.email_confirmed_at,
+        error: error?.message || 'none'
+      });
+
       if (error) {
         console.error('AuthProvider: SignUp error:', error);
         return { error };
       }
-
-      console.log('AuthProvider: SignUp successful:', {
-        userId: data.user?.id || 'none',
-        email: data.user?.email || 'none',
-        confirmed: !!data.user?.email_confirmed_at
-      });
 
       return { error: null };
     } catch (error) {
@@ -168,16 +176,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password
       });
 
+      console.log('AuthProvider: SignIn response:', {
+        success: !error,
+        userId: data.user?.id || 'none',
+        email: data.user?.email || 'none',
+        hasSession: !!data.session,
+        error: error?.message || 'none'
+      });
+
       if (error) {
         console.error('AuthProvider: SignIn error:', error);
         throw error;
       }
       
-      console.log('AuthProvider: SignIn successful:', {
-        userId: data.user?.id || 'none',
-        email: data.user?.email || 'none'
-      });
-      
+      console.log('AuthProvider: SignIn successful');
       // Auth state change will be handled by the listener
     } catch (error) {
       console.error('AuthProvider: SignIn exception:', error);
