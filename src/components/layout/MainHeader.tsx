@@ -15,7 +15,7 @@ const MainHeader = ({ onAuthModal }: MainHeaderProps) => {
             <img 
               src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
               alt="Runners Home Exchange" 
-              className="h-16 w-auto object-contain"
+              className="h-20 w-auto object-contain"
             />
           </div>
 
@@ -32,7 +32,7 @@ const MainHeader = ({ onAuthModal }: MainHeaderProps) => {
               onClick={() => onAuthModal("register")}
               className="bg-runner-orange-500 hover:bg-runner-orange-600 text-white font-semibold"
             >
-              Registrarse Gratis
+              Únete a la Comunidad
             </Button>
           </div>
         </div>
