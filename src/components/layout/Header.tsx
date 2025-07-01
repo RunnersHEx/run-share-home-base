@@ -2,14 +2,18 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import NotificationBell from "../notifications/NotificationBell";
 import UserProfile from "../common/UserProfile";
 import AuthModalIntegrated from "../auth/AuthModalIntegrated";
-import { LogOut } from "lucide-react";
+import { LogOut, Shield } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdminAuth();
+  const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
@@ -25,6 +29,10 @@ const Header = () => {
     } catch (error) {
       toast.error("Error al cerrar sesión");
     }
+  };
+
+  const handleAdminClick = () => {
+    navigate('/admin');
   };
 
   return (
@@ -57,6 +65,17 @@ const Header = () => {
                 <>
                   <NotificationBell />
                   <UserProfile />
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAdminClick}
+                      className="flex items-center space-x-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span>Admin</span>
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -79,7 +98,7 @@ const Header = () => {
                     onClick={() => handleAuthModal("register")}
                     className="bg-runner-blue-600 hover:bg-runner-blue-700"
                   >
-                    Registrarse
+                    Únete a la Comunidad
                   </Button>
                 </div>
               )}

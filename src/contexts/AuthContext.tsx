@@ -26,6 +26,18 @@ export const useAuth = () => {
   return context;
 };
 
+// Mapeo de valores de inglés a español para running_experience
+const mapRunningExperience = (value: string): string => {
+  const mapping: { [key: string]: string } = {
+    'beginner': 'principiante',
+    'intermediate': 'intermedio', 
+    'advanced': 'avanzado',
+    'expert': 'experto',
+    'elite': 'experto' // Mapeamos elite a experto ya que no tenemos elite en español
+  };
+  return mapping[value] || value;
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -50,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setLoading(false);
         
-        // Si es un nuevo usuario que se acaba de registrar, crear/actualizar su perfil
+        // Si es un nuevo usuario que se acaba de registrar o hacer login, crear/actualizar su perfil
         if (event === 'SIGNED_IN' && session?.user) {
           // Delay para asegurar que el trigger de la DB haya corrido
           setTimeout(async () => {
@@ -66,7 +78,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   phone: metadata.phone,
                   birth_date: metadata.birthDate || metadata.birth_date,
                   bio: metadata.bio,
-                  running_experience: metadata.runningExperience || metadata.running_experience,
+                  // Mapear running_experience de inglés a español
+                  running_experience: metadata.runningExperience 
+                    ? mapRunningExperience(metadata.runningExperience)
+                    : (metadata.running_experience 
+                        ? mapRunningExperience(metadata.running_experience) 
+                        : null),
                   running_modalities: metadata.runningModalities || metadata.running_modalities || [],
                   preferred_distances: metadata.preferredDistances || metadata.preferred_distances || [],
                   personal_records: metadata.personalRecords || metadata.personal_records || {},
@@ -141,6 +158,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     console.log('SignUp userData being sent:', userData);
     
+    // Convertir running_experience a español antes de guardar
+    const mappedUserData = {
+      ...userData,
+      runningExperience: userData.runningExperience ? mapRunningExperience(userData.runningExperience) : null
+    };
+    
     // Enviar TODOS los datos del usuario en el metadata con campos más consistentes
     const { error } = await supabase.auth.signUp({
       email,
@@ -149,34 +172,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailRedirectTo: redirectUrl,
         data: {
           // Campos principales con nombres consistentes
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          phone: userData.phone,
-          birthDate: userData.birthDate,
-          bio: userData.bio,
-          runningExperience: userData.runningExperience,
-          runningModalities: userData.runningModalities || [],
-          preferredDistances: userData.preferredDistances || [],
-          personalRecords: userData.personalRecords || {},
-          racesCompletedThisYear: userData.racesCompletedThisYear || 0,
-          emergencyContactName: userData.emergencyContactName,
-          emergencyContactPhone: userData.emergencyContactPhone,
-          isHost: userData.isHost !== undefined ? userData.isHost : true,
-          isGuest: userData.isGuest !== undefined ? userData.isGuest : true,
+          firstName: mappedUserData.firstName,
+          lastName: mappedUserData.lastName,
+          phone: mappedUserData.phone,
+          birthDate: mappedUserData.birthDate,
+          bio: mappedUserData.bio,
+          runningExperience: mappedUserData.runningExperience,
+          runningModalities: mappedUserData.runningModalities || [],
+          preferredDistances: mappedUserData.preferredDistances || [],
+          personalRecords: mappedUserData.personalRecords || {},
+          racesCompletedThisYear: mappedUserData.racesCompletedThisYear || 0,
+          emergencyContactName: mappedUserData.emergencyContactName,
+          emergencyContactPhone: mappedUserData.emergencyContactPhone,
+          isHost: mappedUserData.isHost !== undefined ? mappedUserData.isHost : true,
+          isGuest: mappedUserData.isGuest !== undefined ? mappedUserData.isGuest : true,
           
           // Campos alternativos para compatibilidad con base de datos
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-          birth_date: userData.birthDate,
-          running_experience: userData.runningExperience,
-          running_modalities: userData.runningModalities || [],
-          preferred_distances: userData.preferredDistances || [],
-          personal_records: userData.personalRecords || {},
-          races_completed_this_year: userData.racesCompletedThisYear || 0,
-          emergency_contact_name: userData.emergencyContactName,
-          emergency_contact_phone: userData.emergencyContactPhone,
-          is_host: userData.isHost !== undefined ? userData.isHost : true,
-          is_guest: userData.isGuest !== undefined ? userData.isGuest : true
+          first_name: mappedUserData.firstName,
+          last_name: mappedUserData.lastName,
+          birth_date: mappedUserData.birthDate,
+          running_experience: mappedUserData.runningExperience,
+          running_modalities: mappedUserData.runningModalities || [],
+          preferred_distances: mappedUserData.preferredDistances || [],
+          personal_records: mappedUserData.personalRecords || {},
+          races_completed_this_year: mappedUserData.racesCompletedThisYear || 0,
+          emergency_contact_name: mappedUserData.emergencyContactName,
+          emergency_contact_phone: mappedUserData.emergencyContactPhone,
+          is_host: mappedUserData.isHost !== undefined ? mappedUserData.isHost : true,
+          is_guest: mappedUserData.isGuest !== undefined ? mappedUserData.isGuest : true
         }
       }
     });

@@ -9,11 +9,10 @@ interface RunnerExperienceSectionProps {
 }
 
 const experienceOptions = [
-  { value: 'beginner', label: 'Principiante (menos de 1 año)' },
-  { value: 'intermediate', label: 'Intermedio (1-3 años)' },
-  { value: 'advanced', label: 'Avanzado (3-5 años)' },
-  { value: 'expert', label: 'Experto (5-10 años)' },
-  { value: 'elite', label: 'Elite (más de 10 años)' },
+  { value: 'principiante', label: 'Principiante (menos de 1 año)' },
+  { value: 'intermedio', label: 'Intermedio (1-3 años)' },
+  { value: 'avanzado', label: 'Avanzado (3-5 años)' },
+  { value: 'experto', label: 'Experto (más de 5 años)' },
 ];
 
 const RunnerExperienceSection = ({ experience, isEditing, onExperienceChange }: RunnerExperienceSectionProps) => {

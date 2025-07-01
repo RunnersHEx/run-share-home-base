@@ -17,20 +17,14 @@ export const useAdminAuth = () => {
       }
 
       try {
-        // Use direct SQL query to check admin status
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('email', 'runnershomeexchange@gmail.com')
-          .eq('email', user.email)
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error checking admin status:', error);
-          setIsAdmin(false);
-        } else {
-          setIsAdmin(!!data);
-        }
+        // Verificar si el email del usuario es el email de admin
+        const adminEmail = 'runnershomeexchange@gmail.com';
+        const userIsAdmin = user.email === adminEmail;
+        
+        console.log('Checking admin status for:', user.email);
+        console.log('Is admin?', userIsAdmin);
+        
+        setIsAdmin(userIsAdmin);
       } catch (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
