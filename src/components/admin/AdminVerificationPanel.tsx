@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { Shield, CheckCircle, XCircle, Clock, User, FileText } from "lucide-react";
+import { Shield, CheckCircle, XCircle, Clock, User, FileText, Eye } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -17,6 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface VerificationRequest {
   id: string;
@@ -38,6 +44,9 @@ const AdminVerificationPanel = () => {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState<{ [key: string]: string }>({});
+  const [showDocuments, setShowDocuments] = useState(false);
+  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
+  const [selectedUserName, setSelectedUserName] = useState<string>('');
 
   const fetchVerificationRequests = async () => {
     try {
@@ -101,6 +110,19 @@ const AdminVerificationPanel = () => {
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const openDocuments = (documents: string[], userName: string) => {
+    setSelectedDocuments(documents);
+    setSelectedUserName(userName);
+    setShowDocuments(true);
+  };
+
+  const getDocumentUrl = (docPath: string) => {
+    const { data } = supabase.storage
+      .from('verification-docs')
+      .getPublicUrl(docPath);
+    return data.publicUrl;
   };
 
   const getStatusBadge = (status: string) => {
@@ -170,11 +192,26 @@ const AdminVerificationPanel = () => {
                       {request.user_profile?.email || 'No disponible'}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <FileText className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm">
-                          {request.user_profile?.verification_documents?.length || 0} documentos
-                        </span>
+                      <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-1">
+                          <FileText className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm">
+                            {request.user_profile?.verification_documents?.length || 0} documentos
+                          </span>
+                        </div>
+                        {request.user_profile?.verification_documents && request.user_profile.verification_documents.length > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openDocuments(
+                              request.user_profile?.verification_documents || [],
+                              `${request.user_profile?.first_name || 'N/A'} ${request.user_profile?.last_name || ''}`
+                            )}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            Ver
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -252,6 +289,53 @@ const AdminVerificationPanel = () => {
           </div>
         )}
       </CardContent>
+
+      {/* Modal para ver documentos */}
+      <Dialog open={showDocuments} onOpenChange={setShowDocuments}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Documentos de Verificación - {selectedUserName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedDocuments.map((docPath, index) => (
+              <div key={index} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium">Documento {index + 1}</h4>
+                  <a 
+                    href={getDocumentUrl(docPath)} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    Abrir en nueva pestaña
+                  </a>
+                </div>
+                <div className="bg-gray-50 rounded p-2">
+                  <img 
+                    src={getDocumentUrl(docPath)} 
+                    alt={`Documento ${index + 1}`}
+                    className="max-w-full h-auto rounded shadow-sm"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentNode as HTMLElement;
+                      parent.innerHTML = `
+                        <div class="flex items-center justify-center h-32 bg-gray-100 rounded">
+                          <div class="text-center text-gray-500">
+                            <FileText class="h-8 w-8 mx-auto mb-2" />
+                            <p>No se puede mostrar el documento</p>
+                            <p class="text-xs">Haz clic en "Abrir en nueva pestaña"</p>
+                          </div>
+                        </div>
+                      `;
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

@@ -3,11 +3,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import AuthModalIntegrated from "@/components/auth/AuthModalIntegrated";
 import UserProfile from "@/components/common/UserProfile";
 
 const Header = () => {
   const { user } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
@@ -50,6 +52,14 @@ const Header = () => {
                 >
                   Descubrir Carreras
                 </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => navigate("/admin")}
+                    className="text-red-600 hover:text-red-700 font-medium transition-colors"
+                  >
+                    Panel Admin
+                  </button>
+                )}
               </nav>
             )}
 
