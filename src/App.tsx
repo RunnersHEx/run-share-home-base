@@ -6,8 +6,11 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
 import { useEffect } from "react";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import ProductionWrapper from "@/components/common/ProductionWrapper";
+import ProductionMonitor from "@/components/common/ProductionMonitor";
 import { initWebVitalsTracking } from "@/hooks/usePerformanceTracking";
 import { analytics } from "@/lib/analytics";
+import { PRODUCTION_CONFIG } from "@/lib/productionConfig";
 import Index from "./pages/Index";
 import DiscoverRaces from "./pages/DiscoverRaces";
 import Properties from "./pages/Properties";
@@ -20,8 +23,9 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: PRODUCTION_CONFIG.CACHE_TTL.USER_PROFILE,
       retry: 2,
+      refetchOnWindowFocus: false,
     },
   },
 });
@@ -46,6 +50,7 @@ function AppContent() {
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <ProductionMonitor />
     </div>
   );
 }
@@ -59,14 +64,16 @@ const App = () => {
   return (
     <ErrorBoundary>
       <HelmetProvider>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <BrowserRouter>
-              <AppContent />
-              <Toaster />
-            </BrowserRouter>
-          </TooltipProvider>
-        </QueryClientProvider>
+        <ProductionWrapper>
+          <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+              <BrowserRouter>
+                <AppContent />
+                <Toaster />
+              </BrowserRouter>
+            </TooltipProvider>
+          </QueryClientProvider>
+        </ProductionWrapper>
       </HelmetProvider>
     </ErrorBoundary>
   );
