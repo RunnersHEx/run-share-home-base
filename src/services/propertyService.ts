@@ -18,7 +18,7 @@ export class PropertyService {
 
     return data?.map(property => ({
       ...property,
-      approval_status: property.approval_status ?? 'pending', // Handle optional field
+      approval_status: (property as any).approval_status ?? 'pending', // Handle optional field with type assertion
       images: property.property_images || []
     })) || [];
   }
@@ -34,10 +34,10 @@ export class PropertyService {
 
     if (error) throw error;
     
-    // Add default approval_status if missing
+    // Add default approval_status if missing with type assertion
     return {
       ...data,
-      approval_status: data.approval_status ?? 'pending'
+      approval_status: (data as any).approval_status ?? 'pending'
     };
   }
 
