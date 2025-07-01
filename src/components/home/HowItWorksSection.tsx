@@ -1,23 +1,19 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, MessageSquare, Trophy } from "lucide-react";
 
 const HowItWorksSection = () => {
   const steps = [
     {
-      icon: Search,
       number: 1,
       title: "Busca y Solicita",
       description: "Explora carreras por ubicación, fecha, modalidad y distancia. Envía una solicitud al host local que más te interese."
     },
     {
-      icon: MessageSquare,
       number: 2,
       title: "Conecta y Planifica",
       description: "Una vez aceptado, coordina con tu host los detalles de la carrera y logística"
     },
     {
-      icon: Trophy,
       number: 3,
       title: "Vive la Experiencia",
       description: "Disfruta del alojamiento, conocimiento local y la compañía de otro friki runner que mejore tu experiencia y rendimiento"
@@ -38,15 +34,11 @@ const HowItWorksSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {steps.map((step, index) => {
-            const Icon = step.icon;
             return (
               <Card key={index} className="runner-card text-center relative overflow-hidden">
-                <div className="absolute top-4 right-4 w-8 h-8 bg-runner-gradient rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">{step.number}</span>
-                </div>
                 <CardHeader>
                   <div className="w-16 h-16 bg-runner-gradient rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Icon className="h-8 w-8 text-white" />
+                    <span className="text-white font-bold text-2xl">{step.number}</span>
                   </div>
                   <CardTitle className="text-xl">{step.title}</CardTitle>
                 </CardHeader>

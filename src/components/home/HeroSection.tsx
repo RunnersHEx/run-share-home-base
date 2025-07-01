@@ -23,7 +23,7 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
           </h1>
           <p className="text-xl lg:text-2xl text-gray-600 mb-8 animate-fade-in">
             La plataforma que conecta corredores locales con corredores que viajan a carreras, 
-            ofreciendo alojamiento auténtico y experiencia compartida por cero gasto
+            ofreciendo alojamiento auténtico y experiencia compartida por gasto cero
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in">

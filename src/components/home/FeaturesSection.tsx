@@ -59,7 +59,7 @@ const FeaturesSection = () => {
 
         <div className="text-center mt-16">
           <p className="text-xl text-gray-600 max-w-3xl mx-auto font-medium">
-            Viajes solo o acompañado, sabes que te espera alguien que habla tu mismo idioma: el del running
+            Viajes solo o acompañado, sabes que te espera alguien que habla tu mismo idioma: EL DEL RUNNING
           </p>
         </div>
       </div>
