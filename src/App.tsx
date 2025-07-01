@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import ProductionWrapper from "@/components/common/ProductionWrapper";
 import ProductionMonitor from "@/components/common/ProductionMonitor";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { initWebVitalsTracking } from "@/hooks/usePerformanceTracking";
 import { analytics } from "@/lib/analytics";
 import { PRODUCTION_CONFIG } from "@/lib/productionConfig";
@@ -66,12 +67,14 @@ const App = () => {
       <HelmetProvider>
         <ProductionWrapper>
           <QueryClientProvider client={queryClient}>
-            <TooltipProvider>
-              <BrowserRouter>
-                <AppContent />
-                <Toaster />
-              </BrowserRouter>
-            </TooltipProvider>
+            <AuthProvider>
+              <TooltipProvider>
+                <BrowserRouter>
+                  <AppContent />
+                  <Toaster />
+                </BrowserRouter>
+              </TooltipProvider>
+            </AuthProvider>
           </QueryClientProvider>
         </ProductionWrapper>
       </HelmetProvider>
