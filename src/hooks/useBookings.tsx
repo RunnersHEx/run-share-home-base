@@ -9,6 +9,7 @@ export const useBookings = (filters?: BookingFilters) => {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<BookingStats>({
     totalBookings: 0,
     pendingRequests: 0,
@@ -24,12 +25,14 @@ export const useBookings = (filters?: BookingFilters) => {
 
     try {
       setLoading(true);
+      setError(null);
       console.log('Fetching bookings for user:', user.id);
       const data = await BookingService.fetchUserBookings(user.id, filters);
       console.log('Fetched bookings:', data);
       setBookings(data);
     } catch (error) {
       console.error('Error fetching bookings:', error);
+      setError('Error al cargar las reservas');
       toast.error('Error al cargar las reservas');
     } finally {
       setLoading(false);
@@ -115,6 +118,7 @@ export const useBookings = (filters?: BookingFilters) => {
   return {
     bookings,
     loading,
+    error,
     stats,
     createBookingRequest,
     respondToBooking,

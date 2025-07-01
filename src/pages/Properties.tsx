@@ -122,7 +122,6 @@ const Properties = () => {
 
         {showWizard && (
           <PropertyWizard
-            isOpen={showWizard}
             onClose={() => setShowWizard(false)}
           />
         )}

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trophy, MapPin, Calendar, Users } from "lucide-react";
 import { useState } from "react";
-import RaceWizard from "@/components/races/RaceWizard";
+import { RaceWizard } from "@/components/races/RaceWizard";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -128,8 +128,8 @@ const Races = () => {
 
         {showWizard && (
           <RaceWizard
-            isOpen={showWizard}
             onClose={() => setShowWizard(false)}
+            onSuccess={() => setShowWizard(false)}
           />
         )}
       </div>

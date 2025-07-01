@@ -9,15 +9,18 @@ export const useProperties = () => {
   const { user } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchProperties = async () => {
     if (!user) return;
 
     try {
+      setError(null);
       const data = await PropertyService.fetchUserProperties(user.id);
       setProperties(data);
     } catch (error) {
       console.error('Error fetching properties:', error);
+      setError('Error al cargar las propiedades');
       toast.error('Error al cargar las propiedades');
     } finally {
       setLoading(false);
@@ -107,6 +110,7 @@ export const useProperties = () => {
   return {
     properties,
     loading,
+    error,
     createProperty,
     updateProperty,
     deleteProperty,
