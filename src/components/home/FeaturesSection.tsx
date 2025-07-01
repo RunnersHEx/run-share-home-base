@@ -7,7 +7,7 @@ const FeaturesSection = () => {
     {
       icon: MapPin,
       title: "Conocimiento Local",
-      description: "Hosts locales que conocen cada detalle de la carrera, rutas de entrenamiento y los mejores restaurantes"
+      description: "Hosts locales que conocen cada detalle de la carrera, de la zona, alrededores, rutas de entrenamiento, mejores restaurantes..."
     },
     {
       icon: Users,
@@ -17,12 +17,12 @@ const FeaturesSection = () => {
     {
       icon: Trophy,
       title: "Precio Justo",
-      description: "Sistema de puntos que evita los precios inflados durante fines de semana de carreras populares"
+      description: "Sistema de puntos que apoya un modelo de turismo activo más ecológico, responsable y auténtico que fomenta valores como la hospitalidad, la generosidad y la conexión humana"
     },
     {
       icon: Heart,
       title: "Experiencia Auténtica",
-      description: "Vive la carrera como un local, con despertares tempranos compartidos y celebraciones post-carrera"
+      description: "Entre corredores nos entendemos. Esto va más allá de compartir alojamiento. Es compartir pasión, consejos, nervios y metas"
     }
   ];
 
@@ -55,6 +55,12 @@ const FeaturesSection = () => {
               </Card>
             );
           })}
+        </div>
+
+        <div className="text-center mt-16">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto font-medium">
+            Viajes solo o acompañado, sabes que te espera alguien que habla tu mismo idioma: el del running
+          </p>
         </div>
       </div>
     </section>

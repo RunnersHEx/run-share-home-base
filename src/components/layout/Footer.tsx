@@ -14,8 +14,8 @@ const Footer = () => {
               className="h-16 w-auto mb-4 brightness-0 invert"
             />
             <p className="text-gray-300 mb-4 max-w-md">
-              La plataforma que conecta corredores locales con viajeros, 
-              ofreciendo alojamiento auténtico y experiencia compartida.
+              La plataforma que conecta corredores locales con corredores que viajan a carreras, 
+              ofreciendo alojamiento auténtico y experiencia compartida por cero gasto.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-300 hover:text-white transition-colors">

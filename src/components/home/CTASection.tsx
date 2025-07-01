@@ -15,12 +15,12 @@ const CTASection = ({ onAuthModal }: CTASectionProps) => {
         <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
           Únete a nuestra comunidad de corredores apasionados y descubre una nueva forma de viajar y correr.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
           <Button 
             onClick={() => onAuthModal("register")}
             className="bg-white text-runner-blue-600 hover:bg-gray-100 text-lg px-8 py-4 font-semibold"
           >
-            Crear Cuenta Gratis
+            Únete a la Comunidad
           </Button>
           <Button 
             className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-runner-blue-600 text-lg px-8 py-4 font-semibold"
@@ -28,6 +28,9 @@ const CTASection = ({ onAuthModal }: CTASectionProps) => {
             Explorar Carreras
           </Button>
         </div>
+        <p className="text-xl text-white/90 max-w-2xl mx-auto font-medium">
+          RunnersHEx no es solo alojamiento. Es otra forma de vivir el running.
+        </p>
       </div>
     </section>
   );
