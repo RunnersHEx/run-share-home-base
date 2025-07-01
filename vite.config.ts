@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => ({
         '**/Thumbs.db'
       ],
       // Use polling as fallback for file watching
-      usePolling: false,
+      usePolling: true,
       // Reduce the number of file watchers
       interval: 1000,
     },
