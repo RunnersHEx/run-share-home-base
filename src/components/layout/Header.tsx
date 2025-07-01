@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -16,6 +16,13 @@ const Header = () => {
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Force re-render when user state changes
+  useEffect(() => {
+    setIsAuthenticated(!!user);
+    console.log('Header: User state changed:', user?.email || 'None');
+  }, [user]);
 
   const handleAuthModal = (mode: "login" | "register") => {
     setAuthMode(mode);
@@ -25,7 +32,9 @@ const Header = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
+      setIsAuthenticated(false);
       toast.success("Sesión cerrada correctamente");
+      navigate("/");
     } catch (error) {
       toast.error("Error al cerrar sesión");
     }
@@ -61,7 +70,7 @@ const Header = () => {
 
             {/* User Actions */}
             <div className="flex items-center space-x-4">
-              {user ? (
+              {isAuthenticated && user ? (
                 <>
                   <NotificationBell />
                   <UserProfile />

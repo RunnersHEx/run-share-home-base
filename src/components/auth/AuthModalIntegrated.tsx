@@ -26,7 +26,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   
   const [formData, setFormData] = useState({
-    // Información básica
     firstName: "",
     lastName: "",
     email: "",
@@ -34,20 +33,14 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     confirmPassword: "",
     phone: "",
     birthDate: "",
-    
-    // Información del corredor
     bio: "",
     runningExperience: "",
     preferredDistances: [] as string[],
     runningModalities: [] as string[],
     personalRecords: {} as Record<string, string>,
     racesCompletedThisYear: 0,
-    
-    // Contacto de emergencia
     emergencyContactName: "",
     emergencyContactPhone: "",
-    
-    // Roles (por defecto ambos true como es obligatorio)
     isHost: true,
     isGuest: true
   });
@@ -60,16 +53,12 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       return newData;
     });
     
-    // Lógica de navegación de pasos corregida
     if (mode === "register") {
       if (currentStep === 1) {
-        // Después de paso 1 (Info básica), saltar paso 2 (Runner info) y ir a paso 3 (Emergencia)
         setCurrentStep(3);
       } else if (currentStep === 3) {
-        // Después de paso 3 (Emergencia), ir a paso 4 (Roles)
         setCurrentStep(4);
       } else if (currentStep === 4) {
-        // Último paso - crear cuenta
         handleFinalSubmit({ ...formData, ...stepData });
       }
     }
@@ -80,14 +69,12 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     console.log('Final submit with data:', finalData);
     
     try {
-      // Validar que tenemos todos los datos necesarios
       if (!finalData.email || !finalData.password) {
         toast.error("Email y contraseña son requeridos");
         setIsLoading(false);
         return;
       }
 
-      // Preparar datos para Supabase con todos los campos del formulario
       const userData = {
         firstName: finalData.firstName,
         lastName: finalData.lastName,
@@ -124,12 +111,10 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
         toast.success("¡Cuenta creada exitosamente!");
         onClose();
         
-        // Mostrar modal de verificación después de un breve delay
         setTimeout(() => {
           setShowVerificationModal(true);
         }, 1000);
         
-        // Reset form
         resetForm();
       }
     } catch (error) {
@@ -148,8 +133,16 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       await signIn(loginData.email, loginData.password);
       console.log('AuthModal: Login successful');
       toast.success("¡Has iniciado sesión correctamente!");
+      
+      // Close modal immediately after successful login
       onClose();
       resetForm();
+      
+      // Force a small delay to ensure state propagation
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+      
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);
       if (error.message?.includes('Invalid login credentials') || error.message?.includes('Invalid credentials')) {
@@ -166,10 +159,8 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
 
   const handleBack = () => {
     if (currentStep === 3) {
-      // Desde paso 3 (emergencia) volver a paso 1 (básica)
       setCurrentStep(1);
     } else if (currentStep === 4) {
-      // Desde paso 4 (roles) volver a paso 3 (emergencia)
       setCurrentStep(3);
     }
   };
@@ -266,7 +257,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     return "Únete a la comunidad de runners";
   };
 
-  // Función para obtener el número de paso actual para mostrar en el progreso
   const getCurrentStepForProgress = () => {
     const stepMapping = { 1: 1, 3: 2, 4: 3 };
     return stepMapping[currentStep as keyof typeof stepMapping] || 1;

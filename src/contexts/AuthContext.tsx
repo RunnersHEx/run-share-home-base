@@ -44,51 +44,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    const getSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Error getting session:', error);
-        } else {
-          console.log('Initial session:', session?.user?.email || 'No session');
-          setUser(session?.user ?? null);
-          setSession(session);
-        }
-      } catch (error) {
-        console.error('Error in getSession:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    let mounted = true;
 
-    getSession();
-
-    // Listen for auth changes
+    // Listen for auth changes FIRST - this is critical
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth event:', event, 'User:', session?.user?.email || 'None');
-        setUser(session?.user ?? null);
+        console.log('Auth state change:', event, 'User:', session?.user?.email || 'None');
+        
+        if (!mounted) return;
+        
+        // Immediate state update
         setSession(session);
+        setUser(session?.user ?? null);
         setLoading(false);
         
-        // Si es un nuevo usuario que se acaba de registrar o hacer login, crear/actualizar su perfil
+        // Handle profile updates for sign-in events
         if (event === 'SIGNED_IN' && session?.user) {
-          // Delay para asegurar que el trigger de la DB haya corrido
+          // Process metadata after state is set
           setTimeout(async () => {
+            if (!mounted) return;
+            
             try {
               const metadata = session.user.user_metadata;
               console.log('Processing user metadata:', metadata);
               
               if (metadata && Object.keys(metadata).length > 0) {
-                // Preparar todos los datos del registro con mejor mapeo
                 const profileData: any = {
                   first_name: metadata.firstName || metadata.first_name,
                   last_name: metadata.lastName || metadata.last_name,
                   phone: metadata.phone,
                   birth_date: metadata.birthDate || metadata.birth_date,
                   bio: metadata.bio,
-                  // Mapear running_experience de inglés a español
                   running_experience: metadata.runningExperience 
                     ? mapRunningExperience(metadata.runningExperience)
                     : (metadata.running_experience 
@@ -106,7 +92,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 console.log('Updating profile with complete data:', profileData);
 
-                // Primero verificar si ya existe el perfil
                 const { data: existingProfile } = await supabase
                   .from('profiles')
                   .select('id')
@@ -114,7 +99,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   .single();
 
                 if (existingProfile) {
-                  // Actualizar el perfil existente
                   const { error } = await supabase
                     .from('profiles')
                     .update(profileData)
@@ -126,7 +110,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     console.log('Profile updated successfully with all registration data');
                   }
                 } else {
-                  // Crear nuevo perfil si no existe
                   const { error } = await supabase
                     .from('profiles')
                     .insert({
@@ -145,16 +128,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } catch (error) {
               console.error('Error processing user profile after login:', error);
             }
-          }, 1500);
+          }, 1000);
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Get initial session AFTER setting up the listener
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting initial session:', error);
+        } else {
+          console.log('Initial session:', session?.user?.email || 'No session');
+          if (mounted) {
+            setSession(session);
+            setUser(session?.user ?? null);
+          }
+        }
+      } catch (error) {
+        console.error('Error in getInitialSession:', error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    getInitialSession();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, userData: any) => {
-    // Validar que email y password no estén vacíos
     if (!email || !password) {
       return { 
         error: { 
@@ -163,25 +172,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     }
 
-    // Usar la URL correcta de la aplicación Lovable
     const redirectUrl = `${window.location.origin}/`;
     
     console.log('SignUp userData being sent:', userData);
     
-    // Convertir running_experience a español antes de guardar
     const mappedUserData = {
       ...userData,
       runningExperience: userData.runningExperience ? mapRunningExperience(userData.runningExperience) : null
     };
     
-    // Enviar TODOS los datos del usuario en el metadata con campos más consistentes
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          // Campos principales con nombres consistentes
           firstName: mappedUserData.firstName,
           lastName: mappedUserData.lastName,
           phone: mappedUserData.phone,
@@ -197,7 +202,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isHost: mappedUserData.isHost !== undefined ? mappedUserData.isHost : true,
           isGuest: mappedUserData.isGuest !== undefined ? mappedUserData.isGuest : true,
           
-          // Campos alternativos para compatibilidad con base de datos
           first_name: mappedUserData.firstName,
           last_name: mappedUserData.lastName,
           birth_date: mappedUserData.birthDate,
@@ -231,10 +235,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     console.log('AuthContext: SignIn successful for user:', data.user?.email);
+    
+    // Force state update immediately after successful login
+    if (data.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+    }
   };
 
   const signOut = async () => {
     console.log('AuthContext: Signing out user:', user?.email);
+    
+    // Clear state immediately
+    setUser(null);
+    setSession(null);
+    
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('AuthContext: SignOut error:', error);
