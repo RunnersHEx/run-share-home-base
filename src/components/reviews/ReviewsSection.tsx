@@ -52,7 +52,7 @@ const ReviewsSection = () => {
 
       if (reviewsError) throw reviewsError;
 
-      // Transform data to match expected format
+      // Transform data to match expected format with proper typing
       const transformedReviews: ReviewData[] = (receivedReviews || []).map(review => ({
         id: review.id,
         reviewer_name: `${review.reviewer.first_name} ${review.reviewer.last_name}`,
@@ -61,7 +61,7 @@ const ReviewsSection = () => {
         title: review.title,
         content: review.content,
         created_at: review.created_at,
-        review_type: review.review_type,
+        review_type: review.review_type as 'host_to_guest' | 'guest_to_host',
         categories: review.categories
       }));
 

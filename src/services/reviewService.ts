@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Review {
@@ -36,7 +35,7 @@ export class ReviewService {
       throw error;
     }
 
-    return data;
+    return data as Review;
   }
 
   static async getReviewsForUser(userId: string): Promise<Review[]> {
@@ -54,7 +53,7 @@ export class ReviewService {
       throw error;
     }
 
-    return data || [];
+    return (data || []) as Review[];
   }
 
   static async getReviewsByUser(userId: string): Promise<Review[]> {
@@ -72,7 +71,7 @@ export class ReviewService {
       throw error;
     }
 
-    return data || [];
+    return (data || []) as Review[];
   }
 
   static async getPendingReviews(userId: string): Promise<any[]> {
