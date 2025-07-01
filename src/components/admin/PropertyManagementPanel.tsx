@@ -69,7 +69,7 @@ const PropertyManagementPanel = () => {
         .update({
           approval_status: status,
           is_active: status === 'approved'
-        })
+        } as any)
         .eq('id', propertyId);
 
       if (error) throw error;

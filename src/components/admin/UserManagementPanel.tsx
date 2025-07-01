@@ -54,7 +54,7 @@ const UserManagementPanel = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_active: !currentStatus })
+        .update({ is_active: !currentStatus } as any)
         .eq('id', userId);
 
       if (error) throw error;
