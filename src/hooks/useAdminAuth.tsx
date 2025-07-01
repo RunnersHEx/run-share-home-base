@@ -17,16 +17,19 @@ export const useAdminAuth = () => {
       }
 
       try {
-        // Usar consulta SQL directa para evitar problemas de tipos
-        const { data, error } = await supabase.rpc('is_admin', {
-          user_email: user.email
-        });
+        // Use direct SQL query to check admin status
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('email', 'runnershomeexchange@gmail.com')
+          .eq('email', user.email)
+          .single();
 
-        if (error) {
+        if (error && error.code !== 'PGRST116') {
           console.error('Error checking admin status:', error);
           setIsAdmin(false);
         } else {
-          setIsAdmin(data || false);
+          setIsAdmin(!!data);
         }
       } catch (error) {
         console.error('Error checking admin status:', error);

@@ -36,14 +36,25 @@ const UserManagementPanel = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, is_active, created_at, verification_status')
-        .order('created_at', { ascending: false });
+        .select('id, email, first_name, last_name, is_active, created_at, verification_status');
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (error) {
+        console.error('Error fetching users:', error);
+        toast.error('Error al cargar usuarios');
+        setUsers([]);
+        return;
+      }
+      
+      // Filter out any null results and ensure proper typing
+      const validUsers = (data || []).filter((user): user is UserProfile => 
+        user !== null && typeof user === 'object' && 'id' in user
+      );
+      
+      setUsers(validUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Error al cargar usuarios');
+      setUsers([]);
     } finally {
       setLoading(false);
     }

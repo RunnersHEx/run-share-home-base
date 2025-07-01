@@ -48,14 +48,25 @@ const PropertyManagementPanel = () => {
           owner_profile:profiles!properties_owner_id_fkey (
             first_name, last_name, email
           )
-        `)
-        .order('created_at', { ascending: false });
+        `);
 
-      if (error) throw error;
-      setProperties(data || []);
+      if (error) {
+        console.error('Error fetching properties:', error);
+        toast.error('Error al cargar propiedades');
+        setProperties([]);
+        return;
+      }
+      
+      // Filter out any null results and ensure proper typing
+      const validProperties = (data || []).filter((property): property is Property => 
+        property !== null && typeof property === 'object' && 'id' in property
+      );
+      
+      setProperties(validProperties);
     } catch (error) {
       console.error('Error fetching properties:', error);
       toast.error('Error al cargar propiedades');
+      setProperties([]);
     } finally {
       setLoading(false);
     }

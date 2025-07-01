@@ -19,6 +19,7 @@ export interface Property {
   runner_instructions: string | null;
   cancellation_policy: string;
   is_active: boolean;
+  approval_status: string;
   total_bookings: number;
   average_rating: number;
   points_earned: number;
