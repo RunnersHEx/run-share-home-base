@@ -10,12 +10,12 @@ import { Calendar, CreditCard, Zap, CheckCircle, AlertCircle } from "lucide-reac
 
 interface Subscription {
   id: string;
-  plan_type: string;
+  plan_name: string;
   status: string;
-  points_balance: number;
-  subscription_end: string | null;
-  stripe_customer_id: string | null;
+  current_period_end: string | null;
+  stripe_subscription_id: string | null;
   created_at: string;
+  user_id: string;
 }
 
 const SubscriptionSection = () => {
@@ -28,7 +28,7 @@ const SubscriptionSection = () => {
 
     try {
       const { data, error } = await supabase
-        .from('subscribers')
+        .from('subscriptions')
         .select('*')
         .eq('user_id', user.id)
         .single();
@@ -138,7 +138,7 @@ const SubscriptionSection = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-lg">Membresía Runners HEx</h3>
+                  <h3 className="font-semibold text-lg">{subscription.plan_name}</h3>
                   <p className="text-gray-600">Plan Anual - €79/año</p>
                 </div>
                 {getStatusBadge(subscription.status)}
@@ -153,26 +153,18 @@ const SubscriptionSection = () => {
                   </div>
                 </div>
 
-                {subscription.subscription_end && (
+                {subscription.current_period_end && (
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-gray-500" />
                     <div>
                       <p className="text-sm text-gray-600">Renovación</p>
-                      <p className="font-medium">{formatDate(subscription.subscription_end)}</p>
+                      <p className="font-medium">{formatDate(subscription.current_period_end)}</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center space-x-2 p-4 bg-blue-50 rounded-lg">
-                <Zap className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="font-semibold text-blue-900">Balance de Puntos</p>
-                  <p className="text-2xl font-bold text-blue-600">{subscription.points_balance} puntos</p>
-                </div>
-              </div>
-
-              {subscription.status === 'active' && subscription.stripe_customer_id && (
+              {subscription.status === 'active' && subscription.stripe_subscription_id && (
                 <Button onClick={handleManageSubscription} variant="outline" className="w-full">
                   Gestionar Suscripción
                 </Button>

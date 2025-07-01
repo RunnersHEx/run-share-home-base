@@ -15,7 +15,8 @@ import {
   Trash2,
   Calendar,
   CreditCard,
-  Coins
+  Coins,
+  Star
 } from "lucide-react";
 
 interface ProfileLayoutProps {
@@ -34,6 +35,7 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
     { id: "properties", label: "Mi Propiedad", icon: Home },
     { id: "races", label: "Mis Carreras", icon: Trophy },
     { id: "bookings", label: "Solicitudes", icon: Calendar },
+    { id: "reviews", label: "Valoraciones", icon: Star },
     { id: "subscription", label: "Mi Suscripción", icon: CreditCard },
     { id: "points", label: "Sistema de Puntos", icon: Coins },
     { id: "verification", label: "Verificación", icon: Shield },

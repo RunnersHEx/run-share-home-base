@@ -14,6 +14,7 @@ import RacesSection from "@/components/profile/RacesSection";
 import BookingsSection from "@/components/profile/BookingsSection";
 import SubscriptionSection from "@/components/profile/SubscriptionSection";
 import PointsSystemSection from "@/components/profile/PointsSystemSection";
+import ReviewsSection from "@/components/reviews/ReviewsSection";
 
 const Profile = () => {
   const { user, loading } = useAuth();
@@ -55,6 +56,8 @@ const Profile = () => {
         return <RacesSection />;
       case "bookings":
         return <BookingsSection />;
+      case "reviews":
+        return <ReviewsSection />;
       case "subscription":
         return <SubscriptionSection />;
       case "points":
