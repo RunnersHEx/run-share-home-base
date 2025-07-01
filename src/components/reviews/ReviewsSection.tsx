@@ -11,9 +11,21 @@ import ReviewForm from "./ReviewForm";
 import { Star, MessageSquare, Award } from "lucide-react";
 import { toast } from "sonner";
 
+interface ReviewData {
+  id: string;
+  reviewer_name: string;
+  reviewer_image?: string;
+  rating: number;
+  title?: string;
+  content: string;
+  created_at: string;
+  review_type: 'host_to_guest' | 'guest_to_host';
+  categories?: Record<string, number>;
+}
+
 const ReviewsSection = () => {
   const { user } = useAuth();
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<ReviewData[]>([]);
   const [pendingReviews, setPendingReviews] = useState<any[]>([]);
   const [showReviewForm, setShowReviewForm] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -30,26 +42,39 @@ const ReviewsSection = () => {
     try {
       // Fetch received reviews
       const { data: receivedReviews, error: reviewsError } = await supabase
-        .from('reviews')
+        .from('booking_reviews')
         .select(`
           *,
-          reviewer:profiles!reviews_reviewer_id_fkey(first_name, last_name, profile_image_url)
+          reviewer:profiles!booking_reviews_reviewer_id_fkey(first_name, last_name, profile_image_url)
         `)
         .eq('reviewee_id', user.id)
         .order('created_at', { ascending: false });
 
       if (reviewsError) throw reviewsError;
 
+      // Transform data to match expected format
+      const transformedReviews: ReviewData[] = (receivedReviews || []).map(review => ({
+        id: review.id,
+        reviewer_name: `${review.reviewer.first_name} ${review.reviewer.last_name}`,
+        reviewer_image: review.reviewer.profile_image_url,
+        rating: review.rating,
+        title: review.title,
+        content: review.content,
+        created_at: review.created_at,
+        review_type: review.review_type,
+        categories: review.categories
+      }));
+
       // Calculate stats
-      const totalReviews = receivedReviews?.length || 0;
+      const totalReviews = transformedReviews.length;
       const averageRating = totalReviews > 0 
-        ? receivedReviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+        ? transformedReviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
         : 0;
       
-      const hostReviews = receivedReviews?.filter(r => r.review_type === 'guest_to_host').length || 0;
-      const guestReviews = receivedReviews?.filter(r => r.review_type === 'host_to_guest').length || 0;
+      const hostReviews = transformedReviews.filter(r => r.review_type === 'guest_to_host').length;
+      const guestReviews = transformedReviews.filter(r => r.review_type === 'host_to_guest').length;
 
-      setReviews(receivedReviews || []);
+      setReviews(transformedReviews);
       setStats({ totalReviews, averageRating, hostReviews, guestReviews });
 
       // Fetch completed bookings without reviews
@@ -70,7 +95,7 @@ const ReviewsSection = () => {
       const bookingsWithoutReviews = [];
       for (const booking of completedBookings || []) {
         const { data: existingReview } = await supabase
-          .from('reviews')
+          .from('booking_reviews')
           .select('id')
           .eq('booking_id', booking.id)
           .eq('reviewer_id', user.id)
@@ -93,7 +118,7 @@ const ReviewsSection = () => {
   const handleSubmitReview = async (reviewData: any) => {
     try {
       const { error } = await supabase
-        .from('reviews')
+        .from('booking_reviews')
         .insert({
           ...reviewData,
           reviewer_id: user?.id
@@ -192,20 +217,7 @@ const ReviewsSection = () => {
           {reviews.length > 0 ? (
             <div className="space-y-4">
               {reviews.map((review) => (
-                <ReviewCard
-                  key={review.id}
-                  review={{
-                    id: review.id,
-                    reviewer_name: `${review.reviewer.first_name} ${review.reviewer.last_name}`,
-                    reviewer_image: review.reviewer.profile_image_url,
-                    rating: review.rating,
-                    title: review.title,
-                    content: review.content,
-                    created_at: review.created_at,
-                    review_type: review.review_type,
-                    categories: review.categories
-                  }}
-                />
+                <ReviewCard key={review.id} review={review} />
               ))}
             </div>
           ) : (

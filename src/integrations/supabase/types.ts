@@ -44,6 +44,70 @@ export type Database = {
           },
         ]
       }
+      booking_reviews: {
+        Row: {
+          booking_id: string
+          categories: Json | null
+          content: string
+          created_at: string
+          id: string
+          is_public: boolean | null
+          rating: number
+          review_type: string
+          reviewee_id: string
+          reviewer_id: string
+          title: string | null
+        }
+        Insert: {
+          booking_id: string
+          categories?: Json | null
+          content: string
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          rating: number
+          review_type: string
+          reviewee_id: string
+          reviewer_id: string
+          title?: string | null
+        }
+        Update: {
+          booking_id?: string
+          categories?: Json | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          rating?: number
+          review_type?: string
+          reviewee_id?: string
+          reviewer_id?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_reviews_reviewee_id_fkey"
+            columns: ["reviewee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           accepted_at: string | null

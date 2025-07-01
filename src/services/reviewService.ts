@@ -26,7 +26,7 @@ export interface ReviewStats {
 export class ReviewService {
   static async createReview(reviewData: Omit<Review, 'id' | 'created_at'>): Promise<Review> {
     const { data, error } = await supabase
-      .from('reviews')
+      .from('booking_reviews')
       .insert(reviewData)
       .select()
       .single();
@@ -41,10 +41,10 @@ export class ReviewService {
 
   static async getReviewsForUser(userId: string): Promise<Review[]> {
     const { data, error } = await supabase
-      .from('reviews')
+      .from('booking_reviews')
       .select(`
         *,
-        reviewer:profiles!reviews_reviewer_id_fkey(first_name, last_name, profile_image_url)
+        reviewer:profiles!booking_reviews_reviewer_id_fkey(first_name, last_name, profile_image_url)
       `)
       .eq('reviewee_id', userId)
       .order('created_at', { ascending: false });
@@ -59,10 +59,10 @@ export class ReviewService {
 
   static async getReviewsByUser(userId: string): Promise<Review[]> {
     const { data, error } = await supabase
-      .from('reviews')
+      .from('booking_reviews')
       .select(`
         *,
-        reviewee:profiles!reviews_reviewee_id_fkey(first_name, last_name, profile_image_url)
+        reviewee:profiles!booking_reviews_reviewee_id_fkey(first_name, last_name, profile_image_url)
       `)
       .eq('reviewer_id', userId)
       .order('created_at', { ascending: false });
@@ -97,7 +97,7 @@ export class ReviewService {
     const pendingReviews = [];
     for (const booking of completedBookings || []) {
       const { data: existingReview } = await supabase
-        .from('reviews')
+        .from('booking_reviews')
         .select('id')
         .eq('booking_id', booking.id)
         .eq('reviewer_id', userId)
@@ -143,7 +143,7 @@ export class ReviewService {
 
   static async hasUserReviewedBooking(userId: string, bookingId: string): Promise<boolean> {
     const { data, error } = await supabase
-      .from('reviews')
+      .from('booking_reviews')
       .select('id')
       .eq('reviewer_id', userId)
       .eq('booking_id', bookingId)
