@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import ProductionWrapper from "@/components/common/ProductionWrapper";
 import ProductionMonitor from "@/components/common/ProductionMonitor";
+import Layout from "@/components/layout/Layout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { initWebVitalsTracking } from "@/hooks/usePerformanceTracking";
 import { analytics } from "@/lib/analytics";
@@ -40,7 +41,7 @@ function AppContent() {
   }, [location]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <Layout>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/discover" element={<DiscoverRaces />} />
@@ -52,7 +53,7 @@ function AppContent() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <ProductionMonitor />
-    </div>
+    </Layout>
   );
 }
 

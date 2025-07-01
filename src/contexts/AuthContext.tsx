@@ -32,48 +32,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('AuthProvider: Setting up auth state listener');
-    
-    // Get initial session first
-    const getInitialSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('AuthProvider: Error getting initial session:', error);
-        } else {
-          console.log('AuthProvider: Initial session loaded:', session?.user?.email || 'No session');
-          setSession(session);
-          setUser(session?.user ?? null);
-        }
-      } catch (error) {
-        console.error('AuthProvider: Error in getInitialSession:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    console.log('AuthProvider: Initializing auth state');
 
-    // Set up auth state change listener
+    // Set up auth state change listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log('AuthProvider: Auth state changed:', event, 'User:', newSession?.user?.email || 'None');
+        console.log('AuthProvider: Auth state changed:', {
+          event,
+          userId: newSession?.user?.id || 'none',
+          userEmail: newSession?.user?.email || 'none'
+        });
         
-        // Update state immediately
         setSession(newSession);
         setUser(newSession?.user ?? null);
         setLoading(false);
         
-        // Handle different auth events
         if (event === 'SIGNED_IN' && newSession?.user) {
           console.log('AuthProvider: User signed in successfully');
-          // Force a small delay to ensure UI updates
-          setTimeout(() => {
-            window.location.reload();
-          }, 100);
+          toast.success('¡Sesión iniciada correctamente!');
         } else if (event === 'SIGNED_OUT') {
           console.log('AuthProvider: User signed out');
         }
       }
     );
+
+    // THEN get initial session
+    const getInitialSession = async () => {
+      try {
+        console.log('AuthProvider: Getting initial session...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('AuthProvider: Error getting initial session:', error);
+        } else {
+          console.log('AuthProvider: Initial session:', {
+            hasSession: !!session,
+            userId: session?.user?.id || 'none',
+            userEmail: session?.user?.email || 'none'
+          });
+          
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
+      } catch (error) {
+        console.error('AuthProvider: Exception getting initial session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     getInitialSession();
 
@@ -86,20 +92,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, userData: any) => {
     console.log('AuthProvider: Starting signUp for:', email);
     
-    if (!email || !password) {
-      return { 
-        error: { 
-          message: "Email y contraseña son requeridos" 
-        } 
-      };
+    if (!email?.trim() || !password) {
+      const error = { message: "Email y contraseña son requeridos" };
+      console.error('AuthProvider: SignUp validation error:', error);
+      return { error };
     }
 
     const redirectUrl = `${window.location.origin}/`;
     console.log('AuthProvider: Using redirect URL:', redirectUrl);
     
     try {
+      setLoading(true);
+      
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           emailRedirectTo: redirectUrl,
@@ -127,30 +133,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error };
       }
 
-      console.log('AuthProvider: SignUp successful:', data.user?.email);
-      
-      // If user is immediately confirmed (no email verification required)
-      if (data.user && !data.user.email_confirmed_at) {
-        console.log('AuthProvider: User needs email confirmation');
-      } else if (data.user && data.user.email_confirmed_at) {
-        console.log('AuthProvider: User confirmed immediately');
-      }
+      console.log('AuthProvider: SignUp successful:', {
+        userId: data.user?.id || 'none',
+        email: data.user?.email || 'none',
+        confirmed: !!data.user?.email_confirmed_at
+      });
 
       return { error: null };
     } catch (error) {
       console.error('AuthProvider: SignUp exception:', error);
       return { error };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
     console.log('AuthProvider: Starting signIn for:', email);
     
-    if (!email || !password) {
-      throw new Error('Email y contraseña son requeridos');
+    if (!email?.trim() || !password) {
+      const error = new Error('Email y contraseña son requeridos');
+      console.error('AuthProvider: SignIn validation error:', error);
+      throw error;
     }
     
     try {
+      setLoading(true);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password
@@ -161,13 +170,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       
-      if (data.user) {
-        console.log('AuthProvider: SignIn successful for:', data.user.email);
-        // Don't manually set state here, let onAuthStateChange handle it
-      }
+      console.log('AuthProvider: SignIn successful:', {
+        userId: data.user?.id || 'none',
+        email: data.user?.email || 'none'
+      });
+      
+      // Auth state change will be handled by the listener
     } catch (error) {
       console.error('AuthProvider: SignIn exception:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -175,23 +188,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('AuthProvider: Starting signOut');
     
     try {
+      setLoading(true);
+      
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('AuthProvider: SignOut error:', error);
         throw error;
       }
+      
       console.log('AuthProvider: SignOut successful');
+      // Auth state change will be handled by the listener
     } catch (error) {
       console.error('AuthProvider: SignOut exception:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) {
+    console.log('AuthProvider: Starting password reset for:', email);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        console.error('AuthProvider: Reset password error:', error);
+        throw error;
+      }
+      
+      console.log('AuthProvider: Reset password successful');
+    } catch (error) {
+      console.error('AuthProvider: Reset password exception:', error);
       throw error;
     }
   };
@@ -205,6 +235,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     resetPassword,
   };
+
+  console.log('AuthProvider: Rendering with state:', {
+    hasUser: !!user,
+    userEmail: user?.email || 'none',
+    loading,
+    sessionExists: !!session
+  });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

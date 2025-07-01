@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { Navigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import ProfileLayout from "@/components/profile/ProfileLayout";
 import PersonalInfoSection from "@/components/profile/PersonalInfoSection";
 import RunnerInfoSection from "@/components/profile/RunnerInfoSection";
@@ -17,7 +17,6 @@ import PointsSystemSection from "@/components/profile/PointsSystemSection";
 import ReviewsSection from "@/components/reviews/ReviewsSection";
 
 const Profile = () => {
-  const { user, loading } = useAuth();
   const location = useLocation();
   const [activeSection, setActiveSection] = useState("personal");
 
@@ -31,16 +30,6 @@ const Profile = () => {
   const handleSectionChange = (section: string) => {
     setActiveSection(section);
   };
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-    </div>;
-  }
-
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -74,9 +63,11 @@ const Profile = () => {
   };
 
   return (
-    <ProfileLayout activeSection={activeSection} onSectionChange={handleSectionChange}>
-      {renderActiveSection()}
-    </ProfileLayout>
+    <ProtectedRoute>
+      <ProfileLayout activeSection={activeSection} onSectionChange={handleSectionChange}>
+        {renderActiveSection()}
+      </ProfileLayout>
+    </ProtectedRoute>
   );
 };
 

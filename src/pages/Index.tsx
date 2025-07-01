@@ -27,6 +27,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
+      {/* HeroSection ahora maneja su propio header */}
       <HeroSection onAuthModal={openAuthModal} />
       
       {/* Quick Search integrated into Hero */}
@@ -41,6 +42,7 @@ const Index = () => {
       <FeaturedRacesSection />
       <CTASection onAuthModal={openAuthModal} />
 
+      {/* Modal de autenticación independiente para la homepage */}
       <AuthModalIntegrated 
         isOpen={authModalOpen}
         onClose={closeAuthModal}
