@@ -15,6 +15,8 @@ const NotificationBell = () => {
   const { unreadCount } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
 
+  console.log('NotificationBell render - unreadCount:', unreadCount);
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -23,9 +25,9 @@ const NotificationBell = () => {
           {unreadCount > 0 && (
             <Badge 
               variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs p-0"
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-[20px]"
             >
-              {unreadCount > 9 ? '9+' : unreadCount}
+              {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
           )}
         </Button>

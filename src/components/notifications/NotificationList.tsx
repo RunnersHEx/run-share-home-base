@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { CheckCircle, AlertCircle, Info } from "lucide-react";
+import { CheckCircle, AlertCircle, Info, MarkAsRead } from "lucide-react";
 
 interface NotificationListProps {
   onClose: () => void;
@@ -25,6 +25,13 @@ const NotificationList = ({ onClose }: NotificationListProps) => {
     }
   };
 
+  const handleMarkAllAsRead = async () => {
+    console.log('Handling mark all as read, unread count:', unreadCount);
+    if (unreadCount > 0) {
+      await markAllAsRead();
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-4 text-center text-sm text-gray-500">
@@ -41,10 +48,11 @@ const NotificationList = ({ onClose }: NotificationListProps) => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={markAllAsRead}
-            className="text-xs"
+            onClick={handleMarkAllAsRead}
+            className="text-xs hover:bg-blue-50 flex items-center gap-1"
           >
-            Marcar todas como leídas
+            <MarkAsRead className="h-3 w-3" />
+            Marcar todas como leídas ({unreadCount})
           </Button>
         )}
       </div>
@@ -59,10 +67,11 @@ const NotificationList = ({ onClose }: NotificationListProps) => {
             {notifications.map((notification, index) => (
               <div key={notification.id}>
                 <div
-                  className={`p-4 hover:bg-gray-50 cursor-pointer ${
+                  className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
                     !notification.read ? 'bg-blue-50 border-l-2 border-l-blue-500' : ''
                   }`}
                   onClick={() => {
+                    console.log('Clicking notification:', notification.id, 'read:', notification.read);
                     if (!notification.read) {
                       markAsRead(notification.id);
                     }
@@ -95,6 +104,17 @@ const NotificationList = ({ onClose }: NotificationListProps) => {
           </div>
         )}
       </ScrollArea>
+
+      {notifications.length > 0 && (
+        <div className="p-4 border-t bg-gray-50">
+          <p className="text-xs text-gray-500 text-center">
+            {unreadCount > 0 
+              ? `${unreadCount} notificación${unreadCount > 1 ? 'es' : ''} sin leer`
+              : 'Todas las notificaciones están leídas'
+            }
+          </p>
+        </div>
+      )}
     </div>
   );
 };
