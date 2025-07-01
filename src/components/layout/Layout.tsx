@@ -69,20 +69,23 @@ const Layout = ({ children }: LayoutProps) => {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <header className={`${isHomePage ? 'absolute top-0 left-0 right-0 z-50 bg-transparent' : 'bg-white shadow-sm border-b sticky top-0 z-50'}`}>
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <img 
-                  src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
-                  alt="Runners Home Exchange" 
-                  className={`${isHomePage ? 'h-20' : 'h-10'} w-auto object-contain`}
-                />
+        {/* No mostrar header en homepage durante loading */}
+        {!isHomePage && (
+          <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <img 
+                    src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
+                    alt="Runners Home Exchange" 
+                    className="h-10 w-auto object-contain"
+                  />
+                </div>
+                <div className="text-gray-500">Cargando...</div>
               </div>
-              <div className={`${isHomePage ? 'text-white' : 'text-gray-500'}`}>Cargando...</div>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
         {children}
       </div>
     );
@@ -90,31 +93,32 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen">
-      <header className={`${isHomePage ? 'absolute top-0 left-0 right-0 z-50 bg-transparent' : 'bg-white shadow-sm border-b sticky top-0 z-50'}`}>
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center cursor-pointer" onClick={() => navigate('/')}>
-              <img 
-                src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
-                alt="Runners Home Exchange" 
-                className={`${isHomePage ? 'h-20' : 'h-10'} w-auto object-contain`}
-              />
-            </div>
+      {/* Solo mostrar header del Layout si NO es la homepage */}
+      {!isHomePage && (
+        <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              {/* Logo */}
+              <div className="flex items-center cursor-pointer" onClick={() => navigate('/')}>
+                <img 
+                  src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
+                  alt="Runners Home Exchange" 
+                  className="h-10 w-auto object-contain"
+                />
+              </div>
 
-            {/* Navigation - Solo mostrar si no es homepage o si el usuario está logueado */}
-            {(!isHomePage || user) && (
+              {/* Navigation */}
               <nav className="hidden md:flex items-center space-x-8">
                 <button 
                   onClick={() => navigate('/')}
-                  className={`${isHomePage ? 'text-white hover:text-gray-200' : 'text-gray-700 hover:text-runner-blue-600'} font-medium transition-colors`}
+                  className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
                 >
                   <Home className="h-4 w-4 inline mr-2" />
                   Inicio
                 </button>
                 <button 
                   onClick={() => navigate('/discover')}
-                  className={`${isHomePage ? 'text-white hover:text-gray-200' : 'text-gray-700 hover:text-runner-blue-600'} font-medium transition-colors`}
+                  className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
                 >
                   <Search className="h-4 w-4 inline mr-2" />
                   Descubrir Carreras
@@ -123,14 +127,14 @@ const Layout = ({ children }: LayoutProps) => {
                   <>
                     <button 
                       onClick={() => navigate('/bookings')}
-                      className={`${isHomePage ? 'text-white hover:text-gray-200' : 'text-gray-700 hover:text-runner-blue-600'} font-medium transition-colors`}
+                      className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
                     >
                       <Calendar className="h-4 w-4 inline mr-2" />
                       Mis Reservas
                     </button>
                     <button 
                       onClick={() => navigate('/races')}
-                      className={`${isHomePage ? 'text-white hover:text-gray-200' : 'text-gray-700 hover:text-runner-blue-600'} font-medium transition-colors`}
+                      className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
                     >
                       <Trophy className="h-4 w-4 inline mr-2" />
                       Mis Carreras
@@ -138,98 +142,97 @@ const Layout = ({ children }: LayoutProps) => {
                   </>
                 )}
               </nav>
-            )}
 
-            {/* User Actions */}
-            <div className="flex items-center space-x-4">
-              {user ? (
-                <>
-                  <NotificationBell />
-                  
-                  {/* User Profile Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage 
-                            src={user.user_metadata?.avatar_url} 
-                            alt="Avatar"
-                            className="object-cover"
-                          />
-                          <AvatarFallback className="bg-blue-600 text-white">
-                            {getInitials(user.email || "")}
-                          </AvatarFallback>
-                        </Avatar>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end" forceMount>
-                      <DropdownMenuLabel className="font-normal">
-                        <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none">
-                            {user.user_metadata?.first_name || user.email?.split('@')[0]}
-                          </p>
-                          <p className="text-xs leading-none text-muted-foreground">
-                            {user.email}
-                          </p>
-                        </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleNavigation("/profile")}>
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Mi Perfil</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleNavigation("/profile", "properties")}>
-                        <Home className="mr-2 h-4 w-4" />
-                        <span>Mis Propiedades</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleNavigation("/profile", "races")}>
-                        <Trophy className="mr-2 h-4 w-4" />
-                        <span>Mis Carreras</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {isAdmin && (
-                        <>
-                          <DropdownMenuItem onClick={() => navigate('/admin')}>
-                            <Shield className="mr-2 h-4 w-4" />
-                            <span>Panel Admin</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                        </>
-                      )}
-                      <DropdownMenuItem onClick={handleSignOut}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Cerrar sesión</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant={isHomePage ? "ghost" : "outline"}
-                    onClick={() => handleAuthModal("login")}
-                    className={isHomePage ? "text-white hover:bg-white/20 border border-white/30" : ""}
-                  >
-                    Iniciar Sesión
-                  </Button>
-                  <Button
-                    onClick={() => handleAuthModal("register")}
-                    className={isHomePage ? "bg-runner-orange-500 hover:bg-runner-orange-600 text-white font-semibold" : "bg-runner-blue-600 hover:bg-runner-blue-700"}
-                  >
-                    Únete a la Comunidad
-                  </Button>
-                </div>
-              )}
+              {/* User Actions */}
+              <div className="flex items-center space-x-4">
+                {user ? (
+                  <>
+                    <NotificationBell />
+                    
+                    {/* User Profile Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage 
+                              src={user.user_metadata?.avatar_url} 
+                              alt="Avatar"
+                              className="object-cover"
+                            />
+                            <AvatarFallback className="bg-blue-600 text-white">
+                              {getInitials(user.email || "")}
+                            </AvatarFallback>
+                          </Avatar>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56" align="end" forceMount>
+                        <DropdownMenuLabel className="font-normal">
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium leading-none">
+                              {user.user_metadata?.first_name || user.email?.split('@')[0]}
+                            </p>
+                            <p className="text-xs leading-none text-muted-foreground">
+                              {user.email}
+                            </p>
+                          </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleNavigation("/profile")}>
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Mi Perfil</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleNavigation("/profile", "properties")}>
+                          <Home className="mr-2 h-4 w-4" />
+                          <span>Mis Propiedades</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleNavigation("/profile", "races")}>
+                          <Trophy className="mr-2 h-4 w-4" />
+                          <span>Mis Carreras</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {isAdmin && (
+                          <>
+                            <DropdownMenuItem onClick={() => navigate('/admin')}>
+                              <Shield className="mr-2 h-4 w-4" />
+                              <span>Panel Admin</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
+                        <DropdownMenuItem onClick={handleSignOut}>
+                          <LogOut className="mr-2 h-4 w-4" />
+                          <span>Cerrar sesión</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleAuthModal("login")}
+                    >
+                      Iniciar Sesión
+                    </Button>
+                    <Button
+                      onClick={() => handleAuthModal("register")}
+                      className="bg-runner-blue-600 hover:bg-runner-blue-700"
+                    >
+                      Únete a la Comunidad
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Main Content */}
       {children}
 
-      {/* Auth Modal */}
-      {showAuthModal && (
+      {/* Auth Modal - Solo para páginas que NO son homepage */}
+      {!isHomePage && showAuthModal && (
         <AuthModalIntegrated
           mode={authMode}
           isOpen={showAuthModal}

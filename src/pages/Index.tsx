@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import AuthModalIntegrated from "@/components/auth/AuthModalIntegrated";
+import MainHeader from "@/components/layout/MainHeader";
 import HeroSection from "@/components/home/HeroSection";
 import QuickSearchSection from "@/components/home/QuickSearchSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
@@ -27,7 +28,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      {/* HeroSection ahora maneja su propio header */}
+      {/* Header original para la homepage */}
+      <MainHeader onAuthModal={openAuthModal} />
+      
+      {/* Hero Section */}
       <HeroSection onAuthModal={openAuthModal} />
       
       {/* Quick Search integrated into Hero */}
