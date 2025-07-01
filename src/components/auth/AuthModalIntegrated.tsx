@@ -149,12 +149,17 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
     
     try {
       await signIn(loginData.email, loginData.password);
-      console.log('AuthModal: Login successful');
+      console.log('AuthModal: Login successful, closing modal');
       
-      // Don't show success toast here - AuthContext will handle it
+      // Reset form and close modal immediately
       resetForm();
       onClose();
-      if (onSuccess) onSuccess();
+      
+      // Call success callback if provided
+      if (onSuccess) {
+        console.log('AuthModal: Calling onSuccess callback');
+        onSuccess();
+      }
       
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);
@@ -183,6 +188,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
   };
 
   const resetForm = () => {
+    console.log('AuthModal: Resetting form');
     setCurrentStep(1);
     setFormData({
       firstName: "",
@@ -206,9 +212,17 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
   };
 
   const resetAndClose = () => {
+    console.log('AuthModal: Reset and close called');
     resetForm();
     onClose();
   };
+
+  // Listen for changes in isOpen to reset form when modal closes
+  useState(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  });
 
   const renderStep = () => {
     if (mode === "login") {

@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
@@ -65,6 +65,14 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   const isHomePage = location.pathname === '/';
+
+  // Close auth modal when user logs in successfully
+  useEffect(() => {
+    if (user && showAuthModal) {
+      console.log('Layout: User authenticated, closing auth modal');
+      setShowAuthModal(false);
+    }
+  }, [user, showAuthModal]);
 
   if (loading) {
     return (
@@ -236,7 +244,10 @@ const Layout = ({ children }: LayoutProps) => {
         <AuthModalIntegrated
           mode={authMode}
           isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
+          onClose={() => {
+            console.log('Layout: Closing auth modal manually');
+            setShowAuthModal(false);
+          }}
           onModeChange={setAuthMode}
           onSuccess={() => {
             console.log('Layout: Auth success callback');

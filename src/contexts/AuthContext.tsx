@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,9 +49,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
         sessionSet = true;  // Marcar que la sesión ya fue establecida
         
-        if (event === 'SIGNED_IN' && newSession?.user) {
+        // Solo mostrar toast de éxito si es un login manual (no una restauración de sesión)
+        if (event === 'SIGNED_IN' && newSession?.user && !sessionSet) {
           console.log('AuthProvider: User signed in successfully');
-          toast.success('¡Sesión iniciada correctamente!');
+          // No mostrar toast aquí - se maneja en el componente de login
         } else if (event === 'SIGNED_OUT') {
           console.log('AuthProvider: User signed out');
         }
@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userEmail: session?.user?.email || 'none'
           });
           
-          // FIXED: Solo establecer si hay sesión Y no se ha establecido ya por el listener
+          // Solo establecer si hay sesión Y no se ha establecido ya por el listener
           if (session && !sessionSet) {
             setSession(session);
             setUser(session?.user ?? null);
@@ -151,7 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       return { error: null };
-    } catch (error) {
+    } catch (error: any) {
       console.error('AuthProvider: SignUp exception:', error);
       return { error };
     } finally {
@@ -191,6 +191,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('AuthProvider: SignIn successful');
       // Auth state change will be handled by the listener
+      // Show success toast here since login was manual
+      toast.success('¡Sesión iniciada correctamente!');
+      
     } catch (error) {
       console.error('AuthProvider: SignIn exception:', error);
       throw error;
