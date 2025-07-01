@@ -71,8 +71,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userEmail: session?.user?.email || 'none'
           });
           
-          // Only set if no session is already set by the listener
-          if (!session) {
+          // FIXED: Only set if session exists AND no session is already set by the listener
+          if (session && !session) {
             setSession(session);
             setUser(session?.user ?? null);
           }

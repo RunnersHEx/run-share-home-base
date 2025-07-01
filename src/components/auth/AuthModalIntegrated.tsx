@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -152,7 +151,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
       await signIn(loginData.email, loginData.password);
       console.log('AuthModal: Login successful');
       
-      toast.success("¡Sesión iniciada correctamente!");
+      // Don't show success toast here - AuthContext will handle it
       resetForm();
       onClose();
       if (onSuccess) onSuccess();
