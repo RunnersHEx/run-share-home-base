@@ -39,14 +39,21 @@ interface VerificationRequest {
   };
 }
 
+interface DocumentWithUrl {
+  path: string;
+  url: string | null;
+  error?: string;
+}
+
 const AdminVerificationPanel = () => {
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState<{ [key: string]: string }>({});
   const [showDocuments, setShowDocuments] = useState(false);
-  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
+  const [selectedDocuments, setSelectedDocuments] = useState<DocumentWithUrl[]>([]);
   const [selectedUserName, setSelectedUserName] = useState<string>('');
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
 
   const fetchVerificationRequests = async () => {
     try {
@@ -112,17 +119,52 @@ const AdminVerificationPanel = () => {
     }
   };
 
-  const openDocuments = (documents: string[], userName: string) => {
-    setSelectedDocuments(documents);
-    setSelectedUserName(userName);
-    setShowDocuments(true);
+  const getSignedDocumentUrls = async (documents: string[]) => {
+    setLoadingDocuments(true);
+    const documentsWithUrls: DocumentWithUrl[] = [];
+    
+    for (const docPath of documents) {
+      try {
+        console.log('Getting signed URL for:', docPath);
+        
+        // Get signed URL for private bucket
+        const { data, error } = await supabase.storage
+          .from('verification-docs')
+          .createSignedUrl(docPath, 3600); // 1 hour expiry
+
+        if (error) {
+          console.error('Error getting signed URL:', error);
+          documentsWithUrls.push({
+            path: docPath,
+            url: null,
+            error: error.message
+          });
+        } else {
+          documentsWithUrls.push({
+            path: docPath,
+            url: data.signedUrl
+          });
+        }
+      } catch (error) {
+        console.error('Exception getting signed URL:', error);
+        documentsWithUrls.push({
+          path: docPath,
+          url: null,
+          error: 'Error desconocido'
+        });
+      }
+    }
+    
+    setLoadingDocuments(false);
+    return documentsWithUrls;
   };
 
-  const getDocumentUrl = (docPath: string) => {
-    const { data } = supabase.storage
-      .from('verification-docs')
-      .getPublicUrl(docPath);
-    return data.publicUrl;
+  const openDocuments = async (documents: string[], userName: string) => {
+    setSelectedUserName(userName);
+    setShowDocuments(true);
+    
+    const documentsWithUrls = await getSignedDocumentUrls(documents);
+    setSelectedDocuments(documentsWithUrls);
   };
 
   const getStatusBadge = (status: string) => {
@@ -296,44 +338,71 @@ const AdminVerificationPanel = () => {
           <DialogHeader>
             <DialogTitle>Documentos de Verificación - {selectedUserName}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            {selectedDocuments.map((docPath, index) => (
-              <div key={index} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">Documento {index + 1}</h4>
-                  <a 
-                    href={getDocumentUrl(docPath)} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 text-sm"
-                  >
-                    Abrir en nueva pestaña
-                  </a>
+          
+          {loadingDocuments ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2">Cargando documentos...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {selectedDocuments.map((doc, index) => (
+                <div key={index} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">Documento {index + 1}</h4>
+                    <div className="text-xs text-gray-500">{doc.path}</div>
+                  </div>
+                  
+                  {doc.error ? (
+                    <div className="bg-red-50 border border-red-200 rounded p-4 text-center">
+                      <FileText className="h-8 w-8 mx-auto mb-2 text-red-400" />
+                      <p className="text-red-600 font-medium">Error al cargar documento</p>
+                      <p className="text-sm text-red-500">{doc.error}</p>
+                    </div>
+                  ) : doc.url ? (
+                    <div className="bg-gray-50 rounded p-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600">Vista previa del documento:</span>
+                        <a 
+                          href={doc.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          Abrir en nueva pestaña
+                        </a>
+                      </div>
+                      <img 
+                        src={doc.url} 
+                        alt={`Documento ${index + 1}`}
+                        className="max-w-full h-auto rounded shadow-sm max-h-96 object-contain mx-auto"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentNode as HTMLElement;
+                          const errorDiv = document.createElement('div');
+                          errorDiv.className = 'flex items-center justify-center h-32 bg-gray-100 rounded';
+                          errorDiv.innerHTML = `
+                            <div class="text-center text-gray-500">
+                              <div class="mb-2">📄</div>
+                              <p>Formato no compatible para vista previa</p>
+                              <p class="text-xs">Haz clic en "Abrir en nueva pestaña"</p>
+                            </div>
+                          `;
+                          parent.appendChild(errorDiv);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 border rounded p-4 text-center">
+                      <FileText className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-gray-600">Cargando documento...</p>
+                    </div>
+                  )}
                 </div>
-                <div className="bg-gray-50 rounded p-2">
-                  <img 
-                    src={getDocumentUrl(docPath)} 
-                    alt={`Documento ${index + 1}`}
-                    className="max-w-full h-auto rounded shadow-sm"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const parent = target.parentNode as HTMLElement;
-                      parent.innerHTML = `
-                        <div class="flex items-center justify-center h-32 bg-gray-100 rounded">
-                          <div class="text-center text-gray-500">
-                            <FileText class="h-8 w-8 mx-auto mb-2" />
-                            <p>No se puede mostrar el documento</p>
-                            <p class="text-xs">Haz clic en "Abrir en nueva pestaña"</p>
-                          </div>
-                        </div>
-                      `;
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </Card>
