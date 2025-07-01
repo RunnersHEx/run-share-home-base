@@ -2,9 +2,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { NotificationBell } from "../notifications/NotificationBell";
-import { UserProfile } from "../common/UserProfile";
-import { AuthModalIntegrated } from "../auth/AuthModalIntegrated";
+import NotificationBell from "../notifications/NotificationBell";
+import UserProfile from "../common/UserProfile";
+import AuthModalIntegrated from "../auth/AuthModalIntegrated";
 import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 
@@ -109,6 +109,7 @@ const Header = () => {
           mode={authMode}
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
+          onModeChange={setAuthMode}
         />
       )}
     </>
