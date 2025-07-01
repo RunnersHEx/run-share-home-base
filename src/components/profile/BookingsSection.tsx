@@ -58,7 +58,7 @@ const BookingsSection = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Gestión de Reservas</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Gestión de Solicitudes</h2>
         <p className="text-gray-600">Administra las solicitudes de reserva de tus carreras y tus propias reservas</p>
       </div>
 
@@ -68,7 +68,7 @@ const BookingsSection = () => {
             Solicitudes Recibidas ({receivedBookings.length})
           </TabsTrigger>
           <TabsTrigger value="sent">
-            Mis Solicitudes ({sentBookings.length})
+            Mis Solicitudes Enviadas ({sentBookings.length})
           </TabsTrigger>
         </TabsList>
 

@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -30,7 +31,7 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
     { id: "roles", label: "Roles", icon: UserCheck },
     { id: "properties", label: "Mi Propiedad", icon: Home },
     { id: "races", label: "Mis Carreras", icon: Trophy },
-    { id: "bookings", label: "Solicitudes Recibidas", icon: Calendar },
+    { id: "bookings", label: "Solicitudes", icon: Calendar },
     { id: "verification", label: "Verificación", icon: Shield },
     { id: "stats", label: "Estadísticas", icon: BarChart3 },
     { id: "delete-account", label: "Eliminar Cuenta", icon: Trash2 },
