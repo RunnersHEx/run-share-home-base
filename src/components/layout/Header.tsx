@@ -55,7 +55,7 @@ const Header = () => {
                 {isAdmin && (
                   <button
                     onClick={() => navigate("/admin")}
-                    className="text-red-600 hover:text-red-700 font-medium transition-colors"
+                    className="text-destructive hover:text-destructive/80 font-medium transition-colors"
                   >
                     Panel Admin
                   </button>

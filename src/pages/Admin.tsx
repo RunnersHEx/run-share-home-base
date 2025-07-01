@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminVerificationPanel from "@/components/admin/AdminVerificationPanel";
 import UserManagementPanel from "@/components/admin/UserManagementPanel";
 import PropertyManagementPanel from "@/components/admin/PropertyManagementPanel";
+import AdminStatsPanel from "@/components/admin/AdminStatsPanel";
 
 const Admin = () => {
   const { user, loading } = useAuth();
@@ -35,12 +36,17 @@ const Admin = () => {
           <p className="text-gray-600 mt-2">Gestiona usuarios, verificaciones y propiedades</p>
         </div>
         
-        <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="stats" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="stats">Estadísticas del Sistema</TabsTrigger>
             <TabsTrigger value="users">Gestión de Usuarios</TabsTrigger>
             <TabsTrigger value="verifications">Verificación de Documentos</TabsTrigger>
             <TabsTrigger value="properties">Gestión de Propiedades</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="stats" className="space-y-6">
+            <AdminStatsPanel />
+          </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
             <UserManagementPanel />

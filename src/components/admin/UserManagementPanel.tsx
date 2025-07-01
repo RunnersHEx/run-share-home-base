@@ -3,11 +3,13 @@ import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { Users, UserCheck, UserX } from "lucide-react";
+import { Users, UserCheck, UserX, Search, Eye, Home, Trophy, Calendar } from "lucide-react";
+import AdminUserDetailsModal from "./AdminUserDetailsModal";
 import {
   Table,
   TableBody,
@@ -22,22 +24,33 @@ interface UserProfile {
   email: string;
   first_name: string | null;
   last_name: string | null;
-  is_active?: boolean; // Make optional to handle missing column
+  is_active?: boolean;
   created_at: string;
   verification_status: string;
+  total_properties: number;
+  total_races: number;
+  total_bookings: number;
+  points_balance: number;
+  average_rating: number;
 }
 
 const UserManagementPanel = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string } | null>(null);
 
   const fetchUsers = async () => {
     try {
-      // Try to select with is_active, but handle if column doesn't exist
+      // Obtener usuarios con estadísticas
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, created_at, verification_status');
+        .select(`
+          id, email, first_name, last_name, created_at, verification_status,
+          points_balance, average_rating
+        `);
 
       if (error) {
         console.error('Error fetching users:', error);
@@ -45,18 +58,52 @@ const UserManagementPanel = () => {
         setUsers([]);
         return;
       }
+
+      // Obtener estadísticas adicionales para cada usuario
+      const usersWithStats = await Promise.all(
+        (data || []).map(async (user: any) => {
+          // Contar propiedades
+          const { count: propertiesCount } = await supabase
+            .from('properties')
+            .select('*', { count: 'exact', head: true })
+            .eq('owner_id', user.id);
+
+          // Contar carreras
+          const { count: racesCount } = await supabase
+            .from('races')
+            .select('*', { count: 'exact', head: true })
+            .eq('host_id', user.id);
+
+          // Contar reservas (como guest + como host)
+          const { count: guestBookings } = await supabase
+            .from('bookings')
+            .select('*', { count: 'exact', head: true })
+            .eq('guest_id', user.id);
+
+          const { count: hostBookings } = await supabase
+            .from('bookings')
+            .select('*', { count: 'exact', head: true })
+            .eq('host_id', user.id);
+
+          return {
+            ...user,
+            is_active: user.is_active ?? true,
+            total_properties: propertiesCount || 0,
+            total_races: racesCount || 0,
+            total_bookings: (guestBookings || 0) + (hostBookings || 0),
+            points_balance: user.points_balance || 0,
+            average_rating: user.average_rating || 0,
+          };
+        })
+      );
       
-      // Map data and add default is_active if missing
-      const validUsers = (data || []).map((user: any) => ({
-        ...user,
-        is_active: user.is_active ?? true // Default to true if column doesn't exist
-      }));
-      
-      setUsers(validUsers);
+      setUsers(usersWithStats);
+      setFilteredUsers(usersWithStats);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Error al cargar usuarios');
       setUsers([]);
+      setFilteredUsers([]);
     } finally {
       setLoading(false);
     }
@@ -114,6 +161,20 @@ const UserManagementPanel = () => {
     }
   };
 
+  // Filtrar usuarios por término de búsqueda
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredUsers(users);
+    } else {
+      const filtered = users.filter(user =>
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredUsers(filtered);
+    }
+  }, [searchTerm, users]);
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -127,18 +188,32 @@ const UserManagementPanel = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Users className="h-6 w-6 text-blue-600" />
-          <span>Gestión de Usuarios</span>
-          <Badge variant="secondary">{users.length} usuarios registrados</Badge>
-        </CardTitle>
-      </CardHeader>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Users className="h-6 w-6 text-primary" />
+              <span>Gestión de Usuarios</span>
+              <Badge variant="secondary">{users.length} usuarios registrados</Badge>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar usuarios..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-64"
+                />
+              </div>
+            </div>
+          </CardTitle>
+        </CardHeader>
       <CardContent>
-        {users.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            No hay usuarios registrados
+        {filteredUsers.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {searchTerm ? 'No se encontraron usuarios' : 'No hay usuarios registrados'}
           </div>
         ) : (
           <Table>
@@ -146,6 +221,7 @@ const UserManagementPanel = () => {
               <TableRow>
                 <TableHead>Usuario</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Actividad</TableHead>
                 <TableHead>Verificación</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Registro</TableHead>
@@ -153,7 +229,7 @@ const UserManagementPanel = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="font-medium">
@@ -161,9 +237,28 @@ const UserManagementPanel = () => {
                         ? `${user.first_name} ${user.last_name}` 
                         : 'Sin nombre'}
                     </div>
+                    <div className="text-xs text-muted-foreground">
+                      {user.points_balance} puntos • ⭐ {user.average_rating.toFixed(1)}
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm text-gray-600">
+                  <TableCell className="text-sm text-muted-foreground">
                     {user.email}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-4 text-xs">
+                      <div className="flex items-center space-x-1">
+                        <Home className="h-3 w-3" />
+                        <span>{user.total_properties}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Trophy className="h-3 w-3" />
+                        <span>{user.total_races}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{user.total_bookings}</span>
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell>
                     {getVerificationBadge(user.verification_status)}
@@ -171,32 +266,45 @@ const UserManagementPanel = () => {
                   <TableCell>
                     {getStatusBadge(user.is_active ?? true)}
                   </TableCell>
-                  <TableCell className="text-sm text-gray-500">
+                  <TableCell className="text-sm text-muted-foreground">
                     {formatDistanceToNow(new Date(user.created_at), { 
                       addSuffix: true, 
                       locale: es 
                     })}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      size="sm"
-                      variant={user.is_active ? "destructive" : "default"}
-                      onClick={() => toggleUserStatus(user.id, user.is_active ?? true)}
-                      disabled={processingId === user.id}
-                      className={!(user.is_active ?? true) ? "bg-green-600 hover:bg-green-700" : ""}
-                    >
-                      {user.is_active ? (
-                        <>
-                          <UserX className="h-3 w-3 mr-1" />
-                          Desactivar
-                        </>
-                      ) : (
-                        <>
-                          <UserCheck className="h-3 w-3 mr-1" />
-                          Activar
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedUser({
+                          id: user.id,
+                          name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
+                        })}
+                      >
+                        <Eye className="h-3 w-3 mr-1" />
+                        Ver
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={user.is_active ? "destructive" : "default"}
+                        onClick={() => toggleUserStatus(user.id, user.is_active ?? true)}
+                        disabled={processingId === user.id}
+                        className={!(user.is_active ?? true) ? "bg-green-600 hover:bg-green-700" : ""}
+                      >
+                        {user.is_active ? (
+                          <>
+                            <UserX className="h-3 w-3 mr-1" />
+                            Desactivar
+                          </>
+                        ) : (
+                          <>
+                            <UserCheck className="h-3 w-3 mr-1" />
+                            Activar
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -204,7 +312,18 @@ const UserManagementPanel = () => {
           </Table>
         )}
       </CardContent>
-    </Card>
+      </Card>
+
+      {/* Modal de detalles del usuario */}
+      {selectedUser && (
+        <AdminUserDetailsModal
+          isOpen={!!selectedUser}
+          onClose={() => setSelectedUser(null)}
+          userId={selectedUser.id}
+          userName={selectedUser.name}
+        />
+      )}
+    </>
   );
 };
 
