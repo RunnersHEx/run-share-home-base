@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { isProduction, getEnvironmentConfig } from '@/lib/productionConfig';
 import { analytics } from '@/lib/analytics';
 import { errorTracker } from '@/lib/errorTracking';
-import LazyLoader from './LazyLoader';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProductionWrapperProps {
   children: React.ReactNode;
@@ -34,6 +34,16 @@ const ProductionWrapper = ({ children }: ProductionWrapperProps) => {
     return <>{children}</>;
   }
 
+  const ProductionFallback = (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="space-y-4 w-full max-w-md">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+      </div>
+    </div>
+  );
+
   return (
     <>
       <Helmet>
@@ -46,7 +56,7 @@ const ProductionWrapper = ({ children }: ProductionWrapperProps) => {
         <meta name="twitter:site" content="@RunnersHomeEx" />
       </Helmet>
       
-      <Suspense fallback={<LazyLoader height="100vh" />}>
+      <Suspense fallback={ProductionFallback}>
         {children}
       </Suspense>
     </>
