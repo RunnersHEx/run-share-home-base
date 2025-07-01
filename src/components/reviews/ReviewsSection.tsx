@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,7 +61,7 @@ const ReviewsSection = () => {
         content: review.content,
         created_at: review.created_at,
         review_type: review.review_type as 'host_to_guest' | 'guest_to_host',
-        categories: review.categories
+        categories: review.categories as Record<string, number> | undefined
       }));
 
       // Calculate stats
