@@ -70,17 +70,13 @@ const Layout = ({ children }: LayoutProps) => {
   useEffect(() => {
     if (user && showAuthModal) {
       console.log('Layout: User authenticated, closing auth modal');
-      // Add a small delay to ensure UI state has been updated
-      setTimeout(() => {
-        setShowAuthModal(false);
-      }, 100);
+      setShowAuthModal(false);
     }
   }, [user, showAuthModal]);
 
   if (loading) {
     return (
       <div className="min-h-screen">
-        {/* No mostrar header en homepage durante loading */}
         {!isHomePage && (
           <header className="bg-white shadow-sm border-b sticky top-0 z-50">
             <div className="container mx-auto px-4 py-4">
@@ -104,12 +100,10 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen">
-      {/* Solo mostrar header del Layout si NO es la homepage */}
       {!isHomePage && (
         <header className="bg-white shadow-sm border-b sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              {/* Logo */}
               <div className="flex items-center cursor-pointer" onClick={() => navigate('/')}>
                 <img 
                   src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
@@ -118,7 +112,6 @@ const Layout = ({ children }: LayoutProps) => {
                 />
               </div>
 
-              {/* Navigation */}
               <nav className="hidden md:flex items-center space-x-8">
                 <button 
                   onClick={() => navigate('/')}
@@ -154,13 +147,11 @@ const Layout = ({ children }: LayoutProps) => {
                 )}
               </nav>
 
-              {/* User Actions */}
               <div className="flex items-center space-x-4">
                 {user ? (
                   <>
                     <NotificationBell />
                     
-                    {/* User Profile Dropdown */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -239,10 +230,8 @@ const Layout = ({ children }: LayoutProps) => {
         </header>
       )}
 
-      {/* Main Content */}
       {children}
 
-      {/* Auth Modal - Solo para páginas que NO son homepage */}
       {!isHomePage && showAuthModal && (
         <AuthModalIntegrated
           mode={authMode}

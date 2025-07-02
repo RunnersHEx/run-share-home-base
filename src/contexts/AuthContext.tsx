@@ -18,24 +18,39 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export { AuthContext };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     console.log('AuthProvider: Initializing auth state');
     
-    // Get initial session first
+    // Set up auth state change listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        console.log('AuthProvider: Auth state changed:', {
+          event,
+          userId: newSession?.user?.id || 'none',
+          userEmail: newSession?.user?.email || 'none'
+        });
+        
+        // Update state immediately
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        setLoading(false);
+        
+        // Show toast only for manual sign in events
+        if (event === 'SIGNED_IN' && newSession?.user) {
+          console.log('AuthProvider: User signed in successfully');
+          toast.success('¡Sesión iniciada correctamente!');
+        } else if (event === 'SIGNED_OUT') {
+          console.log('AuthProvider: User signed out');
+        }
+      }
+    );
+
+    // Get initial session
     const getInitialSession = async () => {
       try {
         console.log('AuthProvider: Getting initial session...');
@@ -50,7 +65,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userEmail: session?.user?.email || 'none'
           });
           
-          // Set initial session state
           setSession(session);
           setUser(session?.user ?? null);
         }
@@ -58,40 +72,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('AuthProvider: Exception getting initial session:', error);
       } finally {
         setLoading(false);
-        setInitialized(true);
       }
     };
 
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        console.log('AuthProvider: Auth state changed:', {
-          event,
-          userId: newSession?.user?.id || 'none',
-          userEmail: newSession?.user?.email || 'none',
-          initialized
-        });
-        
-        // Update state immediately
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        
-        // Only show toast for manual sign in events, not initial session restoration
-        if (event === 'SIGNED_IN' && newSession?.user && initialized) {
-          console.log('AuthProvider: User signed in successfully');
-          toast.success('¡Sesión iniciada correctamente!');
-        } else if (event === 'SIGNED_OUT') {
-          console.log('AuthProvider: User signed out');
-        }
-        
-        // Make sure loading is false after any auth state change
-        if (initialized) {
-          setLoading(false);
-        }
-      }
-    );
-
-    // Initialize session
     getInitialSession();
 
     return () => {
@@ -214,7 +197,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       console.log('AuthProvider: SignOut successful');
-      // Auth state change will be handled by the listener
     } catch (error) {
       console.error('AuthProvider: SignOut exception:', error);
       throw error;
@@ -257,8 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     hasUser: !!user,
     userEmail: user?.email || 'none',
     loading,
-    sessionExists: !!session,
-    initialized
+    sessionExists: !!session
   });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

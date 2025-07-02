@@ -111,7 +111,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
       if (error) {
         console.error('AuthModal: SignUp error:', error);
         
-        // Handle specific error messages
         if (error.message?.includes('User already registered')) {
           toast.error("Este email ya está registrado. Intenta iniciar sesión.");
         } else if (error.message?.includes('Invalid email')) {
@@ -130,7 +129,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
         onClose();
         if (onSuccess) onSuccess();
         
-        // Show verification modal after a short delay
         setTimeout(() => {
           setShowVerificationModal(true);
         }, 1000);
@@ -152,13 +150,11 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
       await signIn(loginData.email, loginData.password);
       console.log('AuthModal: Login completed successfully');
       
-      // Don't close modal immediately - the Layout component will handle it
-      // when it detects the user state change
+      // The Layout component will handle closing the modal when it detects user state change
       
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);
       
-      // Handle specific error messages
       if (error.message?.includes('Invalid login credentials')) {
         toast.error("Email o contraseña incorrectos");
       } else if (error.message?.includes('Email not confirmed')) {
