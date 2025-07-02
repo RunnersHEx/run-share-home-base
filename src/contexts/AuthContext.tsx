@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,8 +34,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('AuthProvider: Initializing auth state');
     
-    let sessionSet = false;  // Flag para evitar duplicación
-
     // Set up auth state change listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
@@ -47,12 +46,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(newSession);
         setUser(newSession?.user ?? null);
         setLoading(false);
-        sessionSet = true;  // Marcar que la sesión ya fue establecida
         
-        // Solo mostrar toast de éxito si es un login manual (no una restauración de sesión)
-        if (event === 'SIGNED_IN' && newSession?.user && !sessionSet) {
+        if (event === 'SIGNED_IN' && newSession?.user) {
           console.log('AuthProvider: User signed in successfully');
-          // No mostrar toast aquí - se maneja en el componente de login
+          toast.success('¡Sesión iniciada correctamente!');
         } else if (event === 'SIGNED_OUT') {
           console.log('AuthProvider: User signed out');
         }
@@ -67,7 +64,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (error) {
           console.error('AuthProvider: Error getting initial session:', error);
-          setLoading(false);
         } else {
           console.log('AuthProvider: Initial session:', {
             hasSession: !!session,
@@ -75,17 +71,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userEmail: session?.user?.email || 'none'
           });
           
-          // Solo establecer si hay sesión Y no se ha establecido ya por el listener
-          if (session && !sessionSet) {
+          // Set initial session if exists
+          if (session) {
             setSession(session);
             setUser(session?.user ?? null);
           }
-          
-          // Siempre establecer loading en false
-          setLoading(false);
         }
       } catch (error) {
         console.error('AuthProvider: Exception getting initial session:', error);
+      } finally {
+        // Always set loading to false after initial check
         setLoading(false);
       }
     };
@@ -191,8 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('AuthProvider: SignIn successful');
       // Auth state change will be handled by the listener
-      // Show success toast here since login was manual
-      toast.success('¡Sesión iniciada correctamente!');
+      // The toast will be shown by the auth state change listener
       
     } catch (error) {
       console.error('AuthProvider: SignIn exception:', error);

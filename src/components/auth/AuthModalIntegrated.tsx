@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -149,17 +150,10 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
     
     try {
       await signIn(loginData.email, loginData.password);
-      console.log('AuthModal: Login successful, closing modal');
+      console.log('AuthModal: Login completed, waiting for auth state change');
       
-      // Reset form and close modal immediately
-      resetForm();
-      onClose();
-      
-      // Call success callback if provided
-      if (onSuccess) {
-        console.log('AuthModal: Calling onSuccess callback');
-        onSuccess();
-      }
+      // Don't close modal immediately - wait for auth state to update
+      // The Layout component will close the modal when user state changes
       
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);
@@ -216,13 +210,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
     resetForm();
     onClose();
   };
-
-  // Listen for changes in isOpen to reset form when modal closes
-  useState(() => {
-    if (!isOpen) {
-      resetForm();
-    }
-  });
 
   const renderStep = () => {
     if (mode === "login") {
