@@ -29,9 +29,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     let mounted = true;
 
-    // Configurar listener PRIMERO
+    // Configurar listener PRIMERO antes de obtener sesión
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
         if (!mounted) return;
         
         console.log('AuthProvider: Auth state change:', {
@@ -41,12 +41,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           hasSession: !!newSession
         });
         
-        // Actualizar estado
+        // Actualizar estado inmediatamente
         setSession(newSession);
         setUser(newSession?.user ?? null);
-        setLoading(false);
         
-        // Mostrar toast solo después de inicialización y para eventos reales
+        if (initialized) {
+          setLoading(false);
+        }
+        
+        // Solo mostrar toasts después de inicialización
         if (initialized && mounted) {
           if (event === 'SIGNED_IN' && newSession?.user) {
             console.log('AuthProvider: User signed in successfully');
@@ -59,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Obtener sesión inicial DESPUÉS
+    // Obtener sesión inicial DESPUÉS del listener
     const initializeAuth = async () => {
       try {
         console.log('AuthProvider: Getting initial session...');
@@ -67,20 +70,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (error) {
           console.error('AuthProvider: Error getting initial session:', error);
-        } else {
+        }
+        
+        if (mounted) {
           console.log('AuthProvider: Initial session retrieved:', {
             hasSession: !!initialSession,
             userId: initialSession?.user?.id || 'none'
           });
           
-          if (mounted) {
-            setSession(initialSession);
-            setUser(initialSession?.user ?? null);
-          }
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+          setLoading(false);
+          setInitialized(true);
         }
       } catch (error) {
         console.error('AuthProvider: Exception getting initial session:', error);
-      } finally {
         if (mounted) {
           setLoading(false);
           setInitialized(true);
@@ -95,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('AuthProvider: Cleaning up auth subscription');
       subscription.unsubscribe();
     };
-  }, []);
+  }, [initialized]);
 
   const signUp = async (email: string, password: string, userData: any) => {
     console.log('AuthProvider: Starting signUp for:', email);
@@ -147,11 +151,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password: password
       });
 
-      console.log('AuthProvider: SignIn attempt result:', {
+      console.log('AuthProvider: SignIn response:', {
         hasData: !!data,
         hasUser: !!data?.user,
         hasSession: !!data?.session,
-        error: error?.message || 'none'
+        errorMessage: error?.message || 'none'
       });
 
       if (error) {
@@ -159,22 +163,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         let errorMessage = 'Error al iniciar sesión';
         
-        if (error.message.includes('Invalid login credentials') || error.message.includes('invalid_credentials')) {
-          errorMessage = 'Email o contraseña incorrectos';
-        } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = 'Por favor confirma tu email antes de iniciar sesión';
-        } else if (error.message.includes('Too many requests')) {
+        if (error.message?.includes('Invalid login credentials') || 
+            error.message?.includes('invalid_credentials') ||
+            error.message?.includes('Email not confirmed')) {
+          errorMessage = 'Email o contraseña incorrectos. Verifica tus credenciales.';
+        } else if (error.message?.includes('Too many requests')) {
           errorMessage = 'Demasiados intentos. Espera un momento antes de intentar de nuevo';
-        } else {
+        } else if (error.message) {
           errorMessage = error.message;
         }
         
         throw new Error(errorMessage);
       }
 
-      if (!data?.user) {
-        console.error('AuthProvider: No user data returned');
-        throw new Error('No se pudo obtener la información del usuario');
+      if (!data?.user || !data?.session) {
+        console.error('AuthProvider: Login successful but no user/session data returned');
+        throw new Error('Error de autenticación: datos incompletos');
       }
       
       console.log('AuthProvider: SignIn successful for user:', data.user.id);
@@ -232,7 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resetPassword,
   };
 
-  console.log('AuthProvider: Current state:', {
+  console.log('AuthProvider: Current state render:', {
     hasUser: !!user,
     userEmail: user?.email || 'none',
     loading,

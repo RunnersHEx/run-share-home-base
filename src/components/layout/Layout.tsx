@@ -35,7 +35,8 @@ const Layout = ({ children }: LayoutProps) => {
     userEmail: user?.email || 'none',
     loading,
     isAdmin,
-    showAuthModal
+    showAuthModal,
+    authMode
   });
 
   const handleAuthModal = (mode: "login" | "register") => {
@@ -72,13 +73,22 @@ const Layout = ({ children }: LayoutProps) => {
 
   // Cerrar modal automáticamente cuando el usuario se autentica
   useEffect(() => {
+    console.log('Layout: useEffect triggered', {
+      hasUser: !!user,
+      showAuthModal,
+      loading
+    });
+    
     if (user && showAuthModal && !loading) {
       console.log('Layout: User authenticated, closing auth modal');
-      setShowAuthModal(false);
+      setTimeout(() => {
+        setShowAuthModal(false);
+      }, 100);
     }
   }, [user, showAuthModal, loading]);
 
   if (loading) {
+    console.log('Layout: Rendering loading state');
     return (
       <div className="min-h-screen">
         {!isHomePage && (
@@ -101,6 +111,8 @@ const Layout = ({ children }: LayoutProps) => {
       </div>
     );
   }
+
+  console.log('Layout: Rendering main layout');
 
   return (
     <div className="min-h-screen">
@@ -216,12 +228,18 @@ const Layout = ({ children }: LayoutProps) => {
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
-                      onClick={() => handleAuthModal("login")}
+                      onClick={() => {
+                        console.log('Layout: Header login button clicked');
+                        handleAuthModal("login");
+                      }}
                     >
                       Iniciar Sesión
                     </Button>
                     <Button
-                      onClick={() => handleAuthModal("register")}
+                      onClick={() => {
+                        console.log('Layout: Header register button clicked');
+                        handleAuthModal("register");
+                      }}
                       className="bg-runner-blue-600 hover:bg-runner-blue-700"
                     >
                       Únete a la Comunidad
@@ -236,7 +254,7 @@ const Layout = ({ children }: LayoutProps) => {
 
       {children}
 
-      {!isHomePage && showAuthModal && (
+      {showAuthModal && (
         <AuthModalIntegrated
           mode={authMode}
           isOpen={showAuthModal}

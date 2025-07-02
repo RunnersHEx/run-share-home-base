@@ -45,9 +45,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     isGuest: true
   });
 
-  // El loading general combina ambos estados
-  const isLoading = authLoading || submitting;
-
   const handleStepSubmit = (stepData: any) => {
     console.log('AuthModal: Step submit for step:', currentStep);
     
@@ -147,13 +144,19 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   const handleLoginSubmit = async (loginData: { email: string; password: string }) => {
     console.log('AuthModal: Login submit attempt');
     
+    if (submitting || authLoading) {
+      console.log('AuthModal: Already processing, skipping');
+      return;
+    }
+    
     setSubmitting(true);
     
     try {
       await signIn(loginData.email, loginData.password);
-      console.log('AuthModal: Login successful');
+      console.log('AuthModal: Login successful, modal should close automatically');
       
-      // No cerramos el modal aquí - se cerrará automáticamente desde Layout cuando detecte el usuario
+      // No cerramos el modal manualmente aquí
+      // Se cerrará automáticamente cuando detecte el usuario en Layout
       
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);
@@ -197,12 +200,19 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   };
 
   const handleClose = () => {
+    if (submitting || authLoading) {
+      console.log('AuthModal: Cannot close while loading');
+      return;
+    }
+    
     console.log('AuthModal: Handling close');
     resetForm();
     onClose();
   };
 
   const handleModeChange = (newMode: "login" | "register") => {
+    if (submitting || authLoading) return;
+    
     console.log('AuthModal: Mode change to:', newMode);
     resetForm();
     onModeChange(newMode);
@@ -213,11 +223,13 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       return (
         <LoginForm 
           onSubmit={handleLoginSubmit} 
-          isLoading={isLoading}
+          isLoading={submitting}
           onModeChange={() => handleModeChange("register")}
         />
       );
     }
+
+    const isLoading = submitting || authLoading;
 
     switch (currentStep) {
       case 1:
@@ -277,9 +289,11 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     return stepMapping[currentStep as keyof typeof stepMapping] || 1;
   };
 
+  const isProcessing = submitting || authLoading;
+
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={handleClose}>
+      <Dialog open={isOpen} onOpenChange={isProcessing ? undefined : handleClose}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogTitle className="sr-only">
             {getTitle()}
@@ -304,7 +318,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
               size="icon"
               onClick={handleClose}
               className="h-6 w-6"
-              disabled={isLoading}
+              disabled={isProcessing}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -350,7 +364,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
                   variant="link"
                   className="p-0 h-auto font-medium text-blue-600"
                   onClick={() => handleModeChange("login")}
-                  disabled={isLoading}
+                  disabled={isProcessing}
                 >
                   Inicia sesión aquí
                 </Button>

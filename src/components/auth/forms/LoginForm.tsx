@@ -19,25 +19,30 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [localLoading, setLocalLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isLoading || localLoading) return;
     
     console.log('LoginForm: Form submission started', { email: formData.email });
     
     // Limpiar errores previos
     setErrors({});
     
-    // Validación básica
+    // Validación mínima
     if (!formData.email.trim()) {
       setErrors({ email: 'El email es requerido' });
       return;
     }
     
-    if (!formData.password) {
+    if (!formData.password || formData.password.length < 1) {
       setErrors({ password: 'La contraseña es requerida' });
       return;
     }
+    
+    setLocalLoading(true);
     
     try {
       console.log('LoginForm: Calling onSubmit with credentials');
@@ -49,19 +54,23 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
     } catch (error: any) {
       console.error('LoginForm: Login error:', error);
       
-      // Mostrar error apropiado
-      if (error.message?.toLowerCase().includes('email')) {
-        setErrors({ email: error.message });
+      // Mostrar error en el campo más apropiado
+      const errorMessage = error.message || 'Error al iniciar sesión';
+      if (errorMessage.toLowerCase().includes('email') || errorMessage.toLowerCase().includes('password')) {
+        setErrors({ password: errorMessage });
       } else {
-        setErrors({ password: error.message || 'Error al iniciar sesión' });
+        setErrors({ password: errorMessage });
       }
+    } finally {
+      setLocalLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    if (isLoading) return;
+    if (isLoading || localLoading) return;
     
     setErrors({});
+    setLocalLoading(true);
     
     try {
       console.log('LoginForm: Starting Google OAuth');
@@ -79,8 +88,12 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
     } catch (error: any) {
       console.error('LoginForm: Google OAuth exception:', error);
       setErrors({ email: 'Error al conectar con Google' });
+    } finally {
+      setLocalLoading(false);
     }
   };
+
+  const loading = isLoading || localLoading;
 
   return (
     <div className="space-y-4">
@@ -99,7 +112,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
                 setFormData(prev => ({ ...prev, email: e.target.value }));
                 if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
               }}
-              disabled={isLoading}
+              disabled={loading}
               autoComplete="email"
             />
           </div>
@@ -122,14 +135,14 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
                 setFormData(prev => ({ ...prev, password: e.target.value }));
                 if (errors.password) setErrors(prev => ({ ...prev, password: undefined }));
               }}
-              disabled={isLoading}
+              disabled={loading}
               autoComplete="current-password"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-              disabled={isLoading}
+              disabled={loading}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -142,9 +155,9 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
         <Button 
           type="submit" 
           className="w-full bg-blue-600 hover:bg-blue-700" 
-          disabled={isLoading}
+          disabled={loading}
         >
-          {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+          {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
         </Button>
       </form>
 
@@ -162,7 +175,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
         variant="outline"
         onClick={handleGoogleSignIn}
         className="w-full"
-        disabled={isLoading}
+        disabled={loading}
       >
         <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
           <path
@@ -182,7 +195,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
           />
         </svg>
-        {isLoading ? "Conectando..." : "Continuar con Google"}
+        {loading ? "Conectando..." : "Continuar con Google"}
       </Button>
 
       <div className="text-center">
@@ -190,7 +203,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
           type="button"
           onClick={onModeChange}
           className="text-sm text-blue-600 hover:text-blue-700 underline"
-          disabled={isLoading}
+          disabled={loading}
         >
           ¿No tienes cuenta? Regístrate aquí
         </button>
