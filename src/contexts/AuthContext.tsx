@@ -193,6 +193,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('AuthProvider: Starting signOut');
     
     try {
+      // Limpiar estado local inmediatamente
+      setUser(null);
+      setSession(null);
+      
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('AuthProvider: SignOut error:', error);
@@ -200,8 +204,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       console.log('AuthProvider: SignOut successful');
+      
+      // Forzar recarga de la página para limpiar todo el estado
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+      
     } catch (error) {
       console.error('AuthProvider: SignOut exception:', error);
+      // Aún si hay error, limpiar estado local
+      setUser(null);
+      setSession(null);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
       throw error;
     }
   };

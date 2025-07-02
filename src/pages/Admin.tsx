@@ -7,6 +7,7 @@ import AdminVerificationPanel from "@/components/admin/AdminVerificationPanel";
 import UserManagementPanel from "@/components/admin/UserManagementPanel";
 import PropertyManagementPanel from "@/components/admin/PropertyManagementPanel";
 import AdminStatsPanel from "@/components/admin/AdminStatsPanel";
+import RaceVerificationPanel from "@/components/admin/RaceVerificationPanel";
 import { Loader2 } from "lucide-react";
 
 const Admin = () => {
@@ -30,15 +31,16 @@ const Admin = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Panel de Administración</h1>
-            <p className="text-gray-600 mt-2">Gestiona usuarios, verificaciones y propiedades</p>
+            <p className="text-gray-600 mt-2">Gestiona usuarios, verificaciones, propiedades y carreras</p>
           </div>
           
           <Tabs defaultValue="stats" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="stats">Estadísticas del Sistema</TabsTrigger>
               <TabsTrigger value="users">Gestión de Usuarios</TabsTrigger>
               <TabsTrigger value="verifications">Verificación de Documentos</TabsTrigger>
               <TabsTrigger value="properties">Gestión de Propiedades</TabsTrigger>
+              <TabsTrigger value="races">Verificación de Carreras</TabsTrigger>
             </TabsList>
 
             <TabsContent value="stats" className="space-y-6">
@@ -55,6 +57,10 @@ const Admin = () => {
 
             <TabsContent value="properties" className="space-y-6">
               <PropertyManagementPanel />
+            </TabsContent>
+
+            <TabsContent value="races" className="space-y-6">
+              <RaceVerificationPanel />
             </TabsContent>
           </Tabs>
         </div>

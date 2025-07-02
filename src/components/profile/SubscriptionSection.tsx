@@ -1,198 +1,178 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Check, Crown, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Calendar, CreditCard, Zap, CheckCircle, AlertCircle } from "lucide-react";
-
-interface Subscription {
-  id: string;
-  plan_name: string;
-  status: string;
-  current_period_end: string | null;
-  stripe_subscription_id: string | null;
-  created_at: string;
-  user_id: string;
-}
 
 const SubscriptionSection = () => {
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const fetchSubscription = async () => {
-    if (!user) return;
+  const handleSubscribe = async () => {
+    if (!user) {
+      toast.error("Debes estar autenticado para suscribirte");
+      return;
+    }
 
+    setLoading(true);
+    
     try {
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      const { data, error } = await supabase.functions.invoke('create-subscription', {
+        body: { userId: user.id }
+      });
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      if (error) {
+        console.error('Error creating subscription:', error);
+        toast.error("Error al procesar la suscripción");
+        return;
       }
 
-      setSubscription(data);
+      if (data?.url) {
+        window.location.href = data.url;
+      }
     } catch (error) {
-      console.error('Error fetching subscription:', error);
+      console.error('Exception creating subscription:', error);
+      toast.error("Error al procesar la suscripción");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubscribe = async () => {
-    try {
-      toast.info("Redirigiendo a Stripe para suscripción...");
-      
-      const { data, error } = await supabase.functions.invoke('create-subscription', {
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-    } catch (error) {
-      console.error('Error creating subscription:', error);
-      toast.error('Error al crear la suscripción');
-    }
-  };
-
-  const handleManageSubscription = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('manage-subscription', {
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-    } catch (error) {
-      console.error('Error managing subscription:', error);
-      toast.error('Error al gestionar la suscripción');
-    }
-  };
-
-  useEffect(() => {
-    fetchSubscription();
-  }, [user]);
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-green-100 text-green-700 border-green-200"><CheckCircle className="h-3 w-3 mr-1" />Activa</Badge>;
-      case 'canceled':
-        return <Badge className="bg-red-100 text-red-700 border-red-200"><AlertCircle className="h-3 w-3 mr-1" />Cancelada</Badge>;
-      case 'expired':
-        return <Badge className="bg-gray-100 text-gray-700 border-gray-200"><AlertCircle className="h-3 w-3 mr-1" />Expirada</Badge>;
-      default:
-        return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200"><AlertCircle className="h-3 w-3 mr-1" />Pendiente</Badge>;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  const features = [
+    "Acceso ilimitado a todas las carreras",
+    "Intercambio de alojamiento con hosts verificados",
+    "Sistema de puntos para reservas",
+    "Soporte prioritario 24/7",
+    "Acceso a eventos exclusivos",
+    "Comunidad premium de runners",
+    "Estadísticas detalladas de rendimiento",
+    "Recomendaciones personalizadas"
+  ];
 
   return (
     <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Mi Suscripción</h2>
+        <p className="text-gray-600">
+          Gestiona tu membresía y beneficios de RunnersHEx
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Plan Actual */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl">Estado Actual</CardTitle>
+              <Badge variant="outline">Gratis</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                Actualmente tienes una cuenta gratuita con acceso limitado.
+              </p>
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <Star className="h-5 w-5 text-orange-500 mr-2" />
+                  <span className="font-medium text-orange-700">
+                    Actualiza para acceso completo
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Plan Premium */}
+        <Card className="border-2 border-runner-blue-200 relative">
+          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <Badge className="bg-runner-blue-600 text-white px-4 py-1">
+              <Crown className="h-4 w-4 mr-1" />
+              Recomendado
+            </Badge>
+          </div>
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center">
+              <Crown className="h-6 w-6 text-runner-blue-600 mr-2" />
+              Membresía RunnersHEx Premium
+            </CardTitle>
+            <div className="flex items-baseline">
+              <span className="text-4xl font-bold text-runner-blue-600">59€</span>
+              <span className="text-gray-600 ml-2">/año</span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <ul className="space-y-3">
+                {features.map((feature, index) => (
+                  <li key={index} className="flex items-start">
+                    <Check className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              
+              <div className="pt-4">
+                <Button
+                  onClick={handleSubscribe}
+                  disabled={loading}
+                  className="w-full bg-runner-blue-600 hover:bg-runner-blue-700 text-white py-3 text-lg font-semibold"
+                >
+                  {loading ? "Procesando..." : "Suscribirse por 59€/año"}
+                </Button>
+              </div>
+
+              <div className="text-center text-sm text-gray-500">
+                <p>Pago seguro procesado por Stripe</p>
+                <p>Cancela cuando quieras</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Beneficios adicionales */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <CreditCard className="h-5 w-5 mr-2" />
-            Mi Suscripción
-          </CardTitle>
+          <CardTitle>¿Por qué elegir Premium?</CardTitle>
         </CardHeader>
         <CardContent>
-          {subscription ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-lg">{subscription.plan_name}</h3>
-                  <p className="text-gray-600">Plan Anual - €59/año</p>
-                </div>
-                {getStatusBadge(subscription.status)}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="bg-runner-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <Crown className="h-8 w-8 text-runner-blue-600" />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-600">Fecha de suscripción</p>
-                    <p className="font-medium">{formatDate(subscription.created_at)}</p>
-                  </div>
-                </div>
-
-                {subscription.current_period_end && (
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Renovación</p>
-                      <p className="font-medium">{formatDate(subscription.current_period_end)}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {subscription.status === 'active' && subscription.stripe_subscription_id && (
-                <Button onClick={handleManageSubscription} variant="outline" className="w-full">
-                  Gestionar Suscripción
-                </Button>
-              )}
+              <h3 className="font-semibold mb-2">Acceso Ilimitado</h3>
+              <p className="text-gray-600 text-sm">
+                Participa en todas las carreras sin restricciones
+              </p>
             </div>
-          ) : (
-            <div className="text-center space-y-4">
-              <div className="p-6 bg-gradient-to-br from-blue-50 to-green-50 rounded-lg">
-                <h3 className="font-semibold text-lg mb-2">¡Únete a la Comunidad!</h3>
-                <p className="text-gray-600 mb-4">
-                  Accede a la red global de corredores con nuestra membresía anual
-                </p>
-                <div className="space-y-2 text-sm text-gray-600 mb-6">
-                  <p>✓ 100 puntos nuevo suscriptor</p>
-                  <p>✓ Acceso a toda la red de hosts y sus carreras</p>
-                  <p>✓ Sistema de intercambio justo</p>
-                  <p>✓ Experiencias auténticas</p>
-                </div>
-                <div className="text-center mb-4">
-                  <span className="text-3xl font-bold text-blue-600">€59</span>
-                  <span className="text-gray-600">/año</span>
-                </div>
-                <Button onClick={handleSubscribe} className="bg-blue-600 hover:bg-blue-700">
-                  Suscribirse Ahora
-                </Button>
+            
+            <div className="text-center">
+              <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <Check className="h-8 w-8 text-green-600" />
               </div>
+              <h3 className="font-semibold mb-2">Hosts Verificados</h3>
+              <p className="text-gray-600 text-sm">
+                Alojamiento seguro con hosts completamente verificados
+              </p>
             </div>
-          )}
+            
+            <div className="text-center">
+              <div className="bg-orange-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <Star className="h-8 w-8 text-orange-600" />
+              </div>
+              <h3 className="font-semibold mb-2">Soporte Premium</h3>
+              <p className="text-gray-600 text-sm">
+                Atención prioritaria 24/7 para resolver cualquier duda
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

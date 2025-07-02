@@ -1,11 +1,18 @@
 
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface HeroSectionProps {
   onAuthModal: (mode: "login" | "register") => void;
 }
 
 const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
+  const navigate = useNavigate();
+
+  const handleExploreRaces = () => {
+    navigate('/discover');
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
