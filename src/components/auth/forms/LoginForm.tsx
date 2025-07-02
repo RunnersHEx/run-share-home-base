@@ -19,35 +19,65 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'El email es requerido';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      newErrors.email = 'El formato del email no es válido';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'La contraseña es requerida';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('LoginForm: Form submission started');
+    
+    // Prevenir múltiples envíos
     if (submitting || isLoading) {
-      console.log('LoginForm: Submission blocked - already submitting or loading');
+      console.log('LoginForm: Submission blocked - already in progress');
       return;
     }
     
-    console.log('LoginForm: Starting form submission');
-    console.log('LoginForm: Email:', formData.email);
-    console.log('LoginForm: Password length:', formData.password?.length || 0);
-    
-    if (!formData.email?.trim() || !formData.password) {
-      console.error('LoginForm: Missing email or password');
+    // Validar formulario
+    if (!validateForm()) {
+      console.log('LoginForm: Form validation failed');
       return;
     }
-
+    
     setSubmitting(true);
+    setErrors({});
     
     try {
-      console.log('LoginForm: Calling onSubmit with data');
+      console.log('LoginForm: Calling onSubmit with validated data');
       await onSubmit({
         email: formData.email.trim(),
         password: formData.password
       });
       console.log('LoginForm: onSubmit completed successfully');
-    } catch (error) {
-      console.error('LoginForm: Error during form submission:', error);
+    } catch (error: any) {
+      console.error('LoginForm: Form submission error:', error);
+      
+      // Manejar errores específicos
+      if (error.message?.includes('email')) {
+        setErrors({ email: error.message });
+      } else if (error.message?.includes('contraseña') || error.message?.includes('password')) {
+        setErrors({ password: error.message });
+      } else {
+        setErrors({ password: error.message || 'Error al iniciar sesión' });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -55,13 +85,15 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
 
   const handleGoogleSignIn = async () => {
     if (submitting || isLoading) {
-      console.log('LoginForm: Google sign in blocked - already submitting or loading');
+      console.log('LoginForm: Google sign in blocked - already in progress');
       return;
     }
     
     setSubmitting(true);
+    setErrors({});
+    
     try {
-      console.log('LoginForm: Starting Google sign in');
+      console.log('LoginForm: Starting Google OAuth sign in');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -71,17 +103,20 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
       
       if (error) {
         console.error('LoginForm: Google sign in error:', error);
+        setErrors({ email: 'Error al iniciar sesión con Google' });
       } else {
-        console.log('LoginForm: Google sign in initiated');
+        console.log('LoginForm: Google OAuth initiated successfully');
       }
-    } catch (error) {
-      console.error('LoginForm: Google sign in exception:', error);
+    } catch (error: any) {
+      console.error('LoginForm: Google OAuth exception:', error);
+      setErrors({ email: 'Error al conectar con Google' });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const isFormDisabled = isLoading || submitting || !formData.email?.trim() || !formData.password;
+  const isFormValid = formData.email.trim() && formData.password;
+  const isDisabled = submitting || isLoading || !isFormValid;
 
   return (
     <div className="space-y-4">
@@ -94,13 +129,20 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
               id="email"
               type="email"
               placeholder="tu@email.com"
-              className="pl-10"
+              className={`pl-10 ${errors.email ? 'border-red-500' : ''}`}
               value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, email: e.target.value }));
+                if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
+              }}
               disabled={submitting || isLoading}
               required
+              autoComplete="email"
             />
           </div>
+          {errors.email && (
+            <p className="text-sm text-red-600">{errors.email}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -111,16 +153,20 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
               id="password"
               type={showPassword ? "text" : "password"}
               placeholder="Tu contraseña"
-              className="pl-10 pr-10"
+              className={`pl-10 pr-10 ${errors.password ? 'border-red-500' : ''}`}
               value={formData.password}
-              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, password: e.target.value }));
+                if (errors.password) setErrors(prev => ({ ...prev, password: undefined }));
+              }}
               disabled={submitting || isLoading}
               required
+              autoComplete="current-password"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 disabled:opacity-50"
               disabled={submitting || isLoading}
             >
               {showPassword ? (
@@ -130,12 +176,15 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
               )}
             </button>
           </div>
+          {errors.password && (
+            <p className="text-sm text-red-600">{errors.password}</p>
+          )}
         </div>
 
         <Button 
           type="submit" 
-          className="w-full bg-blue-600 hover:bg-blue-700" 
-          disabled={isFormDisabled}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50" 
+          disabled={isDisabled}
         >
           {submitting ? "Iniciando sesión..." : "Iniciar Sesión"}
         </Button>
@@ -175,8 +224,19 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
           />
         </svg>
-        Continuar con Google
+        {submitting ? "Conectando..." : "Continuar con Google"}
       </Button>
+
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={onModeChange}
+          className="text-sm text-blue-600 hover:text-blue-700 underline"
+          disabled={submitting || isLoading}
+        >
+          ¿No tienes cuenta? Regístrate aquí
+        </button>
+      </div>
     </div>
   );
 };

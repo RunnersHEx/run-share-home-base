@@ -1,11 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import BasicInfoForm from "./forms/BasicInfoForm";
-import RunnerProfileForm from "./forms/RunnerProfileForm";
 import EmergencyContactForm from "./forms/EmergencyContactForm";
 import RoleSelectionForm from "./forms/RoleSelectionForm";
 import LoginForm from "./forms/LoginForm";
@@ -21,7 +20,7 @@ interface AuthModalIntegratedProps {
 }
 
 const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalIntegratedProps) => {
-  const { signUp, signIn } = useAuth();
+  const { signUp, signIn, user, loading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -46,11 +45,24 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     isGuest: true
   });
 
+  // Cerrar modal automáticamente cuando el usuario se autentica
+  useEffect(() => {
+    if (user && isOpen && !loading) {
+      console.log('AuthModal: User authenticated, closing modal automatically');
+      const timer = setTimeout(() => {
+        resetForm();
+        onClose();
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user, isOpen, loading, onClose]);
+
   const handleStepSubmit = (stepData: any) => {
     console.log('AuthModal: Handling step submit:', currentStep, stepData);
     setFormData(prev => {
       const newData = { ...prev, ...stepData };
-      console.log('AuthModal: Updated form data:', newData);
+      console.log('AuthModal: Updated form data for step', currentStep);
       return newData;
     });
     
@@ -66,11 +78,12 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   };
 
   const handleFinalSubmit = async (finalData: typeof formData) => {
-    console.log('AuthModal: Starting final submit with data:', finalData);
+    console.log('AuthModal: Starting final registration submit');
     
     setIsLoading(true);
     
     try {
+      // Validaciones
       if (!finalData.email?.trim() || !finalData.password) {
         toast.error("Email y contraseña son requeridos");
         return;
@@ -103,13 +116,14 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
         isGuest: finalData.isGuest
       };
 
-      console.log('AuthModal: Calling signUp with email:', finalData.email);
+      console.log('AuthModal: Attempting user registration');
       
       const { error } = await signUp(finalData.email.trim(), finalData.password, userData);
       
       if (error) {
-        console.error('AuthModal: SignUp error:', error);
+        console.error('AuthModal: Registration error:', error);
         
+        // Mensajes de error específicos
         if (error.message?.includes('User already registered')) {
           toast.error("Este email ya está registrado. Intenta iniciar sesión.");
         } else if (error.message?.includes('Invalid email')) {
@@ -122,17 +136,18 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
           toast.error(error.message || "Error al crear la cuenta");
         }
       } else {
-        console.log('AuthModal: SignUp successful');
+        console.log('AuthModal: Registration successful');
         toast.success("¡Cuenta creada exitosamente! Revisa tu email para verificar tu cuenta.");
         resetForm();
         onClose();
         
+        // Mostrar modal de verificación después de un breve delay
         setTimeout(() => {
           setShowVerificationModal(true);
         }, 1000);
       }
     } catch (error: any) {
-      console.error('AuthModal: Error in final submit:', error);
+      console.error('AuthModal: Registration exception:', error);
       toast.error(error.message || "Error inesperado al crear la cuenta");
     } finally {
       setIsLoading(false);
@@ -140,28 +155,21 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   };
 
   const handleLoginSubmit = async (loginData: { email: string; password: string }) => {
-    console.log('AuthModal: Attempting login with email:', loginData.email);
+    console.log('AuthModal: Attempting login');
     
     setIsLoading(true);
     
     try {
       await signIn(loginData.email, loginData.password);
-      console.log('AuthModal: Login completed successfully - waiting for Layout to close modal');
+      console.log('AuthModal: Login request completed, waiting for auth state change');
       
-      // NO cerrar el modal aquí - dejar que el Layout lo haga cuando detecte el cambio de usuario
+      // El modal se cerrará automáticamente cuando cambie el estado de autenticación
       
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);
       
-      if (error.message?.includes('Invalid login credentials')) {
-        toast.error("Email o contraseña incorrectos");
-      } else if (error.message?.includes('Email not confirmed')) {
-        toast.error("Por favor confirma tu email antes de iniciar sesión");
-      } else if (error.message?.includes('Too many requests')) {
-        toast.error("Demasiados intentos. Espera un momento antes de intentar de nuevo.");
-      } else {
-        toast.error(error.message || "Error al iniciar sesión");
-      }
+      // Los errores específicos ya se manejan en el AuthContext
+      toast.error(error.message || "Error al iniciar sesión");
     } finally {
       setIsLoading(false);
     }
@@ -176,8 +184,9 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   };
 
   const resetForm = () => {
-    console.log('AuthModal: Resetting form');
+    console.log('AuthModal: Resetting form to initial state');
     setCurrentStep(1);
+    setIsLoading(false);
     setFormData({
       firstName: "",
       lastName: "",
@@ -199,10 +208,16 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     });
   };
 
-  const resetAndClose = () => {
-    console.log('AuthModal: Reset and close called');
+  const handleClose = () => {
+    console.log('AuthModal: Closing modal and resetting form');
     resetForm();
     onClose();
+  };
+
+  const handleModeChange = (newMode: "login" | "register") => {
+    console.log('AuthModal: Changing mode to:', newMode);
+    resetForm();
+    onModeChange(newMode);
   };
 
   const renderStep = () => {
@@ -210,8 +225,8 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       return (
         <LoginForm 
           onSubmit={handleLoginSubmit} 
-          isLoading={isLoading}
-          onModeChange={() => onModeChange("register")}
+          isLoading={isLoading || loading}
+          onModeChange={() => handleModeChange("register")}
         />
       );
     }
@@ -276,7 +291,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={resetAndClose}>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogTitle className="sr-only">
             {getTitle()}
@@ -299,7 +314,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
             <Button
               variant="ghost"
               size="icon"
-              onClick={resetAndClose}
+              onClick={handleClose}
               className="h-6 w-6"
             >
               <X className="h-4 w-4" />
@@ -338,21 +353,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
 
           {renderStep()}
 
-          {mode === "login" && (
-            <div className="text-center mt-4">
-              <p className="text-sm text-gray-600">
-                ¿No tienes cuenta?{' '}
-                <Button
-                  variant="link"
-                  className="p-0 h-auto font-medium text-blue-600"
-                  onClick={() => onModeChange("register")}
-                >
-                  Regístrate aquí
-                </Button>
-              </p>
-            </div>
-          )}
-
           {mode === "register" && (
             <div className="text-center mt-4">
               <p className="text-sm text-gray-600">
@@ -360,7 +360,8 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
                 <Button
                   variant="link"
                   className="p-0 h-auto font-medium text-blue-600"
-                  onClick={() => onModeChange("login")}
+                  onClick={() => handleModeChange("login")}
+                  disabled={isLoading || loading}
                 >
                   Inicia sesión aquí
                 </Button>

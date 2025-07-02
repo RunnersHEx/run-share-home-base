@@ -17,23 +17,25 @@ const Header = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
-  // Debug user state
-  useEffect(() => {
-    console.log('Header: User state changed:', user?.email || 'No user');
-    console.log('Header: Loading state:', loading);
-  }, [user, loading]);
+  console.log('Header: Current state:', {
+    hasUser: !!user,
+    userEmail: user?.email || 'none',
+    loading,
+    isAdmin,
+    showAuthModal
+  });
 
   const handleAuthModal = (mode: "login" | "register") => {
-    console.log('Header: Opening auth modal in mode:', mode);
+    console.log('Header: Opening auth modal with mode:', mode);
     setAuthMode(mode);
     setShowAuthModal(true);
   };
 
   const handleSignOut = async () => {
-    console.log('Header: Starting sign out');
+    console.log('Header: Initiating sign out process');
     try {
       await signOut();
-      toast.success("Sesión cerrada correctamente");
+      console.log('Header: Sign out successful');
       navigate("/");
     } catch (error) {
       console.error('Header: Sign out error:', error);
@@ -45,20 +47,15 @@ const Header = () => {
     navigate('/admin');
   };
 
-  // Cerrar modal cuando el usuario se autentica exitosamente
+  // Cerrar modal automáticamente cuando el usuario se autentica
   useEffect(() => {
-    console.log('Header: User state effect triggered:', {
-      hasUser: !!user,
-      userEmail: user?.email || 'none',
-      showAuthModal,
-      loading
-    });
-    
     if (user && showAuthModal && !loading) {
-      console.log('Header: User authenticated successfully, closing auth modal');
-      setTimeout(() => {
+      console.log('Header: User authenticated, closing auth modal');
+      const timer = setTimeout(() => {
         setShowAuthModal(false);
-      }, 100);
+      }, 200);
+      
+      return () => clearTimeout(timer);
     }
   }, [user, showAuthModal, loading]);
 
@@ -157,7 +154,10 @@ const Header = () => {
         <AuthModalIntegrated
           mode={authMode}
           isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
+          onClose={() => {
+            console.log('Header: Manually closing auth modal');
+            setShowAuthModal(false);
+          }}
           onModeChange={setAuthMode}
         />
       )}

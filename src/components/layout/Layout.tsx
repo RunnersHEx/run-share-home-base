@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useState, useEffect } from "react";
@@ -29,21 +30,25 @@ const Layout = ({ children }: LayoutProps) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
-  console.log('Layout: Rendering with user:', user?.email || 'No user');
-  console.log('Layout: Loading state:', loading);
-  console.log('Layout: Is admin:', isAdmin);
+  console.log('Layout: Current state:', {
+    hasUser: !!user,
+    userEmail: user?.email || 'none',
+    loading,
+    isAdmin,
+    showAuthModal
+  });
 
   const handleAuthModal = (mode: "login" | "register") => {
-    console.log('Layout: Opening auth modal in mode:', mode);
+    console.log('Layout: Opening auth modal with mode:', mode);
     setAuthMode(mode);
     setShowAuthModal(true);
   };
 
   const handleSignOut = async () => {
-    console.log('Layout: Starting sign out');
+    console.log('Layout: Initiating sign out process');
     try {
       await signOut();
-      toast.success("Sesión cerrada correctamente");
+      console.log('Layout: Sign out successful');
       navigate("/");
     } catch (error) {
       console.error('Layout: Sign out error:', error);
@@ -65,21 +70,15 @@ const Layout = ({ children }: LayoutProps) => {
 
   const isHomePage = location.pathname === '/';
 
-  // Cerrar modal cuando el usuario se autentica exitosamente
+  // Cerrar modal automáticamente cuando el usuario se autentica
   useEffect(() => {
-    console.log('Layout: User state effect triggered:', {
-      hasUser: !!user,
-      userEmail: user?.email || 'none',
-      showAuthModal,
-      loading
-    });
-    
     if (user && showAuthModal && !loading) {
-      console.log('Layout: User authenticated successfully, closing auth modal');
-      // Pequeño delay para asegurar que todo se actualice correctamente
-      setTimeout(() => {
+      console.log('Layout: User authenticated, closing auth modal');
+      const timer = setTimeout(() => {
         setShowAuthModal(false);
-      }, 100);
+      }, 200);
+      
+      return () => clearTimeout(timer);
     }
   }, [user, showAuthModal, loading]);
 
@@ -246,7 +245,7 @@ const Layout = ({ children }: LayoutProps) => {
           mode={authMode}
           isOpen={showAuthModal}
           onClose={() => {
-            console.log('Layout: Closing auth modal manually');
+            console.log('Layout: Manually closing auth modal');
             setShowAuthModal(false);
           }}
           onModeChange={setAuthMode}
