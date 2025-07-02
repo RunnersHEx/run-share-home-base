@@ -74,11 +74,7 @@ const Layout = ({ children }: LayoutProps) => {
   useEffect(() => {
     if (user && showAuthModal && !loading) {
       console.log('Layout: User authenticated, closing auth modal');
-      const timer = setTimeout(() => {
-        setShowAuthModal(false);
-      }, 200);
-      
-      return () => clearTimeout(timer);
+      setShowAuthModal(false);
     }
   }, [user, showAuthModal, loading]);
 

@@ -18,7 +18,6 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
     password: ""
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const validateForm = () => {
@@ -32,8 +31,6 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
     
     if (!formData.password) {
       newErrors.password = 'La contraseña es requerida';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
     }
     
     setErrors(newErrors);
@@ -45,23 +42,20 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
     
     console.log('LoginForm: Form submission started');
     
-    // Prevenir múltiples envíos
-    if (submitting || isLoading) {
-      console.log('LoginForm: Submission blocked - already in progress');
+    if (isLoading) {
+      console.log('LoginForm: Submission blocked - already loading');
       return;
     }
     
-    // Validar formulario
     if (!validateForm()) {
       console.log('LoginForm: Form validation failed');
       return;
     }
     
-    setSubmitting(true);
     setErrors({});
     
     try {
-      console.log('LoginForm: Calling onSubmit with validated data');
+      console.log('LoginForm: Calling onSubmit with data');
       await onSubmit({
         email: formData.email.trim(),
         password: formData.password
@@ -70,7 +64,6 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
     } catch (error: any) {
       console.error('LoginForm: Form submission error:', error);
       
-      // Manejar errores específicos
       if (error.message?.includes('email')) {
         setErrors({ email: error.message });
       } else if (error.message?.includes('contraseña') || error.message?.includes('password')) {
@@ -78,18 +71,15 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
       } else {
         setErrors({ password: error.message || 'Error al iniciar sesión' });
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    if (submitting || isLoading) {
-      console.log('LoginForm: Google sign in blocked - already in progress');
+    if (isLoading) {
+      console.log('LoginForm: Google sign in blocked - already loading');
       return;
     }
     
-    setSubmitting(true);
     setErrors({});
     
     try {
@@ -110,13 +100,10 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
     } catch (error: any) {
       console.error('LoginForm: Google OAuth exception:', error);
       setErrors({ email: 'Error al conectar con Google' });
-    } finally {
-      setSubmitting(false);
     }
   };
 
   const isFormValid = formData.email.trim() && formData.password;
-  const isDisabled = submitting || isLoading || !isFormValid;
 
   return (
     <div className="space-y-4">
@@ -135,7 +122,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
                 setFormData(prev => ({ ...prev, email: e.target.value }));
                 if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
               }}
-              disabled={submitting || isLoading}
+              disabled={isLoading}
               required
               autoComplete="email"
             />
@@ -159,7 +146,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
                 setFormData(prev => ({ ...prev, password: e.target.value }));
                 if (errors.password) setErrors(prev => ({ ...prev, password: undefined }));
               }}
-              disabled={submitting || isLoading}
+              disabled={isLoading}
               required
               autoComplete="current-password"
             />
@@ -167,7 +154,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-              disabled={submitting || isLoading}
+              disabled={isLoading}
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -184,9 +171,9 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
         <Button 
           type="submit" 
           className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50" 
-          disabled={isDisabled}
+          disabled={!isFormValid || isLoading}
         >
-          {submitting ? "Iniciando sesión..." : "Iniciar Sesión"}
+          {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
         </Button>
       </form>
 
@@ -204,7 +191,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
         variant="outline"
         onClick={handleGoogleSignIn}
         className="w-full"
-        disabled={submitting || isLoading}
+        disabled={isLoading}
       >
         <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
           <path
@@ -224,7 +211,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
           />
         </svg>
-        {submitting ? "Conectando..." : "Continuar con Google"}
+        {isLoading ? "Conectando..." : "Continuar con Google"}
       </Button>
 
       <div className="text-center">
@@ -232,7 +219,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
           type="button"
           onClick={onModeChange}
           className="text-sm text-blue-600 hover:text-blue-700 underline"
-          disabled={submitting || isLoading}
+          disabled={isLoading}
         >
           ¿No tienes cuenta? Regístrate aquí
         </button>

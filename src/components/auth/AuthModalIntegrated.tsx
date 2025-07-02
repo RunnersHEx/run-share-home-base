@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,7 +20,7 @@ interface AuthModalIntegratedProps {
 }
 
 const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalIntegratedProps) => {
-  const { signUp, signIn, user, loading } = useAuth();
+  const { signUp, signIn, loading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -44,19 +44,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     isHost: true,
     isGuest: true
   });
-
-  // Cerrar modal automáticamente cuando el usuario se autentica
-  useEffect(() => {
-    if (user && isOpen && !loading) {
-      console.log('AuthModal: User authenticated, closing modal automatically');
-      const timer = setTimeout(() => {
-        resetForm();
-        onClose();
-      }, 300);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [user, isOpen, loading, onClose]);
 
   const handleStepSubmit = (stepData: any) => {
     console.log('AuthModal: Handling step submit:', currentStep, stepData);
@@ -83,7 +70,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     setIsLoading(true);
     
     try {
-      // Validaciones
       if (!finalData.email?.trim() || !finalData.password) {
         toast.error("Email y contraseña son requeridos");
         return;
@@ -123,7 +109,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       if (error) {
         console.error('AuthModal: Registration error:', error);
         
-        // Mensajes de error específicos
         if (error.message?.includes('User already registered')) {
           toast.error("Este email ya está registrado. Intenta iniciar sesión.");
         } else if (error.message?.includes('Invalid email')) {
@@ -141,7 +126,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
         resetForm();
         onClose();
         
-        // Mostrar modal de verificación después de un breve delay
         setTimeout(() => {
           setShowVerificationModal(true);
         }, 1000);
@@ -161,14 +145,10 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     
     try {
       await signIn(loginData.email, loginData.password);
-      console.log('AuthModal: Login request completed, waiting for auth state change');
-      
-      // El modal se cerrará automáticamente cuando cambie el estado de autenticación
+      console.log('AuthModal: Login successful - modal should close from parent');
       
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);
-      
-      // Los errores específicos ya se manejan en el AuthContext
       toast.error(error.message || "Error al iniciar sesión");
     } finally {
       setIsLoading(false);

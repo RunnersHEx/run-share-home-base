@@ -22,48 +22,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
+  const [authEventProcessed, setAuthEventProcessed] = useState(false);
 
   useEffect(() => {
     console.log('AuthProvider: Initializing auth system');
     
     let mounted = true;
 
-    // Configurar el listener de cambios de autenticación PRIMERO
+    // PASO 1: Configurar el listener PRIMERO para no perder eventos
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!mounted) return;
         
-        console.log('AuthProvider: Auth state change event:', {
+        console.log('AuthProvider: Auth state change:', {
           event,
           userId: newSession?.user?.id || 'none',
           userEmail: newSession?.user?.email || 'none',
-          hasSession: !!newSession,
-          initialized
+          hasSession: !!newSession
         });
         
-        // Actualizar estado
+        // Actualizar estado inmediatamente
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
-        // Mostrar toast solo para eventos de login exitosos (no para inicialización)
-        if (event === 'SIGNED_IN' && newSession?.user && initialized) {
-          console.log('AuthProvider: User signed in successfully');
-          toast.success('¡Sesión iniciada correctamente!');
-        } else if (event === 'SIGNED_OUT') {
-          console.log('AuthProvider: User signed out');
-          toast.success('Sesión cerrada correctamente');
+        // Mostrar toast solo para eventos reales de login (no inicialización)
+        if (mounted && authEventProcessed) {
+          if (event === 'SIGNED_IN' && newSession?.user) {
+            console.log('AuthProvider: User signed in - showing success toast');
+            toast.success('¡Sesión iniciada correctamente!');
+          } else if (event === 'SIGNED_OUT') {
+            console.log('AuthProvider: User signed out - showing success toast');
+            toast.success('Sesión cerrada correctamente');
+          }
         }
         
-        // Marcar como no cargando después del primer evento
+        // Marcar loading como false después del primer evento
         if (loading) {
           setLoading(false);
+        }
+        
+        // Marcar que ya procesamos el primer evento
+        if (!authEventProcessed) {
+          setAuthEventProcessed(true);
         }
       }
     );
 
-    // Obtener sesión inicial DESPUÉS de configurar el listener
-    const initializeAuth = async () => {
+    // PASO 2: Después obtener sesión inicial
+    const getInitialSession = async () => {
       try {
         console.log('AuthProvider: Getting initial session...');
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
@@ -73,26 +79,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           console.log('AuthProvider: Initial session retrieved:', {
             hasSession: !!initialSession,
-            userId: initialSession?.user?.id || 'none',
-            userEmail: initialSession?.user?.email || 'none'
+            userId: initialSession?.user?.id || 'none'
           });
-          
-          if (mounted) {
-            setSession(initialSession);
-            setUser(initialSession?.user ?? null);
-          }
+        }
+        
+        // Solo actualizar estado si no hay sesión activa (evitar conflictos)
+        if (mounted && !session) {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
         }
       } catch (error) {
         console.error('AuthProvider: Exception getting initial session:', error);
       } finally {
         if (mounted) {
           setLoading(false);
-          setInitialized(true);
+          setAuthEventProcessed(true);
         }
       }
     };
 
-    initializeAuth();
+    getInitialSession();
 
     return () => {
       mounted = false;
@@ -106,13 +112,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (!email?.trim() || !password) {
       const error = { message: "Email y contraseña son requeridos" };
-      console.error('AuthProvider: SignUp validation failed:', error);
       return { error };
     }
 
-    // Configurar URL de redirect correctamente
     const redirectUrl = `${window.location.origin}/`;
-    console.log('AuthProvider: Using redirect URL for signup:', redirectUrl);
     
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -142,9 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('AuthProvider: SignUp response:', {
         success: !error,
         userId: data.user?.id || 'none',
-        email: data.user?.email || 'none',
-        confirmed: !!data.user?.email_confirmed_at,
-        error: error?.message || 'none'
+        confirmed: !!data.user?.email_confirmed_at
       });
 
       return { error };
@@ -157,7 +158,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     console.log('AuthProvider: Starting signIn process for:', email);
     
-    // Validación estricta
     if (!email?.trim()) {
       throw new Error('El email es requerido');
     }
@@ -174,15 +174,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('AuthProvider: SignIn response:', {
         success: !error,
         userId: data.user?.id || 'none',
-        email: data.user?.email || 'none',
-        hasSession: !!data.session,
-        error: error?.message || 'none'
+        hasSession: !!data.session
       });
 
       if (error) {
         console.error('AuthProvider: SignIn error:', error);
         
-        // Mensajes de error específicos
         if (error.message.includes('Invalid login credentials')) {
           throw new Error('Email o contraseña incorrectos');
         } else if (error.message.includes('Email not confirmed')) {
@@ -194,7 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       
-      console.log('AuthProvider: SignIn successful, auth state change will handle the rest');
+      console.log('AuthProvider: SignIn successful');
       
     } catch (error) {
       console.error('AuthProvider: SignIn exception:', error);
@@ -257,8 +254,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     hasUser: !!user,
     userEmail: user?.email || 'none',
     loading,
-    sessionExists: !!session,
-    initialized
+    sessionExists: !!session
   });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
