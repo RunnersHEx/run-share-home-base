@@ -45,11 +45,22 @@ const Header = () => {
     navigate('/admin');
   };
 
-  const handleAuthSuccess = () => {
-    console.log('Header: Auth success callback');
-    setShowAuthModal(false);
-    // Don't show toast here as it's already shown in the auth modal
-  };
+  // Cerrar modal cuando el usuario se autentica exitosamente
+  useEffect(() => {
+    console.log('Header: User state effect triggered:', {
+      hasUser: !!user,
+      userEmail: user?.email || 'none',
+      showAuthModal,
+      loading
+    });
+    
+    if (user && showAuthModal && !loading) {
+      console.log('Header: User authenticated successfully, closing auth modal');
+      setTimeout(() => {
+        setShowAuthModal(false);
+      }, 100);
+    }
+  }, [user, showAuthModal, loading]);
 
   if (loading) {
     return (
@@ -148,7 +159,6 @@ const Header = () => {
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
           onModeChange={setAuthMode}
-          onSuccess={handleAuthSuccess}
         />
       )}
     </>
