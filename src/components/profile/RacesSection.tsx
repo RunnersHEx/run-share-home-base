@@ -27,7 +27,6 @@ const RacesSection = () => {
   const [races, setRaces] = useState<Race[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
-  const [editingRace, setEditingRace] = useState<Race | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -64,20 +63,18 @@ const RacesSection = () => {
   };
 
   const handleCreateRace = () => {
-    setEditingRace(null);
     setShowWizard(true);
   };
 
   const handleEditRace = (race: Race) => {
-    setEditingRace(race);
+    // For now, we'll just open the wizard - editing functionality can be added later
     setShowWizard(true);
   };
 
   const handleRaceSuccess = () => {
     setShowWizard(false);
-    setEditingRace(null);
     fetchMyRaces(); // Refrescar la lista
-    toast.success(editingRace ? 'Carrera actualizada exitosamente' : 'Carrera creada exitosamente');
+    toast.success('Carrera creada exitosamente');
   };
 
   const formatDistances = (distances: any) => {
@@ -213,13 +210,8 @@ const RacesSection = () => {
 
       {showWizard && (
         <RaceWizard
-          isOpen={showWizard}
-          onClose={() => {
-            setShowWizard(false);
-            setEditingRace(null);
-          }}
+          onClose={() => setShowWizard(false)}
           onSuccess={handleRaceSuccess}
-          editingRace={editingRace}
         />
       )}
     </div>
