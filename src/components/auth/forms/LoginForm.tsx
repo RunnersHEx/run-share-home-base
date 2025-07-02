@@ -20,54 +20,38 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
-  const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {};
-    
-    if (!formData.email.trim()) {
-      newErrors.email = 'El email es requerido';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = 'El formato del email no es válido';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = 'La contraseña es requerida';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('LoginForm: Form submission started');
+    console.log('LoginForm: Form submission started', { email: formData.email });
     
-    if (isLoading) {
-      console.log('LoginForm: Submission blocked - already loading');
-      return;
-    }
-    
-    if (!validateForm()) {
-      console.log('LoginForm: Form validation failed');
-      return;
-    }
-    
+    // Limpiar errores previos
     setErrors({});
     
+    // Validación básica
+    if (!formData.email.trim()) {
+      setErrors({ email: 'El email es requerido' });
+      return;
+    }
+    
+    if (!formData.password) {
+      setErrors({ password: 'La contraseña es requerida' });
+      return;
+    }
+    
     try {
-      console.log('LoginForm: Calling onSubmit with data');
+      console.log('LoginForm: Calling onSubmit with credentials');
       await onSubmit({
         email: formData.email.trim(),
         password: formData.password
       });
       console.log('LoginForm: onSubmit completed successfully');
     } catch (error: any) {
-      console.error('LoginForm: Form submission error:', error);
+      console.error('LoginForm: Login error:', error);
       
-      if (error.message?.includes('email')) {
+      // Mostrar error apropiado
+      if (error.message?.toLowerCase().includes('email')) {
         setErrors({ email: error.message });
-      } else if (error.message?.includes('contraseña') || error.message?.includes('password')) {
-        setErrors({ password: error.message });
       } else {
         setErrors({ password: error.message || 'Error al iniciar sesión' });
       }
@@ -75,15 +59,12 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
   };
 
   const handleGoogleSignIn = async () => {
-    if (isLoading) {
-      console.log('LoginForm: Google sign in blocked - already loading');
-      return;
-    }
+    if (isLoading) return;
     
     setErrors({});
     
     try {
-      console.log('LoginForm: Starting Google OAuth sign in');
+      console.log('LoginForm: Starting Google OAuth');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -94,16 +75,12 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
       if (error) {
         console.error('LoginForm: Google sign in error:', error);
         setErrors({ email: 'Error al iniciar sesión con Google' });
-      } else {
-        console.log('LoginForm: Google OAuth initiated successfully');
       }
     } catch (error: any) {
       console.error('LoginForm: Google OAuth exception:', error);
       setErrors({ email: 'Error al conectar con Google' });
     }
   };
-
-  const isFormValid = formData.email.trim() && formData.password;
 
   return (
     <div className="space-y-4">
@@ -123,7 +100,6 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
                 if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
               }}
               disabled={isLoading}
-              required
               autoComplete="email"
             />
           </div>
@@ -147,20 +123,15 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
                 if (errors.password) setErrors(prev => ({ ...prev, password: undefined }));
               }}
               disabled={isLoading}
-              required
               autoComplete="current-password"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
               disabled={isLoading}
             >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
           {errors.password && (
@@ -170,8 +141,8 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
 
         <Button 
           type="submit" 
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50" 
-          disabled={!isFormValid || isLoading}
+          className="w-full bg-blue-600 hover:bg-blue-700" 
+          disabled={isLoading}
         >
           {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
         </Button>

@@ -20,9 +20,9 @@ interface AuthModalIntegratedProps {
 }
 
 const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalIntegratedProps) => {
-  const { signUp, signIn, loading } = useAuth();
+  const { signUp, signIn, loading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -45,13 +45,14 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     isGuest: true
   });
 
+  // El loading general combina ambos estados
+  const isLoading = authLoading || submitting;
+
   const handleStepSubmit = (stepData: any) => {
-    console.log('AuthModal: Handling step submit:', currentStep, stepData);
-    setFormData(prev => {
-      const newData = { ...prev, ...stepData };
-      console.log('AuthModal: Updated form data for step', currentStep);
-      return newData;
-    });
+    console.log('AuthModal: Step submit for step:', currentStep);
+    
+    const newData = { ...formData, ...stepData };
+    setFormData(newData);
     
     if (mode === "register") {
       if (currentStep === 1) {
@@ -59,17 +60,18 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       } else if (currentStep === 3) {
         setCurrentStep(4);
       } else if (currentStep === 4) {
-        handleFinalSubmit({ ...formData, ...stepData });
+        handleFinalSubmit(newData);
       }
     }
   };
 
   const handleFinalSubmit = async (finalData: typeof formData) => {
-    console.log('AuthModal: Starting final registration submit');
+    console.log('AuthModal: Final registration submit');
     
-    setIsLoading(true);
+    setSubmitting(true);
     
     try {
+      // Validaciones básicas
       if (!finalData.email?.trim() || !finalData.password) {
         toast.error("Email y contraseña son requeridos");
         return;
@@ -109,17 +111,21 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       if (error) {
         console.error('AuthModal: Registration error:', error);
         
+        let errorMessage = "Error al crear la cuenta";
+        
         if (error.message?.includes('User already registered')) {
-          toast.error("Este email ya está registrado. Intenta iniciar sesión.");
+          errorMessage = "Este email ya está registrado. Intenta iniciar sesión.";
         } else if (error.message?.includes('Invalid email')) {
-          toast.error("El formato del email no es válido");
+          errorMessage = "El formato del email no es válido";
         } else if (error.message?.includes('Password')) {
-          toast.error("La contraseña no cumple los requisitos mínimos");
+          errorMessage = "La contraseña no cumple los requisitos mínimos";
         } else if (error.message?.includes('Email rate limit exceeded')) {
-          toast.error("Demasiados intentos. Espera un momento antes de intentar de nuevo.");
-        } else {
-          toast.error(error.message || "Error al crear la cuenta");
+          errorMessage = "Demasiados intentos. Espera un momento antes de intentar de nuevo.";
+        } else if (error.message) {
+          errorMessage = error.message;
         }
+        
+        toast.error(errorMessage);
       } else {
         console.log('AuthModal: Registration successful');
         toast.success("¡Cuenta creada exitosamente! Revisa tu email para verificar tu cuenta.");
@@ -134,24 +140,26 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       console.error('AuthModal: Registration exception:', error);
       toast.error(error.message || "Error inesperado al crear la cuenta");
     } finally {
-      setIsLoading(false);
+      setSubmitting(false);
     }
   };
 
   const handleLoginSubmit = async (loginData: { email: string; password: string }) => {
-    console.log('AuthModal: Attempting login');
+    console.log('AuthModal: Login submit attempt');
     
-    setIsLoading(true);
+    setSubmitting(true);
     
     try {
       await signIn(loginData.email, loginData.password);
-      console.log('AuthModal: Login successful - modal should close from parent');
+      console.log('AuthModal: Login successful');
+      
+      // No cerramos el modal aquí - se cerrará automáticamente desde Layout cuando detecte el usuario
       
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);
       toast.error(error.message || "Error al iniciar sesión");
     } finally {
-      setIsLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -164,9 +172,9 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   };
 
   const resetForm = () => {
-    console.log('AuthModal: Resetting form to initial state');
+    console.log('AuthModal: Resetting form');
     setCurrentStep(1);
-    setIsLoading(false);
+    setSubmitting(false);
     setFormData({
       firstName: "",
       lastName: "",
@@ -189,13 +197,13 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
   };
 
   const handleClose = () => {
-    console.log('AuthModal: Closing modal and resetting form');
+    console.log('AuthModal: Handling close');
     resetForm();
     onClose();
   };
 
   const handleModeChange = (newMode: "login" | "register") => {
-    console.log('AuthModal: Changing mode to:', newMode);
+    console.log('AuthModal: Mode change to:', newMode);
     resetForm();
     onModeChange(newMode);
   };
@@ -205,7 +213,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
       return (
         <LoginForm 
           onSubmit={handleLoginSubmit} 
-          isLoading={isLoading || loading}
+          isLoading={isLoading}
           onModeChange={() => handleModeChange("register")}
         />
       );
@@ -296,6 +304,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
               size="icon"
               onClick={handleClose}
               className="h-6 w-6"
+              disabled={isLoading}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -341,7 +350,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
                   variant="link"
                   className="p-0 h-auto font-medium text-blue-600"
                   onClick={() => handleModeChange("login")}
-                  disabled={isLoading || loading}
+                  disabled={isLoading}
                 >
                   Inicia sesión aquí
                 </Button>

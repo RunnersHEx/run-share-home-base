@@ -22,14 +22,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authEventProcessed, setAuthEventProcessed] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     console.log('AuthProvider: Initializing auth system');
     
     let mounted = true;
 
-    // PASO 1: Configurar el listener PRIMERO para no perder eventos
+    // Configurar listener PRIMERO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!mounted) return;
@@ -41,35 +41,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           hasSession: !!newSession
         });
         
-        // Actualizar estado inmediatamente
+        // Actualizar estado
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        setLoading(false);
         
-        // Mostrar toast solo para eventos reales de login (no inicialización)
-        if (mounted && authEventProcessed) {
+        // Mostrar toast solo después de inicialización y para eventos reales
+        if (initialized && mounted) {
           if (event === 'SIGNED_IN' && newSession?.user) {
-            console.log('AuthProvider: User signed in - showing success toast');
+            console.log('AuthProvider: User signed in successfully');
             toast.success('¡Sesión iniciada correctamente!');
           } else if (event === 'SIGNED_OUT') {
-            console.log('AuthProvider: User signed out - showing success toast');
+            console.log('AuthProvider: User signed out');
             toast.success('Sesión cerrada correctamente');
           }
-        }
-        
-        // Marcar loading como false después del primer evento
-        if (loading) {
-          setLoading(false);
-        }
-        
-        // Marcar que ya procesamos el primer evento
-        if (!authEventProcessed) {
-          setAuthEventProcessed(true);
         }
       }
     );
 
-    // PASO 2: Después obtener sesión inicial
-    const getInitialSession = async () => {
+    // Obtener sesión inicial DESPUÉS
+    const initializeAuth = async () => {
       try {
         console.log('AuthProvider: Getting initial session...');
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
@@ -81,24 +72,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             hasSession: !!initialSession,
             userId: initialSession?.user?.id || 'none'
           });
-        }
-        
-        // Solo actualizar estado si no hay sesión activa (evitar conflictos)
-        if (mounted && !session) {
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
+          
+          if (mounted) {
+            setSession(initialSession);
+            setUser(initialSession?.user ?? null);
+          }
         }
       } catch (error) {
         console.error('AuthProvider: Exception getting initial session:', error);
       } finally {
         if (mounted) {
           setLoading(false);
-          setAuthEventProcessed(true);
+          setInitialized(true);
         }
       }
     };
 
-    getInitialSession();
+    initializeAuth();
 
     return () => {
       mounted = false;
@@ -108,21 +98,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, userData: any) => {
-    console.log('AuthProvider: Starting signUp process for:', email);
-    
-    if (!email?.trim() || !password) {
-      const error = { message: "Email y contraseña son requeridos" };
-      return { error };
-    }
-
-    const redirectUrl = `${window.location.origin}/`;
+    console.log('AuthProvider: Starting signUp for:', email);
     
     try {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: redirectUrl,
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             first_name: userData.firstName,
             last_name: userData.lastName,
@@ -156,14 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    console.log('AuthProvider: Starting signIn process for:', email);
-    
-    if (!email?.trim()) {
-      throw new Error('El email es requerido');
-    }
-    if (!password) {
-      throw new Error('La contraseña es requerida');
-    }
+    console.log('AuthProvider: Starting signIn for:', email);
     
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -171,36 +147,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password: password
       });
 
-      console.log('AuthProvider: SignIn response:', {
-        success: !error,
-        userId: data.user?.id || 'none',
-        hasSession: !!data.session
+      console.log('AuthProvider: SignIn attempt result:', {
+        hasData: !!data,
+        hasUser: !!data?.user,
+        hasSession: !!data?.session,
+        error: error?.message || 'none'
       });
 
       if (error) {
         console.error('AuthProvider: SignIn error:', error);
         
-        if (error.message.includes('Invalid login credentials')) {
-          throw new Error('Email o contraseña incorrectos');
+        let errorMessage = 'Error al iniciar sesión';
+        
+        if (error.message.includes('Invalid login credentials') || error.message.includes('invalid_credentials')) {
+          errorMessage = 'Email o contraseña incorrectos';
         } else if (error.message.includes('Email not confirmed')) {
-          throw new Error('Por favor confirma tu email antes de iniciar sesión');
+          errorMessage = 'Por favor confirma tu email antes de iniciar sesión';
         } else if (error.message.includes('Too many requests')) {
-          throw new Error('Demasiados intentos. Espera un momento antes de intentar de nuevo');
+          errorMessage = 'Demasiados intentos. Espera un momento antes de intentar de nuevo';
         } else {
-          throw new Error(error.message || 'Error al iniciar sesión');
+          errorMessage = error.message;
         }
+        
+        throw new Error(errorMessage);
+      }
+
+      if (!data?.user) {
+        console.error('AuthProvider: No user data returned');
+        throw new Error('No se pudo obtener la información del usuario');
       }
       
-      console.log('AuthProvider: SignIn successful');
+      console.log('AuthProvider: SignIn successful for user:', data.user.id);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('AuthProvider: SignIn exception:', error);
       throw error;
     }
   };
 
   const signOut = async () => {
-    console.log('AuthProvider: Starting signOut process');
+    console.log('AuthProvider: Starting signOut');
     
     try {
       const { error } = await supabase.auth.signOut();
@@ -218,10 +204,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (email: string) => {
     console.log('AuthProvider: Starting password reset for:', email);
-    
-    if (!email?.trim()) {
-      throw new Error('El email es requerido');
-    }
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
@@ -254,6 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     hasUser: !!user,
     userEmail: user?.email || 'none',
     loading,
+    initialized,
     sessionExists: !!session
   });
 
