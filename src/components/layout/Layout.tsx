@@ -70,7 +70,10 @@ const Layout = ({ children }: LayoutProps) => {
   useEffect(() => {
     if (user && showAuthModal) {
       console.log('Layout: User authenticated, closing auth modal');
-      setShowAuthModal(false);
+      // Add a small delay to ensure UI state has been updated
+      setTimeout(() => {
+        setShowAuthModal(false);
+      }, 100);
     }
   }, [user, showAuthModal]);
 

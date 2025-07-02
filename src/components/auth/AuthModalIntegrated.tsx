@@ -150,10 +150,10 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
     
     try {
       await signIn(loginData.email, loginData.password);
-      console.log('AuthModal: Login completed, waiting for auth state change');
+      console.log('AuthModal: Login completed successfully');
       
-      // Don't close modal immediately - wait for auth state to update
-      // The Layout component will close the modal when user state changes
+      // Don't close modal immediately - the Layout component will handle it
+      // when it detects the user state change
       
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);

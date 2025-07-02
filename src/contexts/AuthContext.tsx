@@ -30,33 +30,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     console.log('AuthProvider: Initializing auth state');
     
-    // Set up auth state change listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        console.log('AuthProvider: Auth state changed:', {
-          event,
-          userId: newSession?.user?.id || 'none',
-          userEmail: newSession?.user?.email || 'none'
-        });
-        
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        setLoading(false);
-        
-        if (event === 'SIGNED_IN' && newSession?.user) {
-          console.log('AuthProvider: User signed in successfully');
-          toast.success('¡Sesión iniciada correctamente!');
-        } else if (event === 'SIGNED_OUT') {
-          console.log('AuthProvider: User signed out');
-        }
-      }
-    );
-
-    // THEN get initial session
+    // Get initial session first
     const getInitialSession = async () => {
       try {
         console.log('AuthProvider: Getting initial session...');
@@ -71,20 +50,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userEmail: session?.user?.email || 'none'
           });
           
-          // Set initial session if exists
-          if (session) {
-            setSession(session);
-            setUser(session?.user ?? null);
-          }
+          // Set initial session state
+          setSession(session);
+          setUser(session?.user ?? null);
         }
       } catch (error) {
         console.error('AuthProvider: Exception getting initial session:', error);
       } finally {
-        // Always set loading to false after initial check
         setLoading(false);
+        setInitialized(true);
       }
     };
 
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        console.log('AuthProvider: Auth state changed:', {
+          event,
+          userId: newSession?.user?.id || 'none',
+          userEmail: newSession?.user?.email || 'none',
+          initialized
+        });
+        
+        // Update state immediately
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        
+        // Only show toast for manual sign in events, not initial session restoration
+        if (event === 'SIGNED_IN' && newSession?.user && initialized) {
+          console.log('AuthProvider: User signed in successfully');
+          toast.success('¡Sesión iniciada correctamente!');
+        } else if (event === 'SIGNED_OUT') {
+          console.log('AuthProvider: User signed out');
+        }
+        
+        // Make sure loading is false after any auth state change
+        if (initialized) {
+          setLoading(false);
+        }
+      }
+    );
+
+    // Initialize session
     getInitialSession();
 
     return () => {
@@ -184,9 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       
-      console.log('AuthProvider: SignIn successful');
-      // Auth state change will be handled by the listener
-      // The toast will be shown by the auth state change listener
+      console.log('AuthProvider: SignIn successful - auth state change will be handled by listener');
       
     } catch (error) {
       console.error('AuthProvider: SignIn exception:', error);
@@ -252,7 +257,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     hasUser: !!user,
     userEmail: user?.email || 'none',
     loading,
-    sessionExists: !!session
+    sessionExists: !!session,
+    initialized
   });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
