@@ -22,35 +22,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasShownLoginToast, setHasShownLoginToast] = useState(false);
 
   useEffect(() => {
     console.log('AuthProvider: Initializing auth state');
     
-    // Set up auth state change listener first
+    let mounted = true;
+
+    // Configurar el listener PRIMERO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        if (!mounted) return;
+        
         console.log('AuthProvider: Auth state changed:', {
           event,
           userId: newSession?.user?.id || 'none',
-          userEmail: newSession?.user?.email || 'none'
+          userEmail: newSession?.user?.email || 'none',
+          hasSession: !!newSession
         });
         
-        // Update state immediately
+        // Actualizar estado inmediatamente
         setSession(newSession);
         setUser(newSession?.user ?? null);
-        setLoading(false);
         
-        // Show toast only for manual sign in events
-        if (event === 'SIGNED_IN' && newSession?.user) {
-          console.log('AuthProvider: User signed in successfully');
+        // Mostrar toast solo para eventos de login manuales (no para inicialización)
+        if (event === 'SIGNED_IN' && newSession?.user && !hasShownLoginToast) {
+          console.log('AuthProvider: Showing login success toast');
           toast.success('¡Sesión iniciada correctamente!');
+          setHasShownLoginToast(true);
         } else if (event === 'SIGNED_OUT') {
           console.log('AuthProvider: User signed out');
+          setHasShownLoginToast(false);
         }
+        
+        // Finalizar loading después de procesar el evento
+        setLoading(false);
       }
     );
 
-    // Get initial session
+    // Obtener sesión inicial DESPUÉS de configurar el listener
     const getInitialSession = async () => {
       try {
         console.log('AuthProvider: Getting initial session...');
@@ -65,23 +75,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userEmail: session?.user?.email || 'none'
           });
           
-          setSession(session);
-          setUser(session?.user ?? null);
+          if (mounted) {
+            setSession(session);
+            setUser(session?.user ?? null);
+          }
         }
       } catch (error) {
         console.error('AuthProvider: Exception getting initial session:', error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     getInitialSession();
 
     return () => {
+      mounted = false;
       console.log('AuthProvider: Cleaning up auth listener');
       subscription.unsubscribe();
     };
-  }, []);
+  }, [hasShownLoginToast]);
 
   const signUp = async (email: string, password: string, userData: any) => {
     console.log('AuthProvider: Starting signUp for:', email);
@@ -130,12 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error: error?.message || 'none'
       });
 
-      if (error) {
-        console.error('AuthProvider: SignUp error:', error);
-        return { error };
-      }
-
-      return { error: null };
+      return { error };
     } catch (error: any) {
       console.error('AuthProvider: SignUp exception:', error);
       return { error };
@@ -155,6 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       setLoading(true);
+      setHasShownLoginToast(false); // Reset para permitir toast en el próximo login
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),

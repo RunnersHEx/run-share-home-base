@@ -18,10 +18,9 @@ interface AuthModalIntegratedProps {
   onClose: () => void;
   mode: "login" | "register";
   onModeChange: (mode: "login" | "register") => void;
-  onSuccess?: () => void;
 }
 
-const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }: AuthModalIntegratedProps) => {
+const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalIntegratedProps) => {
   const { signUp, signIn } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -127,7 +126,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
         toast.success("¡Cuenta creada exitosamente! Revisa tu email para verificar tu cuenta.");
         resetForm();
         onClose();
-        if (onSuccess) onSuccess();
         
         setTimeout(() => {
           setShowVerificationModal(true);
@@ -148,9 +146,9 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange, onSuccess }:
     
     try {
       await signIn(loginData.email, loginData.password);
-      console.log('AuthModal: Login completed successfully');
+      console.log('AuthModal: Login completed successfully - waiting for Layout to close modal');
       
-      // The Layout component will handle closing the modal when it detects user state change
+      // NO cerrar el modal aquí - dejar que el Layout lo haga cuando detecte el cambio de usuario
       
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);

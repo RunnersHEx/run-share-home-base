@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useState, useEffect } from "react";
@@ -66,13 +65,23 @@ const Layout = ({ children }: LayoutProps) => {
 
   const isHomePage = location.pathname === '/';
 
-  // Close auth modal when user logs in successfully
+  // Cerrar modal cuando el usuario se autentica exitosamente
   useEffect(() => {
-    if (user && showAuthModal) {
-      console.log('Layout: User authenticated, closing auth modal');
-      setShowAuthModal(false);
+    console.log('Layout: User state effect triggered:', {
+      hasUser: !!user,
+      userEmail: user?.email || 'none',
+      showAuthModal,
+      loading
+    });
+    
+    if (user && showAuthModal && !loading) {
+      console.log('Layout: User authenticated successfully, closing auth modal');
+      // Pequeño delay para asegurar que todo se actualice correctamente
+      setTimeout(() => {
+        setShowAuthModal(false);
+      }, 100);
     }
-  }, [user, showAuthModal]);
+  }, [user, showAuthModal, loading]);
 
   if (loading) {
     return (
@@ -241,10 +250,6 @@ const Layout = ({ children }: LayoutProps) => {
             setShowAuthModal(false);
           }}
           onModeChange={setAuthMode}
-          onSuccess={() => {
-            console.log('Layout: Auth success callback');
-            setShowAuthModal(false);
-          }}
         />
       )}
     </div>

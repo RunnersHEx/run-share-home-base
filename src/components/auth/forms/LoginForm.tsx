@@ -23,7 +23,10 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (submitting || isLoading) return; // Prevent double submission
+    if (submitting || isLoading) {
+      console.log('LoginForm: Submission blocked - already submitting or loading');
+      return;
+    }
     
     console.log('LoginForm: Starting form submission');
     console.log('LoginForm: Email:', formData.email);
@@ -51,7 +54,10 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
   };
 
   const handleGoogleSignIn = async () => {
-    if (submitting || isLoading) return;
+    if (submitting || isLoading) {
+      console.log('LoginForm: Google sign in blocked - already submitting or loading');
+      return;
+    }
     
     setSubmitting(true);
     try {
