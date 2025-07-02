@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Calendar, MapPin, Users, Trophy, Plus, Edit, Eye } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import RaceWizard from "@/components/races/RaceWizard";
+import { RaceWizard } from "@/components/races/RaceWizard";
 
 interface Race {
   id: string;

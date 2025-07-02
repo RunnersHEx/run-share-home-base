@@ -70,7 +70,7 @@ const FeaturedRacesSection = () => {
                       </Badge>
                       <div className="flex items-center">
                         <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                        <span className="ml-1 text-sm">{race.average_rating || '4.5'}</span>
+                        <span className="ml-1 text-sm">{race.host.rating || '4.5'}</span>
                       </div>
                     </div>
                     <CardTitle className="text-xl">{race.name}</CardTitle>
@@ -79,22 +79,22 @@ const FeaturedRacesSection = () => {
                     <div className="space-y-3">
                       <div className="flex items-center text-gray-600">
                         <Calendar className="h-4 w-4 mr-2" />
-                        <span>{new Date(race.race_date).toLocaleDateString('es-ES')}</span>
+                        <span>{new Date(race.date).toLocaleDateString('es-ES')}</span>
                       </div>
                       <div className="flex items-center text-gray-600">
                         <MapPin className="h-4 w-4 mr-2" />
-                        <span>{race.start_location || 'Ubicación por confirmar'}</span>
+                        <span>{race.location || 'Ubicación por confirmar'}</span>
                       </div>
                       <div className="flex items-center text-gray-600">
                         <Users className="h-4 w-4 mr-2" />
-                        <span>{race.max_guests} plazas disponibles</span>
+                        <span>{race.maxGuests} plazas disponibles</span>
                       </div>
                       <p className="text-gray-700 text-sm line-clamp-2">
-                        {race.highlights || race.description || 'Una experiencia única de running que no te puedes perder.'}
+                        {race.highlights || 'Una experiencia única de running que no te puedes perder.'}
                       </p>
                       <div className="flex items-center justify-between pt-2">
                         <span className="text-lg font-bold text-runner-blue-600">
-                          {race.points_cost} puntos
+                          {race.pointsCost} puntos
                         </span>
                         <Button 
                           size="sm" 
