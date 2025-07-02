@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Star } from "lucide-react";
+import { Check, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,7 +32,8 @@ const SubscriptionSection = () => {
       }
 
       if (data?.url) {
-        window.location.href = data.url;
+        // Abrir en una nueva pestaña
+        window.open(data.url, '_blank');
       }
     } catch (error) {
       console.error('Exception creating subscription:', error);
@@ -46,9 +47,6 @@ const SubscriptionSection = () => {
     "Acceso ilimitado a todas las carreras",
     "Intercambio de alojamiento con hosts verificados",
     "Sistema de puntos para reservas",
-    "Soporte prioritario 24/7",
-    "Acceso a eventos exclusivos",
-    "Comunidad premium de runners",
     "Estadísticas detalladas de rendimiento",
     "Recomendaciones personalizadas"
   ];
@@ -62,32 +60,7 @@ const SubscriptionSection = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Plan Actual */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl">Estado Actual</CardTitle>
-              <Badge variant="outline">Gratis</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-gray-600">
-                Actualmente tienes una cuenta gratuita con acceso limitado.
-              </p>
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <Star className="h-5 w-5 text-orange-500 mr-2" />
-                  <span className="font-medium text-orange-700">
-                    Actualiza para acceso completo
-                  </span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+      <div className="max-w-md mx-auto">
         {/* Plan Premium */}
         <Card className="border-2 border-runner-blue-200 relative">
           <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -97,11 +70,11 @@ const SubscriptionSection = () => {
             </Badge>
           </div>
           <CardHeader>
-            <CardTitle className="text-xl flex items-center">
+            <CardTitle className="text-xl flex items-center justify-center">
               <Crown className="h-6 w-6 text-runner-blue-600 mr-2" />
-              Membresía RunnersHEx Premium
+              Membresía RunnersHEx
             </CardTitle>
-            <div className="flex items-baseline">
+            <div className="flex items-baseline justify-center">
               <span className="text-4xl font-bold text-runner-blue-600">59€</span>
               <span className="text-gray-600 ml-2">/año</span>
             </div>
@@ -135,46 +108,6 @@ const SubscriptionSection = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Beneficios adicionales */}
-      <Card>
-        <CardHeader>
-          <CardTitle>¿Por qué elegir Premium?</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="bg-runner-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Crown className="h-8 w-8 text-runner-blue-600" />
-              </div>
-              <h3 className="font-semibold mb-2">Acceso Ilimitado</h3>
-              <p className="text-gray-600 text-sm">
-                Participa en todas las carreras sin restricciones
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Check className="h-8 w-8 text-green-600" />
-              </div>
-              <h3 className="font-semibold mb-2">Hosts Verificados</h3>
-              <p className="text-gray-600 text-sm">
-                Alojamiento seguro con hosts completamente verificados
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-orange-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Star className="h-8 w-8 text-orange-600" />
-              </div>
-              <h3 className="font-semibold mb-2">Soporte Premium</h3>
-              <p className="text-gray-600 text-sm">
-                Atención prioritaria 24/7 para resolver cualquier duda
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

@@ -13,6 +13,10 @@ const CTASection = ({ onAuthModal }: CTASectionProps) => {
     navigate('/discover');
   };
 
+  const handleJoinCommunity = () => {
+    onAuthModal("register");
+  };
+
   return (
     <section className="py-16 lg:py-24 bg-runner-gradient">
       <div className="container mx-auto px-4 text-center">
@@ -24,7 +28,7 @@ const CTASection = ({ onAuthModal }: CTASectionProps) => {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
           <Button 
-            onClick={() => onAuthModal("register")}
+            onClick={handleJoinCommunity}
             className="bg-white text-runner-blue-600 hover:bg-gray-100 text-lg px-8 py-4 font-semibold"
           >
             Únete a la Comunidad

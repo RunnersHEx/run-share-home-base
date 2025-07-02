@@ -13,6 +13,14 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
     navigate('/discover');
   };
 
+  const handleJoinCommunity = () => {
+    onAuthModal("register");
+  };
+
+  const handleLogin = () => {
+    onAuthModal("login");
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -47,7 +55,7 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               size="lg"
-              onClick={() => onAuthModal("register")}
+              onClick={handleJoinCommunity}
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-4 text-lg rounded-lg shadow-lg"
             >
               Únete a la Comunidad
@@ -55,7 +63,7 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
             
             <Button
               size="lg"
-              onClick={() => onAuthModal("login")}
+              onClick={handleLogin}
               className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-4 text-lg rounded-lg shadow-lg"
             >
               Iniciar Sesión

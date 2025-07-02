@@ -1,4 +1,5 @@
 
+import { useAuth } from "@/hooks/useAuth";
 import HeroSection from "@/components/home/HeroSection";
 import QuickSearchSection from "@/components/home/QuickSearchSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
@@ -7,12 +8,13 @@ import HowItWorksSection from "@/components/home/HowItWorksSection";
 import CTASection from "@/components/home/CTASection";
 
 const Index = () => {
+  const { openAuthModal } = useAuth();
+
   console.log("Index component is rendering - using unified Layout system");
 
-  // Función placeholder para mantener compatibilidad con los componentes hijos
-  // pero que no hará nada ya que el Layout maneja toda la lógica de modal
-  const placeholderAuthModal = () => {
-    console.log("Index: Auth modal called - handled by Layout");
+  const handleAuthModal = (mode: "login" | "register") => {
+    console.log("Index: Auth modal called with mode:", mode);
+    openAuthModal(mode);
   };
 
   console.log("Index component rendering complete - unified system");
@@ -20,7 +22,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <HeroSection onAuthModal={placeholderAuthModal} />
+      <HeroSection onAuthModal={handleAuthModal} />
       
       {/* Quick Search integrated into Hero */}
       <section className="relative overflow-hidden page-gradient -mt-16 pt-16">
@@ -32,7 +34,7 @@ const Index = () => {
       <FeaturesSection />
       <HowItWorksSection />
       <FeaturedRacesSection />
-      <CTASection onAuthModal={placeholderAuthModal} />
+      <CTASection onAuthModal={handleAuthModal} />
     </div>
   );
 };
