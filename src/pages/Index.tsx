@@ -1,7 +1,4 @@
 
-import { useState } from "react";
-import AuthModalIntegrated from "@/components/auth/AuthModalIntegrated";
-import MainHeader from "@/components/layout/MainHeader";
 import HeroSection from "@/components/home/HeroSection";
 import QuickSearchSection from "@/components/home/QuickSearchSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
@@ -10,29 +7,20 @@ import HowItWorksSection from "@/components/home/HowItWorksSection";
 import CTASection from "@/components/home/CTASection";
 
 const Index = () => {
-  console.log("Index component is rendering");
-  
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("register");
+  console.log("Index component is rendering - using unified Layout system");
 
-  const openAuthModal = (mode: "login" | "register") => {
-    setAuthMode(mode);
-    setAuthModalOpen(true);
+  // Función placeholder para mantener compatibilidad con los componentes hijos
+  // pero que no hará nada ya que el Layout maneja toda la lógica de modal
+  const placeholderAuthModal = () => {
+    console.log("Index: Auth modal called - handled by Layout");
   };
 
-  const closeAuthModal = () => {
-    setAuthModalOpen(false);
-  };
-
-  console.log("Index component rendering complete");
+  console.log("Index component rendering complete - unified system");
 
   return (
     <div className="min-h-screen">
-      {/* Header original para la homepage */}
-      <MainHeader onAuthModal={openAuthModal} />
-      
       {/* Hero Section */}
-      <HeroSection onAuthModal={openAuthModal} />
+      <HeroSection onAuthModal={placeholderAuthModal} />
       
       {/* Quick Search integrated into Hero */}
       <section className="relative overflow-hidden page-gradient -mt-16 pt-16">
@@ -44,15 +32,7 @@ const Index = () => {
       <FeaturesSection />
       <HowItWorksSection />
       <FeaturedRacesSection />
-      <CTASection onAuthModal={openAuthModal} />
-
-      {/* Modal de autenticación independiente para la homepage */}
-      <AuthModalIntegrated 
-        isOpen={authModalOpen}
-        onClose={closeAuthModal}
-        mode={authMode}
-        onModeChange={setAuthMode}
-      />
+      <CTASection onAuthModal={placeholderAuthModal} />
     </div>
   );
 };

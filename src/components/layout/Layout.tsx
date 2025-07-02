@@ -30,13 +30,16 @@ const Layout = ({ children }: LayoutProps) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
+  const isHomePage = location.pathname === '/';
+
   console.log('Layout: Current state:', {
     hasUser: !!user,
     userEmail: user?.email || 'none',
     loading,
     isAdmin,
     showAuthModal,
-    authMode
+    authMode,
+    isHomePage
   });
 
   const handleAuthModal = (mode: "login" | "register") => {
@@ -69,8 +72,6 @@ const Layout = ({ children }: LayoutProps) => {
     return email.split('@')[0].slice(0, 2).toUpperCase();
   };
 
-  const isHomePage = location.pathname === '/';
-
   // Cerrar modal automáticamente cuando el usuario se autentica
   useEffect(() => {
     console.log('Layout: useEffect triggered', {
@@ -91,7 +92,23 @@ const Layout = ({ children }: LayoutProps) => {
     console.log('Layout: Rendering loading state');
     return (
       <div className="min-h-screen">
-        {!isHomePage && (
+        {/* Header para homepage durante loading */}
+        {isHomePage ? (
+          <header className="absolute top-0 left-0 right-0 z-50 bg-transparent">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <img 
+                    src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
+                    alt="Runners Home Exchange" 
+                    className="h-20 w-auto object-contain"
+                  />
+                </div>
+                <div className="text-white">Cargando...</div>
+              </div>
+            </div>
+          </header>
+        ) : (
           <header className="bg-white shadow-sm border-b sticky top-0 z-50">
             <div className="container mx-auto px-4 py-4">
               <div className="flex items-center justify-between">
@@ -116,7 +133,114 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen">
-      {!isHomePage && (
+      {/* Header condicional según la página */}
+      {isHomePage ? (
+        // Header transparente para homepage
+        <header className="absolute top-0 left-0 right-0 z-50 bg-transparent">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <img 
+                  src="/lovable-uploads/981505bd-2f25-4665-9b98-5496d5124ebe.png" 
+                  alt="Runners Home Exchange" 
+                  className="h-20 w-auto object-contain"
+                />
+              </div>
+
+              <div className="flex items-center space-x-4">
+                {user ? (
+                  <>
+                    <NotificationBell />
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage 
+                              src={user.user_metadata?.avatar_url} 
+                              alt="Avatar"
+                              className="object-cover"
+                            />
+                            <AvatarFallback className="bg-blue-600 text-white">
+                              {getInitials(user.email || "")}
+                            </AvatarFallback>
+                          </Avatar>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56" align="end" forceMount>
+                        <DropdownMenuLabel className="font-normal">
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium leading-none">
+                              {user.user_metadata?.first_name || user.email?.split('@')[0]}
+                            </p>
+                            <p className="text-xs leading-none text-muted-foreground">
+                              {user.email}
+                            </p>
+                          </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleNavigation("/profile")}>
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Mi Perfil</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleNavigation("/discover")}>
+                          <Search className="mr-2 h-4 w-4" />
+                          <span>Descubrir Carreras</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleNavigation("/bookings")}>
+                          <Calendar className="mr-2 h-4 w-4" />
+                          <span>Mis Reservas</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleNavigation("/races")}>
+                          <Trophy className="mr-2 h-4 w-4" />
+                          <span>Mis Carreras</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {isAdmin && (
+                          <>
+                            <DropdownMenuItem onClick={() => navigate('/admin')}>
+                              <Shield className="mr-2 h-4 w-4" />
+                              <span>Panel Admin</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
+                        <DropdownMenuItem onClick={handleSignOut}>
+                          <LogOut className="mr-2 h-4 w-4" />
+                          <span>Cerrar sesión</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                ) : (
+                  <div className="flex items-center space-x-4">
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        console.log('Layout: Homepage login button clicked');
+                        handleAuthModal("login");
+                      }}
+                      className="text-white hover:bg-white/20 border border-white/30"
+                    >
+                      Iniciar Sesión
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        console.log('Layout: Homepage register button clicked');
+                        handleAuthModal("register");
+                      }}
+                      className="bg-runner-orange-500 hover:bg-runner-orange-600 text-white font-semibold"
+                    >
+                      Únete a la Comunidad
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </header>
+      ) : (
+        // Header normal para otras páginas
         <header className="bg-white shadow-sm border-b sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
