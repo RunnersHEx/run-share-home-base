@@ -8,14 +8,12 @@ interface CTASectionProps {
 const CTASection = ({ onAuthModal }: CTASectionProps) => {
   const handleJoinCommunity = () => {
     console.log('CTASection: Join community button clicked');
-    // Disparar evento personalizado que Layout capturará
-    window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { mode: 'register' } }));
+    onAuthModal('register');
   };
 
   const handleExploreRaces = () => {
     console.log('CTASection: Explore races button clicked');
-    // Disparar evento personalizado que Layout capturará
-    window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { mode: 'login' } }));
+    onAuthModal('login');
   };
 
   return (

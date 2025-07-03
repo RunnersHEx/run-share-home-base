@@ -9,14 +9,12 @@ interface HeroSectionProps {
 const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
   const handleJoinCommunity = () => {
     console.log('HeroSection: Join community button clicked');
-    // Disparar evento personalizado que Layout capturará
-    window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { mode: 'register' } }));
+    onAuthModal('register');
   };
 
   const handleInitiateLogin = () => {
     console.log('HeroSection: Login button clicked');
-    // Disparar evento personalizado que Layout capturará
-    window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { mode: 'login' } }));
+    onAuthModal('login');
   };
 
   return (
