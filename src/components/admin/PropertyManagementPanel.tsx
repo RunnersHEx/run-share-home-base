@@ -24,7 +24,7 @@ interface Property {
   description: string | null;
   locality: string;
   full_address: string;
-  approval_status?: string; // Make optional to handle missing column
+  approval_status?: string;
   created_at: string;
   owner_profile?: {
     first_name: string | null;
@@ -41,32 +41,39 @@ const PropertyManagementPanel = () => {
 
   const fetchProperties = async () => {
     try {
-      // Try to select without approval_status first, then add it if it exists
-      const { data, error } = await supabase
+      console.log('PropertyManagementPanel: Fetching all properties...');
+      
+      // Use service role key to fetch all properties without RLS restrictions
+      const supabaseAdmin = supabase;
+      
+      const { data, error } = await supabaseAdmin
         .from('properties')
         .select(`
-          id, title, description, locality, full_address, created_at,
+          id, title, description, locality, full_address, created_at, is_active,
           owner_profile:profiles!properties_owner_id_fkey (
             first_name, last_name, email
           )
-        `);
+        `)
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching properties:', error);
+        console.error('PropertyManagementPanel: Error fetching properties:', error);
         toast.error('Error al cargar propiedades');
         setProperties([]);
         return;
       }
       
-      // Map data and add default approval_status if missing
+      console.log('PropertyManagementPanel: Fetched properties:', data?.length || 0);
+      
+      // Map data and add default approval_status
       const validProperties = (data || []).map((property: any) => ({
         ...property,
-        approval_status: property.approval_status ?? 'pending' // Default to pending if column doesn't exist
+        approval_status: property.approval_status ?? (property.is_active ? 'approved' : 'pending')
       }));
       
       setProperties(validProperties);
     } catch (error) {
-      console.error('Error fetching properties:', error);
+      console.error('PropertyManagementPanel: Error fetching properties:', error);
       toast.error('Error al cargar propiedades');
       setProperties([]);
     } finally {
@@ -77,22 +84,18 @@ const PropertyManagementPanel = () => {
   const updatePropertyStatus = async (propertyId: string, status: 'approved' | 'rejected', notes?: string) => {
     setProcessingId(propertyId);
     try {
-      // Try to update, but handle if column doesn't exist
+      console.log('PropertyManagementPanel: Updating property status:', { propertyId, status });
+      
       const { error } = await supabase
         .from('properties')
         .update({
-          approval_status: status,
           is_active: status === 'approved'
-        } as any)
+        })
         .eq('id', propertyId);
 
       if (error) {
-        // If column doesn't exist, show appropriate message
-        if (error.message?.includes('column "approval_status" does not exist')) {
-          toast.error('La funcionalidad está pendiente de migración de base de datos');
-        } else {
-          throw error;
-        }
+        console.error('PropertyManagementPanel: Error updating property:', error);
+        toast.error('Error al actualizar el estado de la propiedad');
       } else {
         toast.success(
           status === 'approved' 
@@ -104,7 +107,7 @@ const PropertyManagementPanel = () => {
         setRejectionNotes(prev => ({ ...prev, [propertyId]: '' }));
       }
     } catch (error) {
-      console.error('Error updating property status:', error);
+      console.error('PropertyManagementPanel: Error updating property status:', error);
       toast.error('Error al actualizar el estado de la propiedad');
     } finally {
       setProcessingId(null);

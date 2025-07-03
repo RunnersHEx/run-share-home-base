@@ -77,13 +77,15 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`
+          redirectTo: window.location.origin
         }
       });
       
       if (error) {
         console.error('LoginForm: Google sign in error:', error);
         setErrors({ email: 'Error al iniciar sesión con Google' });
+      } else {
+        console.log('LoginForm: Google OAuth initiated successfully');
       }
     } catch (error: any) {
       console.error('LoginForm: Google OAuth exception:', error);

@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 interface GoogleSignUpButtonProps {
   isLoading: boolean;
@@ -8,19 +9,21 @@ interface GoogleSignUpButtonProps {
 const GoogleSignUpButton = ({ isLoading }: GoogleSignUpButtonProps) => {
   const handleGoogleSignUp = async () => {
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
+      console.log('GoogleSignUpButton: Starting Google OAuth for registration');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`
+          redirectTo: window.location.origin
         }
       });
       
       if (error) {
-        console.error('Error with Google sign up:', error);
+        console.error('GoogleSignUpButton: Error with Google sign up:', error);
+      } else {
+        console.log('GoogleSignUpButton: Google OAuth initiated successfully');
       }
     } catch (error) {
-      console.error('Error importing supabase:', error);
+      console.error('GoogleSignUpButton: Error importing supabase or OAuth:', error);
     }
   };
 

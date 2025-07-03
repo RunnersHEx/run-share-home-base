@@ -1,20 +1,19 @@
 
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 
 interface CTASectionProps {
   onAuthModal: (mode: "login" | "register") => void;
 }
 
 const CTASection = ({ onAuthModal }: CTASectionProps) => {
-  const navigate = useNavigate();
-
-  const handleExploreRaces = () => {
-    navigate('/discover');
+  const handleJoinCommunity = () => {
+    console.log('CTASection: Join community button clicked');
+    onAuthModal("register");
   };
 
-  const handleJoinCommunity = () => {
-    onAuthModal("register");
+  const handleExploreRaces = () => {
+    console.log('CTASection: Explore races button clicked');
+    onAuthModal("login");
   };
 
   return (
@@ -37,7 +36,7 @@ const CTASection = ({ onAuthModal }: CTASectionProps) => {
             onClick={handleExploreRaces}
             className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-runner-blue-600 text-lg px-8 py-4 font-semibold"
           >
-            Explorar Carreras
+            Iniciar Sesión
           </Button>
         </div>
         <p className="text-xl text-white/90 max-w-2xl mx-auto font-medium">

@@ -1,23 +1,18 @@
 
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 
 interface HeroSectionProps {
   onAuthModal: (mode: "login" | "register") => void;
 }
 
 const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
-  const navigate = useNavigate();
-
-  const handleExploreRaces = () => {
-    navigate('/discover');
-  };
-
   const handleJoinCommunity = () => {
+    console.log('HeroSection: Join community button clicked');
     onAuthModal("register");
   };
 
   const handleLogin = () => {
+    console.log('HeroSection: Login button clicked');
     onAuthModal("login");
   };
 
