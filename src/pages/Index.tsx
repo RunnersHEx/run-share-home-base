@@ -5,15 +5,19 @@ import FeaturesSection from "@/components/home/FeaturesSection";
 import FeaturedRacesSection from "@/components/home/FeaturedRacesSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 import CTASection from "@/components/home/CTASection";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   console.log("Index component is rendering - using unified Layout system");
+  
+  const { user } = useAuth();
 
-  // The auth modal functionality is now handled by the Layout component
-  // No need to manage it here since Layout has its own auth modal state
+  // Esta función será pasada a los componentes pero la gestión real del modal
+  // está en Layout.tsx que detecta automáticamente cuando se debe abrir
   const handleAuthModal = (mode: "login" | "register") => {
     console.log("Index: Auth modal called with mode:", mode);
-    // This is now handled by the Layout component automatically
+    // El Layout maneja automáticamente la apertura del modal
+    // mediante los eventos de los botones
   };
 
   console.log("Index component rendering complete - unified system");
@@ -32,7 +36,7 @@ const Index = () => {
 
       <FeaturesSection />
       <HowItWorksSection />
-      <FeaturedRacesSection />
+      <FeaturedRacesSection onAuthModal={handleAuthModal} />
       <CTASection onAuthModal={handleAuthModal} />
     </div>
   );

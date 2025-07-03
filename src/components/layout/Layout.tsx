@@ -48,6 +48,21 @@ const Layout = ({ children }: LayoutProps) => {
     setShowAuthModal(true);
   };
 
+  // Escuchar eventos personalizados de los botones de la homepage
+  useEffect(() => {
+    const handleOpenAuthModal = (event: CustomEvent) => {
+      console.log('Layout: Custom event received:', event.detail);
+      const { mode } = event.detail;
+      handleAuthModal(mode);
+    };
+
+    window.addEventListener('openAuthModal', handleOpenAuthModal as EventListener);
+    
+    return () => {
+      window.removeEventListener('openAuthModal', handleOpenAuthModal as EventListener);
+    };
+  }, []);
+
   const handleSignOut = async () => {
     console.log('Layout: Initiating sign out process');
     try {
