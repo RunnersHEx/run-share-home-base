@@ -45,8 +45,7 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
           </div>
           
           <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
-            Corre el Mundo,{" "}
-            <span className="text-orange-400">Vive como Local</span>
+            Conecta • Viaja • Corre
           </h1>
           
           <p className="text-xl lg:text-2xl mb-8 text-white/90 max-w-3xl mx-auto leading-relaxed">
