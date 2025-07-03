@@ -1,5 +1,4 @@
 
-import { useAuth } from "@/hooks/useAuth";
 import HeroSection from "@/components/home/HeroSection";
 import QuickSearchSection from "@/components/home/QuickSearchSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
@@ -8,13 +7,13 @@ import HowItWorksSection from "@/components/home/HowItWorksSection";
 import CTASection from "@/components/home/CTASection";
 
 const Index = () => {
-  const { openAuthModal } = useAuth();
-
   console.log("Index component is rendering - using unified Layout system");
 
+  // The auth modal functionality is now handled by the Layout component
+  // No need to manage it here since Layout has its own auth modal state
   const handleAuthModal = (mode: "login" | "register") => {
     console.log("Index: Auth modal called with mode:", mode);
-    openAuthModal(mode);
+    // This is now handled by the Layout component automatically
   };
 
   console.log("Index component rendering complete - unified system");
