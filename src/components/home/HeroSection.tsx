@@ -20,14 +20,17 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-runner-gradient">
-      {/* Background Image */}
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Background Image with overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `linear-gradient(rgba(30, 64, 175, 0.8), rgba(5, 150, 105, 0.6)), url('/lovable-uploads/a989eba0-bb19-4efd-bcfc-3c1f8870d2cb.png')`
+          backgroundImage: `url('/lovable-uploads/a989eba0-bb19-4efd-bcfc-3c1f8870d2cb.png')`
         }}
       />
+      
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black bg-opacity-40" />
       
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center text-white">
@@ -35,7 +38,7 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
           <div className="flex items-center justify-center mb-6">
             <div className="bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-medium border border-white/20">
               <span className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-runner-orange-400 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
                 Conecta • Viaja • Corre
               </span>
             </div>
@@ -43,7 +46,7 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
           
           <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
             Corre el Mundo,{" "}
-            <span className="text-runner-orange-400">Vive como Local</span>
+            <span className="text-orange-400">Vive como Local</span>
           </h1>
           
           <p className="text-xl lg:text-2xl mb-8 text-white/90 max-w-3xl mx-auto leading-relaxed">
@@ -55,32 +58,30 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button 
               onClick={handleJoinCommunity}
-              className="bg-runner-blue-600 hover:bg-runner-blue-700 text-white text-lg px-8 py-4 rounded-lg font-semibold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-4 rounded-lg font-semibold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
             >
               Únete a la Comunidad
-              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button 
               onClick={handleInitiateLogin}
-              className="bg-runner-orange-500 hover:bg-runner-orange-600 text-white text-lg px-8 py-4 rounded-lg font-semibold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
+              className="bg-orange-500 hover:bg-orange-600 text-white text-lg px-8 py-4 rounded-lg font-semibold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
             >
               Iniciar Sesión
-              <Play className="ml-2 h-5 w-5" />
             </Button>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl font-bold text-runner-orange-400 mb-1">500+</div>
+              <div className="text-3xl font-bold text-orange-400 mb-1">500+</div>
               <div className="text-sm text-white/80">Runners activos</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-runner-orange-400 mb-1">50+</div>
+              <div className="text-3xl font-bold text-orange-400 mb-1">50+</div>
               <div className="text-sm text-white/80">Ciudades</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-runner-orange-400 mb-1">1000+</div>
+              <div className="text-3xl font-bold text-orange-400 mb-1">1000+</div>
               <div className="text-sm text-white/80">Experiencias</div>
             </div>
           </div>

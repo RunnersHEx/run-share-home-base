@@ -70,16 +70,23 @@ export const useDiscoverRaces = () => {
         const today = new Date();
         const daysUntil = Math.ceil((raceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         
-        // Asegurar que modalities y distances son arrays
-        const modalities = Array.isArray(race.modalities) ? race.modalities : [];
-        const distances = Array.isArray(race.distances) ? race.distances : [];
-        const terrainProfile = Array.isArray(race.terrain_profile) ? race.terrain_profile : [];
+        // Asegurar que modalities, distances y terrain_profile son arrays de strings
+        const modalities = Array.isArray(race.modalities) 
+          ? race.modalities.map(m => typeof m === 'string' ? m : String(m)) 
+          : [];
+        const distances = Array.isArray(race.distances) 
+          ? race.distances.map(d => typeof d === 'string' ? d : String(d)) 
+          : [];
+        const terrainProfile = Array.isArray(race.terrain_profile) 
+          ? race.terrain_profile.map(t => typeof t === 'string' ? t : String(t)) 
+          : [];
         
         // Obtener información de la propiedad
         const propertyInfo = Array.isArray(race.property_info) ? race.property_info[0] : race.property_info;
         
-        // Obtener información del host
+        // Obtener información del host con validación de tipo
         const hostInfo = race.host_info || {};
+        const safeHostInfo = Array.isArray(hostInfo) ? hostInfo[0] || {} : hostInfo;
         
         return {
           id: race.id,
@@ -93,11 +100,11 @@ export const useDiscoverRaces = () => {
           imageUrl: race.imageUrl,
           host: {
             id: race.host_id,
-            name: hostInfo.first_name && hostInfo.last_name ? 
-                  `${hostInfo.first_name} ${hostInfo.last_name}`.trim() : "Host Runner",
-            rating: hostInfo.average_rating || 4.5,
-            verified: hostInfo.verification_status === 'approved',
-            imageUrl: hostInfo.profile_image_url || "/placeholder.svg"
+            name: safeHostInfo.first_name && safeHostInfo.last_name ? 
+                  `${safeHostInfo.first_name} ${safeHostInfo.last_name}`.trim() : "Host Runner",
+            rating: safeHostInfo.average_rating || 4.5,
+            verified: safeHostInfo.verification_status === 'approved',
+            imageUrl: safeHostInfo.profile_image_url || "/placeholder.svg"
           },
           pointsCost: race.points_cost || 0,
           available: race.is_active,
