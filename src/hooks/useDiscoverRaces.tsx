@@ -70,27 +70,39 @@ export const useDiscoverRaces = () => {
         const today = new Date();
         const daysUntil = Math.ceil((raceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         
+        // Asegurar que modalities y distances son arrays
+        const modalities = Array.isArray(race.modalities) ? race.modalities : [];
+        const distances = Array.isArray(race.distances) ? race.distances : [];
+        const terrainProfile = Array.isArray(race.terrain_profile) ? race.terrain_profile : [];
+        
+        // Obtener información de la propiedad
+        const propertyInfo = Array.isArray(race.property_info) ? race.property_info[0] : race.property_info;
+        
+        // Obtener información del host
+        const hostInfo = race.host_info || {};
+        
         return {
           id: race.id,
           name: race.name,
-          location: race.start_location || race.property_info?.locality || "Ubicación no especificada",
+          location: race.start_location || propertyInfo?.locality || "Ubicación no especificada",
           date: race.race_date,
           daysUntil: daysUntil,
-          modalities: race.modalities || [],
-          distances: race.distances || [],
-          terrainProfile: race.terrain_profile || [],
+          modalities: modalities,
+          distances: distances,
+          terrainProfile: terrainProfile,
           imageUrl: race.imageUrl,
           host: {
             id: race.host_id,
-            name: race.host_info ? `${race.host_info.first_name || ''} ${race.host_info.last_name || ''}`.trim() : "Host Runner",
-            rating: race.host_info?.average_rating || 4.5,
-            verified: race.host_info?.verification_status === 'approved',
-            imageUrl: race.host_info?.profile_image_url || "/placeholder.svg"
+            name: hostInfo.first_name && hostInfo.last_name ? 
+                  `${hostInfo.first_name} ${hostInfo.last_name}`.trim() : "Host Runner",
+            rating: hostInfo.average_rating || 4.5,
+            verified: hostInfo.verification_status === 'approved',
+            imageUrl: hostInfo.profile_image_url || "/placeholder.svg"
           },
           pointsCost: race.points_cost || 0,
           available: race.is_active,
           highlights: race.highlights || race.description || "Experiencia única de running",
-          maxGuests: race.property_info?.max_guests || race.max_guests || 1
+          maxGuests: propertyInfo?.max_guests || race.max_guests || 1
         };
       });
       
