@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RaceWizard } from "@/components/races/RaceWizard";
+import { useNavigate } from "react-router-dom";
 
 interface Race {
   id: string;
@@ -24,6 +26,7 @@ interface Race {
 
 const RacesSection = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [races, setRaces] = useState<Race[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
@@ -69,6 +72,12 @@ const RacesSection = () => {
   const handleEditRace = (race: Race) => {
     // For now, we'll just open the wizard - editing functionality can be added later
     setShowWizard(true);
+  };
+
+  const handleViewRaceDetails = (raceId: string) => {
+    console.log('Navigating to race details:', raceId);
+    // Navegar a la página de descubrimiento con el filtro de la carrera específica
+    navigate(`/discover?raceId=${raceId}`);
   };
 
   const handleRaceSuccess = () => {
@@ -195,7 +204,16 @@ const RacesSection = () => {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => handleViewRaceDetails(race.id)}
+                        title="Ver detalles"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => handleEditRace(race)}
+                        title="Editar carrera"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>

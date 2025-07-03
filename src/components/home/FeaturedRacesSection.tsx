@@ -7,10 +7,10 @@ interface FeaturedRacesSectionProps {
 }
 
 const FeaturedRacesSection = ({ onAuthModal }: FeaturedRacesSectionProps) => {
-  const handleJoinCommunity = () => {
-    console.log('FeaturedRacesSection: Join community button clicked');
-    // Disparar evento personalizado que Layout capturará
-    window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { mode: 'register' } }));
+  const handleViewAllRaces = () => {
+    console.log('FeaturedRacesSection: View all races button clicked');
+    // Navegar directamente a la página de descubrimiento
+    window.location.href = '/discover';
   };
 
   const featuredRaces = [
@@ -114,7 +114,7 @@ const FeaturedRacesSection = ({ onAuthModal }: FeaturedRacesSectionProps) => {
 
         <div className="text-center">
           <Button 
-            onClick={handleJoinCommunity}
+            onClick={handleViewAllRaces}
             className="bg-runner-blue-600 hover:bg-runner-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-lg"
           >
             Ver Todas las Carreras

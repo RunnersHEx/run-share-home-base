@@ -1,151 +1,105 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Race, RaceFilters } from "@/types/race";
+import { RaceFilters } from "@/types/race";
 
 export class RaceDiscoveryService {
-  static async fetchAllRaces(filters?: RaceFilters): Promise<Race[]> {
-    console.log('RaceDiscoveryService: Fetching all races with filters:', filters);
+  static async fetchAllRaces(filters?: RaceFilters) {
+    console.log('RaceDiscoveryService: Fetching races with filters:', filters);
     
     try {
-      // Construir la consulta base con joins usando los nombres correctos de foreign keys
       let query = supabase
         .from('races')
         .select(`
           *,
-          host_info:profiles!races_host_id_profiles_fkey(
-            id,
+          host_info:profiles!races_host_id_fkey(
             first_name,
             last_name,
             profile_image_url,
             verification_status,
             average_rating
           ),
-          property_info:properties!races_property_id_properties_fkey(
-            id,
+          property_info:properties!races_property_id_fkey(
             title,
             locality,
             max_guests
           )
         `)
         .eq('is_active', true)
-        .order('race_date', { ascending: true });
+        .order('created_at', { ascending: false });
 
-      // Aplicar filtros
-      if (filters?.month) {
-        const year = new Date().getFullYear();
-        const monthNum = parseInt(filters.month);
-        const startDate = new Date(year, monthNum - 1, 1).toISOString().split('T')[0];
-        const endDate = new Date(year, monthNum, 0).toISOString().split('T')[0];
-        console.log('Applying month filter:', filters.month, 'Date range:', startDate, 'to', endDate);
-        query = query.gte('race_date', startDate).lte('race_date', endDate);
-      }
-
-      if (filters?.modalities && filters.modalities.length > 0) {
-        console.log('Applying modalities filter:', filters.modalities);
-        // Usar overlaps para arrays JSONB
-        query = query.overlaps('modalities', filters.modalities);
-      }
-
-      if (filters?.distances && filters.distances.length > 0) {
-        console.log('Applying distances filter:', filters.distances);
-        // Usar overlaps para arrays JSONB
-        query = query.overlaps('distances', filters.distances);
-      }
-
-      if (filters?.province) {
-        console.log('Applying province filter:', filters.province);
-        query = query.ilike('start_location', `%${filters.province}%`);
-      }
-
-      if (filters?.terrainProfiles && filters.terrainProfiles.length > 0) {
-        console.log('Applying terrain profiles filter:', filters.terrainProfiles);
-        // Usar overlaps para arrays JSONB
-        query = query.overlaps('terrain_profile', filters.terrainProfiles);
-      }
-
-      if (filters?.maxGuests) {
-        console.log('Applying max guests filter:', filters.maxGuests);
-        query = query.gte('max_guests', filters.maxGuests);
-      }
-
-      const { data: raceData, error: raceError } = await query;
-
-      if (raceError) {
-        console.error('RaceDiscoveryService: Error fetching races:', raceError);
-        throw raceError;
-      }
-
-      console.log('RaceDiscoveryService: Fetched races count:', raceData?.length || 0);
-
-      if (!raceData || raceData.length === 0) {
-        console.log('No races found in database');
-        return [];
-      }
-
-      // Transformar los datos para asegurar que tienen el formato correcto
-      const transformedRaces = raceData.map(race => {
-        // Manejar host_info que puede venir como array, objeto o null
-        let hostInfo = null;
-        if (race.host_info && 
-            typeof race.host_info === 'object' && 
-            !Array.isArray(race.host_info)) {
-          hostInfo = race.host_info;
+      // Apply filters
+      if (filters) {
+        // Province filter - buscar en property_info.locality
+        if (filters.province) {
+          console.log('Applying province filter:', filters.province);
+          // Necesitamos hacer una subconsulta para filtrar por provincia
+          const { data: propertiesInProvince } = await supabase
+            .from('properties')
+            .select('id')
+            .ilike('locality', `%${filters.province}%`);
+          
+          if (propertiesInProvince && propertiesInProvince.length > 0) {
+            const propertyIds = propertiesInProvince.map(p => p.id);
+            query = query.in('property_id', propertyIds);
+          } else {
+            // Si no hay propiedades en esa provincia, devolver array vacío
+            return [];
+          }
         }
 
-        // Manejar property_info que puede venir como array, objeto o null
-        let propertyInfo = null;
-        if (race.property_info && 
-            typeof race.property_info === 'object' && 
-            !Array.isArray(race.property_info)) {
-          propertyInfo = race.property_info;
+        // Month filter
+        if (filters.month) {
+          console.log('Applying month filter:', filters.month);
+          const monthInt = parseInt(filters.month);
+          // Filtrar por mes usando extract
+          query = query.filter('race_date', 'gte', `${new Date().getFullYear()}-${monthInt.toString().padStart(2, '0')}-01`)
+                       .filter('race_date', 'lt', `${new Date().getFullYear()}-${(monthInt + 1).toString().padStart(2, '0')}-01`);
         }
 
-        // Asegurar que los arrays JSONB sean arrays JavaScript válidos
-        const modalities = Array.isArray(race.modalities) ? race.modalities : 
-                          (race.modalities && typeof race.modalities === 'object' ? Object.values(race.modalities) : []);
-        
-        const distances = Array.isArray(race.distances) ? race.distances : 
-                         (race.distances && typeof race.distances === 'object' ? Object.values(race.distances) : []);
-        
-        const terrainProfile = Array.isArray(race.terrain_profile) ? race.terrain_profile : 
-                              (race.terrain_profile && typeof race.terrain_profile === 'object' ? Object.values(race.terrain_profile) : []);
+        // Modality filter
+        if (filters.modalities && filters.modalities.length > 0) {
+          console.log('Applying modality filter:', filters.modalities);
+          // Filtrar por modalidades usando contains
+          for (const modality of filters.modalities) {
+            query = query.contains('modalities', [modality]);
+          }
+        }
 
-        return {
-          id: race.id,
-          host_id: race.host_id,
-          property_id: race.property_id,
-          name: race.name,
-          description: race.description,
-          race_date: race.race_date,
-          registration_deadline: race.registration_deadline,
-          modalities: modalities,
-          terrain_profile: terrainProfile,
-          distances: distances,
-          has_wave_starts: race.has_wave_starts,
-          start_location: race.start_location,
-          distance_from_property: race.distance_from_property,
-          official_website: race.official_website,
-          registration_cost: race.registration_cost,
-          points_cost: race.points_cost,
-          max_guests: race.max_guests,
-          highlights: race.highlights,
-          local_tips: race.local_tips,
-          weather_notes: race.weather_notes,
-          is_active: race.is_active,
-          total_bookings: race.total_bookings,
-          average_rating: race.average_rating,
-          created_at: race.created_at,
-          updated_at: race.updated_at,
-          host_info: hostInfo,
-          property_info: propertyInfo
-        };
-      });
+        // Distance filter
+        if (filters.distances && filters.distances.length > 0) {
+          console.log('Applying distance filter:', filters.distances);
+          // Filtrar por distancias usando contains
+          for (const distance of filters.distances) {
+            query = query.contains('distances', [distance]);
+          }
+        }
 
-      console.log('RaceDiscoveryService: Transformed races successfully:', transformedRaces.length);
-      return transformedRaces as Race[];
+        // Terrain profile filter
+        if (filters.terrainProfiles && filters.terrainProfiles.length > 0) {
+          console.log('Applying terrain profile filter:', filters.terrainProfiles);
+          for (const terrain of filters.terrainProfiles) {
+            query = query.contains('terrain_profile', [terrain]);
+          }
+        }
 
+        // Max guests filter
+        if (filters.maxGuests) {
+          console.log('Applying max guests filter:', filters.maxGuests);
+          query = query.gte('max_guests', filters.maxGuests);
+        }
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('RaceDiscoveryService: Error fetching races:', error);
+        throw error;
+      }
+
+      console.log('RaceDiscoveryService: Fetched races:', data?.length || 0);
+      return data || [];
     } catch (error) {
-      console.error('RaceDiscoveryService: Error in fetchAllRaces:', error);
+      console.error('RaceDiscoveryService: Exception in fetchAllRaces:', error);
       throw error;
     }
   }
