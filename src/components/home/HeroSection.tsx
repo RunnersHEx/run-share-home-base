@@ -25,7 +25,7 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('/lovable-uploads/a989eba0-bb19-4efd-bcfc-3c1f8870d2cb.png')`
+          backgroundImage: `url('/lovable-uploads/329ccccf-4d65-4db8-bec6-021b755151e1.png')`
         }}
       />
       
