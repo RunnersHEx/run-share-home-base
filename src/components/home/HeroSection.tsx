@@ -35,15 +35,6 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center text-white">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-center mb-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-medium border border-white/20">
-              <span className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-                Conecta • Viaja • Corre
-              </span>
-            </div>
-          </div>
-          
           <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
             <span className="text-blue-400">Conecta</span> • <span className="text-orange-400">Viaja</span> • <span className="text-blue-400">Corre</span>
           </h1>
