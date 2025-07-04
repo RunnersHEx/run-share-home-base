@@ -1,23 +1,22 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, MessageCircle, Medal } from "lucide-react";
 
 const HowItWorksSection = () => {
   const steps = [
     {
-      icon: Users,
-      title: "Conéctate",
-      description: "Encuentra tu match perfecto entre runners locales y viajeros"
+      number: 1,
+      title: "Busca y Solicita",
+      description: "Explora carreras por ubicación, fecha, modalidad y distancia. Envía una solicitud al host local que más te interese."
     },
     {
-      icon: MessageCircle,
-      title: "Coordina",
-      description: "Planifica juntos la experiencia perfecta de carrera"
+      number: 2,
+      title: "Conecta y Planifica",
+      description: "Una vez aceptado, coordina con tu host los detalles de la carrera y logística"
     },
     {
-      icon: Medal,
-      title: "Corre & Disfruta",
-      description: "Vive la carrera como local con tips exclusivos"
+      number: 3,
+      title: "Vive la Experiencia",
+      description: "Disfruta del alojamiento, conocimiento local y la compañía de otro friki runner que mejore tu experiencia y rendimiento"
     }
   ];
 
@@ -26,24 +25,20 @@ const HowItWorksSection = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-            ¿Cómo <span className="text-runner-blue-600">funciona</span>?
+            ¿Cómo <span className="text-runner-blue-600">Funciona</span>?
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Tres pasos simples para vivir experiencias de carreras únicas
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Tres simples pasos para tu próxima aventura running
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {steps.map((step, index) => {
-            const Icon = step.icon;
             return (
-              <Card key={index} className="runner-card text-center relative">
+              <Card key={index} className="runner-card text-center relative overflow-hidden">
                 <CardHeader>
                   <div className="w-16 h-16 bg-runner-gradient rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Icon className="h-8 w-8 text-white" />
-                  </div>
-                  <div className="absolute -top-3 -right-3 w-8 h-8 bg-runner-blue-600 text-white rounded-full flex items-center justify-center text-lg font-bold">
-                    {index + 1}
+                    <span className="text-white font-bold text-2xl">{step.number}</span>
                   </div>
                   <CardTitle className="text-xl">{step.title}</CardTitle>
                 </CardHeader>

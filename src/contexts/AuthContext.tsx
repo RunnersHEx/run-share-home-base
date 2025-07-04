@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -25,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    console.log('AuthProvider: Initializing auth system');
+    logger.debug('AuthProvider: Initializing auth system');
     
     let mounted = true;
 
@@ -34,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (event, newSession) => {
         if (!mounted) return;
         
-        console.log('AuthProvider: Auth state change:', {
+        logger.debug('AuthProvider: Auth state change:', {
           event,
           userId: newSession?.user?.id || 'none',
           userEmail: newSession?.user?.email || 'none',
@@ -52,10 +53,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Solo mostrar toasts después de inicialización
         if (initialized && mounted) {
           if (event === 'SIGNED_IN' && newSession?.user) {
-            console.log('AuthProvider: User signed in successfully');
+            logger.info('AuthProvider: User signed in successfully');
             toast.success('¡Sesión iniciada correctamente!');
           } else if (event === 'SIGNED_OUT') {
-            console.log('AuthProvider: User signed out');
+            logger.info('AuthProvider: User signed out');
             toast.success('Sesión cerrada correctamente');
           }
         }
@@ -65,15 +66,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Obtener sesión inicial DESPUÉS del listener
     const initializeAuth = async () => {
       try {
-        console.log('AuthProvider: Getting initial session...');
+        logger.debug('AuthProvider: Getting initial session...');
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('AuthProvider: Error getting initial session:', error);
+          logger.error('AuthProvider: Error getting initial session:', error);
         }
         
         if (mounted) {
-          console.log('AuthProvider: Initial session retrieved:', {
+          logger.debug('AuthProvider: Initial session retrieved:', {
             hasSession: !!initialSession,
             userId: initialSession?.user?.id || 'none'
           });
@@ -84,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setInitialized(true);
         }
       } catch (error) {
-        console.error('AuthProvider: Exception getting initial session:', error);
+        logger.error('AuthProvider: Exception getting initial session:', error);
         if (mounted) {
           setLoading(false);
           setInitialized(true);
@@ -96,13 +97,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
-      console.log('AuthProvider: Cleaning up auth subscription');
+      logger.debug('AuthProvider: Cleaning up auth subscription');
       subscription.unsubscribe();
     };
   }, [initialized]);
 
   const signUp = async (email: string, password: string, userData: any) => {
-    console.log('AuthProvider: Starting signUp for:', email);
+    logger.debug('AuthProvider: Starting signUp for:', email);
     
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -129,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-      console.log('AuthProvider: SignUp response:', {
+      logger.debug('AuthProvider: SignUp response:', {
         success: !error,
         userId: data.user?.id || 'none',
         confirmed: !!data.user?.email_confirmed_at
@@ -137,13 +138,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { error };
     } catch (error: any) {
-      console.error('AuthProvider: SignUp exception:', error);
+      logger.error('AuthProvider: SignUp exception:', error);
       return { error };
     }
   };
 
   const signIn = async (email: string, password: string) => {
-    console.log('AuthProvider: Starting signIn for:', email);
+    logger.debug('AuthProvider: Starting signIn for:', email);
     
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -151,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password: password
       });
 
-      console.log('AuthProvider: SignIn response:', {
+      logger.debug('AuthProvider: SignIn response:', {
         hasData: !!data,
         hasUser: !!data?.user,
         hasSession: !!data?.session,
@@ -159,7 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        console.error('AuthProvider: SignIn error:', error);
+        logger.error('AuthProvider: SignIn error:', error);
         
         let errorMessage = 'Error al iniciar sesión';
         
@@ -177,20 +178,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (!data?.user || !data?.session) {
-        console.error('AuthProvider: Login successful but no user/session data returned');
+        logger.error('AuthProvider: Login successful but no user/session data returned');
         throw new Error('Error de autenticación: datos incompletos');
       }
       
-      console.log('AuthProvider: SignIn successful for user:', data.user.id);
+      logger.info('AuthProvider: SignIn successful for user:', data.user.id);
       
     } catch (error: any) {
-      console.error('AuthProvider: SignIn exception:', error);
+      logger.error('AuthProvider: SignIn exception:', error);
       throw error;
     }
   };
 
   const signOut = async () => {
-    console.log('AuthProvider: Starting signOut');
+    logger.debug('AuthProvider: Starting signOut');
     
     try {
       // Limpiar estado local inmediatamente
@@ -199,11 +200,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('AuthProvider: SignOut error:', error);
+        logger.error('AuthProvider: SignOut error:', error);
         throw error;
       }
       
-      console.log('AuthProvider: SignOut successful');
+      logger.info('AuthProvider: SignOut successful');
       
       // Forzar recarga de la página para limpiar todo el estado
       setTimeout(() => {
@@ -211,7 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }, 100);
       
     } catch (error) {
-      console.error('AuthProvider: SignOut exception:', error);
+      logger.error('AuthProvider: SignOut exception:', error);
       // Aún si hay error, limpiar estado local
       setUser(null);
       setSession(null);
@@ -223,7 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetPassword = async (email: string) => {
-    console.log('AuthProvider: Starting password reset for:', email);
+    logger.debug('AuthProvider: Starting password reset for:', email);
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
@@ -231,13 +232,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
-        console.error('AuthProvider: Reset password error:', error);
+        logger.error('AuthProvider: Reset password error:', error);
         throw error;
       }
       
-      console.log('AuthProvider: Reset password email sent successfully');
+      logger.info('AuthProvider: Reset password email sent successfully');
     } catch (error) {
-      console.error('AuthProvider: Reset password exception:', error);
+      logger.error('AuthProvider: Reset password exception:', error);
       throw error;
     }
   };
@@ -252,7 +253,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resetPassword,
   };
 
-  console.log('AuthProvider: Current state render:', {
+  logger.debug('AuthProvider: Current state render:', {
     hasUser: !!user,
     userEmail: user?.email || 'none',
     loading,

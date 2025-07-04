@@ -2,15 +2,17 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import './lib/envValidation' // Validate environment variables before app starts
+import { logger } from './lib/logger'
 
-console.log("main.tsx starting");
+logger.debug("Application starting");
 
 const rootElement = document.getElementById("root");
-console.log("Root element found:", rootElement);
 
 if (rootElement) {
-  console.log("Creating React root and rendering App");
+  logger.debug("Creating React root and rendering App");
   createRoot(rootElement).render(<App />);
 } else {
-  console.error("Root element not found!");
+  logger.error("Root element not found!");
+  throw new Error("Unable to find root element for React application");
 }

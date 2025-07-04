@@ -37,12 +37,12 @@ export const PRODUCTION_CONFIG = {
   }
 };
 
-export const isProduction = () => process.env.NODE_ENV === 'production';
+export const isProduction = () => import.meta.env.MODE === 'production';
 
 export const getEnvironmentConfig = () => ({
-  supabaseUrl: process.env.REACT_APP_SUPABASE_URL || 'https://tufikuyzllmrfinvmltt.supabase.co',
-  supabaseAnonKey: process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1ZmlrdXl6bGxtcmZpbnZtbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDk2MTUsImV4cCI6MjA2NTQ4NTYxNX0.5HmCwwu6MV_0swNIV92vC-IQXyT1aCMUcN-qJW_V0Bg',
-  gaTrackingId: process.env.REACT_APP_GA_TRACKING_ID,
-  sentryDsn: process.env.REACT_APP_SENTRY_DSN,
-  environment: process.env.NODE_ENV || 'development'
+  supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  gaTrackingId: import.meta.env.VITE_GA_TRACKING_ID,
+  sentryDsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.VITE_ENVIRONMENT || 'development'
 });

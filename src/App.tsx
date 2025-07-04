@@ -7,12 +7,13 @@ import { HelmetProvider } from 'react-helmet-async';
 import { useEffect } from "react";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import ProductionWrapper from "@/components/common/ProductionWrapper";
-import ProductionMonitor from "@/components/common/ProductionMonitor";
+
 import Layout from "@/components/layout/Layout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { initWebVitalsTracking } from "@/hooks/usePerformanceTracking";
 import { analytics } from "@/lib/analytics";
 import { PRODUCTION_CONFIG } from "@/lib/productionConfig";
+import { initializeSecurity } from "@/lib/security";
 import Index from "./pages/Index";
 import DiscoverRaces from "./pages/DiscoverRaces";
 import Properties from "./pages/Properties";
@@ -52,13 +53,15 @@ function AppContent() {
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <ProductionMonitor />
     </Layout>
   );
 }
 
 const App = () => {
   useEffect(() => {
+    // Initialize security measures
+    initializeSecurity();
+    
     // Initialize performance tracking
     initWebVitalsTracking();
   }, []);

@@ -8,6 +8,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Production-ready logging for Edge Functions
+const log = {
+  info: (message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [INFO] ${message}`, data ? JSON.stringify(data) : '');
+  },
+  error: (message: string, error?: any) => {
+    const timestamp = new Date().toISOString();
+    console.error(`[${timestamp}] [ERROR] ${message}`, error ? JSON.stringify(error) : '');
+  }
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -61,13 +73,25 @@ serve(async (req) => {
       cancel_url: `${req.headers.get("origin")}/profile?tab=subscription`,
     });
 
+    log.info('Subscription session created successfully', {
+      sessionId: session.id,
+      userEmail: user.email,
+      customerId: customerId || 'new'
+    });
+
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error('Error creating subscription:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    log.error('Subscription creation failed', {
+      message: error.message,
+      stack: error.stack
+    });
+    
+    return new Response(JSON.stringify({ 
+      error: error.message || 'Internal server error' 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

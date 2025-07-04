@@ -87,7 +87,7 @@ const PointsSystemSection = () => {
       icon: Home,
       title: "Ser Host",
       description: "Gana puntos cada vez que hospedas a un corredor",
-      points: "+ 30 puntos por noche",
+      points: "+ 30 Puntos por noche",
       color: "text-green-600"
     },
     {
@@ -126,13 +126,6 @@ const PointsSystemSection = () => {
       color: "text-indigo-600"
     },
     {
-      icon: Gift,
-      title: "Nuevo suscriptor",
-      description: "Puntos iniciales al suscribirte por primera vez",
-      points: "+ 100 puntos",
-      color: "text-green-600"
-    },
-    {
       icon: X,
       title: "Cancelación reserva como host",
       description: "Si el Host cancela la reserva con menos de 60 días de antelación",
@@ -145,7 +138,7 @@ const PointsSystemSection = () => {
     {
       icon: Calendar,
       title: "Reservar Estancias",
-      description: "Usa puntos para reservar alojamiento con hosts (coste variable según demanda)",
+      description: "Usa puntos para reservar alojamiento con hosts",
       points: "25-70 puntos/noche",
       color: "text-red-600"
     }

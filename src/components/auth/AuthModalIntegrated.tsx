@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -90,10 +91,9 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
         birthDate: finalData.birthDate,
         bio: finalData.bio,
         runningExperience: finalData.runningExperience,
-        // Asegurar que los arrays se envíen como arrays vacíos reales, no strings
-        runningModalities: finalData.runningModalities.length > 0 ? finalData.runningModalities : [],
-        preferredDistances: finalData.preferredDistances.length > 0 ? finalData.preferredDistances : [],
-        personalRecords: Object.keys(finalData.personalRecords).length > 0 ? finalData.personalRecords : {},
+        runningModalities: finalData.runningModalities,
+        preferredDistances: finalData.preferredDistances,
+        personalRecords: finalData.personalRecords,
         racesCompletedThisYear: finalData.racesCompletedThisYear,
         emergencyContactName: finalData.emergencyContactName,
         emergencyContactPhone: finalData.emergencyContactPhone,
@@ -101,7 +101,7 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
         isGuest: finalData.isGuest
       };
 
-      console.log('AuthModal: Attempting user registration with data:', userData);
+      console.log('AuthModal: Attempting user registration');
       
       const { error } = await signUp(finalData.email.trim(), finalData.password, userData);
       
@@ -129,7 +129,6 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
         resetForm();
         onClose();
         
-        // Mostrar el modal de verificación después de un breve delay
         setTimeout(() => {
           setShowVerificationModal(true);
         }, 1000);
