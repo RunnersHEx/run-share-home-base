@@ -12,11 +12,12 @@ const Index = () => {
   
   const { user } = useAuth();
 
-  // Esta función dispara eventos personalizados que el Layout captura
+  // Esta función será pasada a los componentes pero la gestión real del modal
+  // está en Layout.tsx que detecta automáticamente cuando se debe abrir
   const handleAuthModal = (mode: "login" | "register") => {
     console.log("Index: Auth modal called with mode:", mode);
-    // Disparar evento personalizado que Layout capturará
-    window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { mode } }));
+    // El Layout maneja automáticamente la apertura del modal
+    // mediante los eventos de los botones
   };
 
   console.log("Index component rendering complete - unified system");

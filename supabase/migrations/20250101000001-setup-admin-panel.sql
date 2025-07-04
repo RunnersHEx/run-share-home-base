@@ -20,12 +20,31 @@ CREATE OR REPLACE FUNCTION public.is_admin(user_email TEXT)
 RETURNS BOOLEAN
 LANGUAGE sql
 SECURITY DEFINER
-AS $$
+AS $
   SELECT EXISTS (
     SELECT 1 FROM public.admin_users 
     WHERE email = user_email
   );
-$$;
+$;
+
+-- Función para agregar el primer administrador (solo se ejecuta si no hay admins)
+CREATE OR REPLACE FUNCTION public.setup_initial_admin(admin_email TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $
+BEGIN
+  -- Solo insertar si no hay administradores existentes
+  IF NOT EXISTS (SELECT 1 FROM public.admin_users LIMIT 1) THEN
+    INSERT INTO public.admin_users (email) VALUES (admin_email);
+    RETURN TRUE;
+  END IF;
+  RETURN FALSE;
+END;
+$;
+
+-- NOTA: Para configurar el administrador inicial, ejecutar después del despliegue:
+-- SELECT public.setup_initial_admin('your-admin-email@domain.com');
 
 -- Políticas para admin_users (solo admins pueden ver)
 ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
@@ -68,7 +87,5 @@ CREATE POLICY "Admins can update all verification requests"
   FOR UPDATE 
   USING (public.is_admin(auth.jwt() ->> 'email'));
 
--- Insertar el email del administrador principal
-INSERT INTO public.admin_users (email) 
-VALUES ('runnershomeexchange@gmail.com')
-ON CONFLICT (email) DO NOTHING;
+-- SECURITY: Admin user setup should be done post-deployment via secure admin function
+-- Use: SELECT public.setup_initial_admin('your-secure-admin-email@domain.com');

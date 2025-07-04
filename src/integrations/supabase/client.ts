@@ -1,9 +1,15 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+import { env } from '@/lib/envValidation';
 
-const SUPABASE_URL = "https://tufikuyzllmrfinvmltt.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1ZmlrdXl6bGxtcmZpbnZtbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDk2MTUsImV4cCI6MjA2NTQ4NTYxNX0.5HmCwwu6MV_0swNIV92vC-IQXyT1aCMUcN-qJW_V0Bg";
+const SUPABASE_URL = env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = env.VITE_SUPABASE_ANON_KEY;
+
+// Runtime validation for critical environment variables
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  throw new Error('Missing required Supabase configuration. Please check your environment variables.');
+}
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
@@ -12,7 +18,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     detectSessionInUrl: true,
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     flowType: 'pkce',
-    debug: true
+    debug: env.VITE_ENVIRONMENT === 'development' || env.VITE_ENVIRONMENT === 'staging'
   },
   global: {
     headers: {

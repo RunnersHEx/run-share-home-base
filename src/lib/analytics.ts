@@ -42,7 +42,10 @@ class Analytics {
   trackPageView(path: string, title?: string): void {
     if (!this.isInitialized) return;
     
-    window.gtag('config', process.env.REACT_APP_GA_TRACKING_ID, {
+    const trackingId = import.meta.env.VITE_GA_TRACKING_ID;
+    if (!trackingId) return;
+    
+    window.gtag('config', trackingId, {
       page_path: path,
       page_title: title
     });
@@ -105,6 +108,9 @@ class Analytics {
 export const analytics = new Analytics();
 
 // Auto-initialize in production
-if (typeof window !== 'undefined' && process.env.REACT_APP_GA_TRACKING_ID) {
-  analytics.init(process.env.REACT_APP_GA_TRACKING_ID);
+if (typeof window !== 'undefined') {
+  const trackingId = import.meta.env.VITE_GA_TRACKING_ID;
+  if (trackingId) {
+    analytics.init(trackingId);
+  }
 }

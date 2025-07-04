@@ -44,17 +44,22 @@ export default defineConfig(({ mode }) => ({
   },
   // Optimize build for better performance
   optimizeDeps: {
-    exclude: ['@supabase/supabase-js'],
-    include: ['react', 'react-dom'],
+    include: ['@supabase/supabase-js'],
+  },
+  ssr: {
+    noExternal: ['@supabase/supabase-js'],
   },
   // Reduce the number of files being processed
   build: {
     chunkSizeWarningLimit: 1000,
+    minify: 'terser',
+    sourcemap: false, // Disable source maps in production for security
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
           supabase: ['@supabase/supabase-js'],
+          ui: ['@radix-ui/react-accordion', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu']
         },
       },
     },

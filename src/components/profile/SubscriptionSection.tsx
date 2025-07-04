@@ -7,6 +7,7 @@ import { Check, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 const SubscriptionSection = () => {
   const { user } = useAuth();
@@ -26,7 +27,7 @@ const SubscriptionSection = () => {
       });
 
       if (error) {
-        console.error('Error creating subscription:', error);
+        logger.error('Error creating subscription:', error);
         toast.error("Error al procesar la suscripción");
         return;
       }
@@ -36,7 +37,7 @@ const SubscriptionSection = () => {
         window.open(data.url, '_blank');
       }
     } catch (error) {
-      console.error('Exception creating subscription:', error);
+      logger.error('Exception creating subscription:', error);
       toast.error("Error al procesar la suscripción");
     } finally {
       setLoading(false);
