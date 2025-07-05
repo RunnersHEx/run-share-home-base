@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Booking, BookingFormData, BookingFilters, BookingStats, BookingMessage, PointsTransaction } from "@/types/booking";
 import { BookingService } from "@/services/bookingService";

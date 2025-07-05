@@ -7,6 +7,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { useEffect } from "react";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import ProductionWrapper from "@/components/common/ProductionWrapper";
+import AuthDebugger from "@/components/debug/AuthDebugger";
 
 import Layout from "@/components/layout/Layout";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -76,6 +77,7 @@ const App = () => {
             <AuthProvider>
               <TooltipProvider>
                 <BrowserRouter>
+                  <AuthDebugger />
                   <AppContent />
                   <Toaster />
                 </BrowserRouter>

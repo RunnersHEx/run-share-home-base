@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Race, RaceFormData, RaceFilters } from "@/types/race";
 import { RaceService } from "@/services/raceService";

@@ -183,7 +183,7 @@ class MessagingService {
         .from('booking_messages')
         .select(`
           *,
-          sender:profiles!profiles_id_fkey(
+          sender:profiles!booking_messages_sender_id_profiles_fkey(
             id,
             first_name,
             last_name,
@@ -260,7 +260,7 @@ class MessagingService {
         })
         .select(`
           *,
-          sender:profiles!profiles_id_fkey(
+          sender:profiles!booking_messages_sender_id_profiles_fkey(
             id,
             first_name,
             last_name,

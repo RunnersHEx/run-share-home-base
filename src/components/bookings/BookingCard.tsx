@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, MapPin, Users, Clock, Star, Shield, Phone, MessageSquare } from "lucide-react";
 import { Booking } from "@/types/booking";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface BookingCardProps {
   booking: Booking;

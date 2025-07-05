@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Property, PropertyImage } from "@/types/property";
 import { PropertyService } from "@/services/propertyService";

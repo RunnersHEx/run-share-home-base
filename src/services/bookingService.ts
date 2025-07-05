@@ -29,7 +29,7 @@ export class BookingService {
       .select(`
         *,
         race:races(name, race_date, start_location),
-        host:profiles!bookings_host_id_fkey(first_name, last_name, profile_image_url, verification_status, average_rating),
+        host:profiles!bookings_host_id_profiles_fkey(first_name, last_name, profile_image_url, verification_status, average_rating),
         property:properties(title, locality, max_guests)
       `)
       .single();
@@ -51,8 +51,8 @@ export class BookingService {
       .select(`
         *,
         race:races(name, race_date, start_location),
-        guest:profiles!bookings_guest_id_fkey(first_name, last_name, profile_image_url, verification_status, average_rating),
-        host:profiles!bookings_host_id_fkey(first_name, last_name, profile_image_url, verification_status, average_rating),
+        guest:profiles!bookings_guest_id_profiles_fkey(first_name, last_name, profile_image_url, verification_status, average_rating),
+        host:profiles!bookings_host_id_profiles_fkey(first_name, last_name, profile_image_url, verification_status, average_rating),
         property:properties(title, locality, max_guests)
       `)
       .or(`guest_id.eq.${userId},host_id.eq.${userId}`)

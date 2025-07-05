@@ -5,7 +5,7 @@ import FeaturesSection from "@/components/home/FeaturesSection";
 import FeaturedRacesSection from "@/components/home/FeaturedRacesSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 import CTASection from "@/components/home/CTASection";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   console.log("Index component is rendering - using unified Layout system");

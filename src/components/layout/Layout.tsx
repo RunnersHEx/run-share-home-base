@@ -1,5 +1,5 @@
 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
