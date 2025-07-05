@@ -2,12 +2,29 @@
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useBookings } from "@/hooks/useBookings";
 import BookingCard from "@/components/bookings/BookingCard";
+import { MessagingModal } from "@/components/messaging";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, CheckCircle, XCircle } from "lucide-react";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Booking } from "@/types/booking";
 
 const Bookings = () => {
   const { bookings, loading, error } = useBookings();
+  const { user } = useAuth();
+  const [showMessagingModal, setShowMessagingModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  const handleMessage = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setShowMessagingModal(true);
+  };
+
+  const handleCloseMessaging = () => {
+    setShowMessagingModal(false);
+    setSelectedBooking(null);
+  };
 
   if (loading) {
     return (
@@ -83,7 +100,11 @@ const Bookings = () => {
               </Card>
             ) : (
               pendingBookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} />
+                <BookingCard 
+                  key={booking.id} 
+                  booking={booking} 
+                  onMessage={handleMessage}
+                />
               ))
             )}
           </TabsContent>
@@ -99,7 +120,11 @@ const Bookings = () => {
               </Card>
             ) : (
               acceptedBookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} />
+                <BookingCard 
+                  key={booking.id} 
+                  booking={booking} 
+                  onMessage={handleMessage}
+                />
               ))
             )}
           </TabsContent>
@@ -115,7 +140,11 @@ const Bookings = () => {
               </Card>
             ) : (
               completedBookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} />
+                <BookingCard 
+                  key={booking.id} 
+                  booking={booking} 
+                  onMessage={handleMessage}
+                />
               ))
             )}
           </TabsContent>
@@ -131,11 +160,28 @@ const Bookings = () => {
               </Card>
             ) : (
               rejectedBookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} />
+                <BookingCard 
+                  key={booking.id} 
+                  booking={booking} 
+                  onMessage={handleMessage}
+                />
               ))
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Messaging Modal */}
+        <MessagingModal
+          isOpen={showMessagingModal}
+          onClose={handleCloseMessaging}
+          bookingId={selectedBooking?.id}
+          currentUserId={user?.id || ''}
+          title={`Chat with ${selectedBooking ? (
+            user?.id === selectedBooking.host_id 
+              ? `${selectedBooking.guest?.first_name} ${selectedBooking.guest?.last_name}`
+              : `${selectedBooking.host?.first_name} ${selectedBooking.host?.last_name}`
+          ) : 'User'}`}
+        />
       </div>
     </ProtectedRoute>
   );

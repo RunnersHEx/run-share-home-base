@@ -61,7 +61,7 @@ const DiscoverRaces = () => {
       setFilters(urlFilters);
       fetchRaces(urlFilters);
     }
-  }, [searchParams, fetchRaces]);
+  }, [searchParams]);
 
   const filteredRaces = useMemo(() => {
     console.log('Filtering races. Total races:', races.length);

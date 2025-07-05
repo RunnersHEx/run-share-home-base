@@ -12,11 +12,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Settings, LogOut, Shield, Home, Trophy, Calendar, Search } from "lucide-react";
+import { User, Settings, LogOut, Shield, Home, Trophy, Calendar, Search, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, useLocation } from "react-router-dom";
 import NotificationBell from "../notifications/NotificationBell";
 import AuthModalIntegrated from "../auth/AuthModalIntegrated";
+import { UnreadBadge, useUnreadCount } from "@/components/messaging";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const { user, signOut, loading } = useAuth();
   const { isAdmin } = useAdminAuth();
+  const { unreadCount } = useUnreadCount();
   const navigate = useNavigate();
   const location = useLocation();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -206,6 +208,13 @@ const Layout = ({ children }: LayoutProps) => {
                           <Calendar className="mr-2 h-4 w-4" />
                           <span>Mis Reservas</span>
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleNavigation("/messages")} className="relative">
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          <span>Mensajes</span>
+                          {unreadCount > 0 && (
+                            <UnreadBadge count={unreadCount} className="absolute -top-1 -right-1" />
+                          )}
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleNavigation("/races")}>
                           <Trophy className="mr-2 h-4 w-4" />
                           <span>Mis Carreras</span>
@@ -292,6 +301,16 @@ const Layout = ({ children }: LayoutProps) => {
                       Mis Reservas
                     </button>
                     <button 
+                      onClick={() => navigate('/messages')}
+                      className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors relative"
+                    >
+                      <MessageCircle className="h-4 w-4 inline mr-2" />
+                      Mensajes
+                      {unreadCount > 0 && (
+                        <UnreadBadge count={unreadCount} className="absolute -top-2 -right-2" />
+                      )}
+                    </button>
+                    <button 
                       onClick={() => navigate('/races')}
                       className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
                     >
@@ -341,6 +360,13 @@ const Layout = ({ children }: LayoutProps) => {
                         <DropdownMenuItem onClick={() => handleNavigation("/profile", "properties")}>
                           <Home className="mr-2 h-4 w-4" />
                           <span>Mis Propiedades</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleNavigation("/messages")} className="relative">
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          <span>Mensajes</span>
+                          {unreadCount > 0 && (
+                            <UnreadBadge count={unreadCount} className="absolute -top-1 -right-1" />
+                          )}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleNavigation("/profile", "races")}>
                           <Trophy className="mr-2 h-4 w-4" />
