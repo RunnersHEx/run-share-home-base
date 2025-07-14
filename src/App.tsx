@@ -22,6 +22,7 @@ import Bookings from "./pages/Bookings";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import { MessagingPage } from "@/components/messaging";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +50,7 @@ function AppContent() {
         <Route path="/properties" element={<Properties />} />
         <Route path="/races" element={<Races />} />
         <Route path="/bookings" element={<Bookings />} />
+        <Route path="/messages" element={<MessagingPage />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />

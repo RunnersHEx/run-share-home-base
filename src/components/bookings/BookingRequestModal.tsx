@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BookingFormData } from "@/types/booking";
 import { Race } from "@/types/race";
 import { Property } from "@/types/property";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { StayDetailsSection } from "./sections/StayDetailsSection";
 import { MessageSection } from "./sections/MessageSection";

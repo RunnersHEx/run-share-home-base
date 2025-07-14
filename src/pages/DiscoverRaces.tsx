@@ -1,5 +1,5 @@
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { HeroSearchSection } from "@/components/discover/HeroSearchSection";
 import { AdvancedFilters } from "@/components/discover/filters/AdvancedFilters";
@@ -22,11 +22,14 @@ const DiscoverRaces = () => {
   const [savedRaces, setSavedRaces] = useState<string[]>([]);
   const [selectedRace, setSelectedRace] = useState<any>(null);
   const [showRaceDetail, setShowRaceDetail] = useState(false);
+  const mountedRef = useRef(true);
   
   const { races, loading, error, fetchRaces } = useDiscoverRaces();
 
   // Load filters from URL parameters on component mount
   useEffect(() => {
+    if (!mountedRef.current) return;
+    
     const urlFilters: SearchFilters = {};
     
     const query = searchParams.get('q');
@@ -35,7 +38,7 @@ const DiscoverRaces = () => {
     const modality = searchParams.get('modality');
     const distance = searchParams.get('distance');
     
-    if (query) {
+    if (query && mountedRef.current) {
       setSearchQuery(query);
     }
     
@@ -57,11 +60,27 @@ const DiscoverRaces = () => {
 
     console.log('DiscoverRaces: Loading filters from URL:', urlFilters);
     
-    if (Object.keys(urlFilters).length > 0) {
+    if (Object.keys(urlFilters).length > 0 && mountedRef.current) {
       setFilters(urlFilters);
       fetchRaces(urlFilters);
     }
-  }, [searchParams, fetchRaces]);
+    
+    // Cleanup function
+    return () => {
+      console.log('DiscoverRaces: Cleaning up URL params effect');
+      mountedRef.current = false;
+    };
+  }, [searchParams]);
+  
+  // Component cleanup on unmount
+  useEffect(() => {
+    mountedRef.current = true;
+    
+    return () => {
+      console.log('DiscoverRaces: Component unmounting, cleaning up');
+      mountedRef.current = false;
+    };
+  }, []);
 
   const filteredRaces = useMemo(() => {
     console.log('Filtering races. Total races:', races.length);
@@ -132,6 +151,8 @@ const DiscoverRaces = () => {
   }, [races, searchQuery, filters]);
 
   const handleSaveRace = (raceId: string) => {
+    if (!mountedRef.current) return;
+    
     setSavedRaces(prev => 
       prev.includes(raceId) 
         ? prev.filter(id => id !== raceId)
@@ -140,6 +161,8 @@ const DiscoverRaces = () => {
   };
 
   const handleViewDetails = (race: any) => {
+    if (!mountedRef.current) return;
+    
     console.log('Opening race details for:', race.name);
     setSelectedRace(race);
     setShowRaceDetail(true);
@@ -151,12 +174,16 @@ const DiscoverRaces = () => {
   };
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
+    if (!mountedRef.current) return;
+    
     console.log('Filters changed:', newFilters);
     setFilters(newFilters);
     fetchRaces(newFilters);
   };
 
   const handleClearFilters = () => {
+    if (!mountedRef.current) return;
+    
     setSearchQuery("");
     setFilters({});
     fetchRaces();

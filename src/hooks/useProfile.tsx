@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -33,6 +33,7 @@ interface Profile {
 
 export const useProfile = () => {
   const { user } = useAuth();
+  const mountedRef = useRef(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -56,7 +57,7 @@ export const useProfile = () => {
   };
 
   const fetchProfile = async () => {
-    if (!user) return;
+    if (!user || !mountedRef.current) return;
 
     try {
       console.log('Fetching profile for user:', user.id);
@@ -65,6 +66,8 @@ export const useProfile = () => {
         .select('*')
         .eq('id', user.id)
         .single();
+
+      if (!mountedRef.current) return;
 
       if (error) {
         console.error('Error fetching profile:', error);
@@ -104,21 +107,27 @@ export const useProfile = () => {
         profile_image_url: extendedData.profile_image_url || null
       };
       
-      setProfile(profileData);
+      if (mountedRef.current) {
+        setProfile(profileData);
 
-      // Calculate progress using frontend logic
-      const calculatedProgress = calculateProgress(profileData);
-      setProgress(calculatedProgress);
+        // Calculate progress using frontend logic
+        const calculatedProgress = calculateProgress(profileData);
+        setProgress(calculatedProgress);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
-      toast.error('Error al cargar el perfil');
+      if (mountedRef.current) {
+        toast.error('Error al cargar el perfil');
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user) return false;
+    if (!user || !mountedRef.current) return false;
 
     try {
       console.log('Updating profile with:', updates);
@@ -162,32 +171,38 @@ export const useProfile = () => {
         .update(cleanUpdates)
         .eq('id', user.id);
 
+      if (!mountedRef.current) return false;
+
       if (error) {
         console.error('Error updating profile:', error);
         throw error;
       }
 
       // Update local state
-      setProfile(prev => prev ? { ...prev, ...updates } : null);
-      
-      // Recalculate progress using frontend logic
-      if (profile) {
-        const updatedProfile = { ...profile, ...updates };
-        const calculatedProgress = calculateProgress(updatedProfile);
-        setProgress(calculatedProgress);
-      }
+      if (mountedRef.current) {
+        setProfile(prev => prev ? { ...prev, ...updates } : null);
+        
+        // Recalculate progress using frontend logic
+        if (profile) {
+          const updatedProfile = { ...profile, ...updates };
+          const calculatedProgress = calculateProgress(updatedProfile);
+          setProgress(calculatedProgress);
+        }
 
-      toast.success('Perfil actualizado correctamente');
+        toast.success('Perfil actualizado correctamente');
+      }
       return true;
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Error al actualizar el perfil');
+      if (mountedRef.current) {
+        toast.error('Error al actualizar el perfil');
+      }
       return false;
     }
   };
 
   const uploadAvatar = async (file: File) => {
-    if (!user) return null;
+    if (!user || !mountedRef.current) return null;
 
     try {
       const fileExt = file.name.split('.').pop();
@@ -197,6 +212,8 @@ export const useProfile = () => {
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { upsert: true });
+
+      if (!mountedRef.current) return null;
 
       if (uploadError) throw uploadError;
 
@@ -209,24 +226,28 @@ export const useProfile = () => {
       // Actualizar el perfil con la nueva URL
       const success = await updateProfile({ profile_image_url: data.publicUrl });
       
-      if (success) {
+      if (success && mountedRef.current) {
         console.log('Profile updated, forcing refresh...');
         // Pequeño delay para asegurar que la DB esté actualizada
         setTimeout(() => {
-          fetchProfile();
+          if (mountedRef.current) {
+            fetchProfile();
+          }
         }, 500);
       }
       
       return data.publicUrl;
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      toast.error('Error al subir la foto de perfil');
+      if (mountedRef.current) {
+        toast.error('Error al subir la foto de perfil');
+      }
       return null;
     }
   };
 
   const uploadVerificationDoc = async (file: File, docType: string) => {
-    if (!user) return null;
+    if (!user || !mountedRef.current) return null;
 
     try {
       const fileExt = file.name.split('.').pop();
@@ -235,6 +256,8 @@ export const useProfile = () => {
       const { error: uploadError } = await supabase.storage
         .from('verification-docs')
         .upload(fileName, file);
+
+      if (!mountedRef.current) return null;
 
       if (uploadError) throw uploadError;
 
@@ -248,13 +271,20 @@ export const useProfile = () => {
       return success ? fileName : null;
     } catch (error) {
       console.error('Error uploading verification document:', error);
-      toast.error('Error al subir el documento de verificación');
+      if (mountedRef.current) {
+        toast.error('Error al subir el documento de verificación');
+      }
       return null;
     }
   };
 
   useEffect(() => {
+    mountedRef.current = true;
     fetchProfile();
+    
+    return () => {
+      mountedRef.current = false;
+    };
   }, [user]);
 
   return {

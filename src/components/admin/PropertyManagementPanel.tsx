@@ -50,7 +50,7 @@ const PropertyManagementPanel = () => {
         .from('properties')
         .select(`
           id, title, description, locality, full_address, created_at, is_active,
-          owner_profile:profiles!properties_owner_id_fkey (
+          owner_profile:profiles!properties_owner_id_profiles_fkey (
             first_name, last_name, email
           )
         `)

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { RaceService } from "@/services/raceService";
 import { RaceFilters } from "@/types/race";
 import { toast } from "sonner";
@@ -31,9 +31,21 @@ export const useDiscoverRaces = () => {
   const [races, setRaces] = useState<DiscoverRace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchRaces = async (filters?: RaceFilters) => {
+    // Cancel previous request if it exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+    
     try {
+      if (!mountedRef.current) return;
+      
       setLoading(true);
       setError(null);
       console.log('Fetching races for discovery with filters:', filters);
@@ -41,9 +53,13 @@ export const useDiscoverRaces = () => {
       const data = await RaceService.fetchAllRaces(filters);
       console.log('Raw race data received:', data.length, 'races');
       
+      if (!mountedRef.current) return;
+      
       if (data.length === 0) {
         console.log('No races found in database');
-        setRaces([]);
+        if (mountedRef.current) {
+          setRaces([]);
+        }
         return;
       }
       
@@ -98,28 +114,55 @@ export const useDiscoverRaces = () => {
       if (transformedRaces.length > 0) {
         console.log('Sample transformed race:', transformedRaces[0]);
       }
+      
+      if (!mountedRef.current) return;
+      
       setRaces(transformedRaces);
       
       if (transformedRaces.length === 0) {
         console.log('No races found with current filters:', filters);
-        toast.info('No se encontraron carreras con los filtros aplicados');
+        if (mountedRef.current) {
+          toast.info('No se encontraron carreras con los filtros aplicados');
+        }
       } else {
         console.log(`Found ${transformedRaces.length} races matching filters`);
       }
     } catch (error) {
+      // Don't show errors if the request was aborted
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Race fetch request was aborted');
+        return;
+      }
+      
+      if (!mountedRef.current) return;
+      
       console.error('Error fetching races for discovery:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      setError(`Error al cargar las carreras: ${errorMessage}`);
-      toast.error('Error al cargar las carreras. Por favor, inténtalo de nuevo.');
-      setRaces([]);
+      if (mountedRef.current) {
+        setError(`Error al cargar las carreras: ${errorMessage}`);
+        toast.error('Error al cargar las carreras. Por favor, inténtalo de nuevo.');
+        setRaces([]);
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     console.log('useDiscoverRaces: Initial fetch');
+    mountedRef.current = true;
     fetchRaces();
+    
+    // Cleanup function
+    return () => {
+      console.log('useDiscoverRaces: Cleaning up');
+      mountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   return {
