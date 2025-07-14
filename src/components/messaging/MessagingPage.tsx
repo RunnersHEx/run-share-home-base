@@ -1,42 +1,64 @@
-import React, { useState } from 'react';
-import { X, MessageCircle, Users, Clock } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { MessageCircle, Users, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useChat, useUnreadCount } from '@/hooks/useMessaging';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useMessaging, useUnreadCount } from '@/hooks/useMessaging';
+import { useAuth } from '@/contexts/AuthContext';
 import ConversationList from './ConversationList';
 import ChatInterface from './ChatInterface';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
+// ==========================================
+// TYPES
+// ==========================================
+
+interface ActiveConversation {
+  id: string;
+  booking_id: string;
+  other_participant?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    profile_image_url?: string;
+  };
+}
+
+// ==========================================
+// MAIN COMPONENT
+// ==========================================
+
 export function MessagingPage() {
+  const { user } = useAuth();
   const [isMobileView, setIsMobileView] = useState(false);
+  const [activeConversation, setActiveConversation] = useState<ActiveConversation | null>(null);
+  const [activeTab, setActiveTab] = useState('all');
+  const mountedRef = useRef(true);
   
+  // Use simplified messaging hooks
   const {
     conversations,
-    conversationsLoading,
-    conversationsError,
-    activeConversation,
-    openConversation,
-    closeConversation,
-    markConversationAsRead,
-    user,
-    chatFilters,
-    setChatFilters,
-  } = useChat();
+    loading: conversationsLoading,
+    error: conversationsError,
+    refresh: refreshConversations,
+    clearError: clearConversationsError,
+    markConversationAsRead
+  } = useMessaging(); // No bookingId = conversations mode
 
-  const { unreadCount } = useUnreadCount();
+  const { unreadCount, refresh: refreshUnreadCount } = useUnreadCount();
+  
+  // Component cleanup
+  useEffect(() => {
+    mountedRef.current = true;
+    
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
-  const handleConversationSelect = (conversation: any) => {
-    openConversation(conversation);
-    setIsMobileView(true);
-  };
-
-  const handleBackToList = () => {
-    setIsMobileView(false);
-    closeConversation();
-  };
-
+  // Filter conversations based on active tab
   const getFilteredConversations = (filter: string) => {
     switch (filter) {
       case 'unread':
@@ -58,22 +80,76 @@ export function MessagingPage() {
     }
   };
 
-  if (conversationsError) {
+  const currentConversations = getFilteredConversations(activeTab);
+
+  // Handle conversation selection
+  const handleConversationSelect = async (conversation: any) => {
+    if (!mountedRef.current) return;
+    
+    console.log('MessagingPage: Selecting conversation:', {
+      id: conversation.id,
+      bookingId: conversation.booking_id,
+      otherParticipant: conversation.other_participant
+    });
+    
+    setActiveConversation({
+      id: conversation.id,
+      booking_id: conversation.booking_id,
+      other_participant: conversation.other_participant
+    });
+    setIsMobileView(true);
+    
+    // Mark conversation as read immediately when opened
+    if (markConversationAsRead) {
+      await markConversationAsRead(conversation.booking_id);
+    }
+    
+    // Refresh unread count after marking as read
+    setTimeout(() => {
+      refreshUnreadCount();
+      // Also refresh conversations to update unread counts in the list
+      refreshConversations();
+    }, 500);
+  };
+
+  const handleBackToList = () => {
+    if (!mountedRef.current) return;
+    
+    setIsMobileView(false);
+    setActiveConversation(null);
+    
+    // Refresh data when returning to list
+    refreshConversations();
+    refreshUnreadCount();
+  };
+
+  const handleMarkAsRead = async (conversationId: string) => {
+    // The individual message components handle marking as read
+    // Just refresh the unread count
+    setTimeout(() => {
+      refreshUnreadCount();
+    }, 500);
+  };
+
+  const handleRefreshAll = () => {
+    refreshConversations();
+    refreshUnreadCount();
+  };
+
+  // Critical error state
+  if (conversationsError && conversationsError.type === 'permission') {
     return (
       <ProtectedRoute>
         <div className="container mx-auto px-4 py-8">
-          <Card>
-            <CardContent className="p-8 text-center">
-              <MessageCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Failed to load messages</h3>
-              <p className="text-gray-600 mb-6">
-                We couldn't load your conversations. Please try again.
-              </p>
-              <Button onClick={() => window.location.reload()}>
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
+          <Alert className="border-red-200 bg-red-50">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-700">
+              <div className="mb-2">
+                <strong>Access Denied</strong>
+              </div>
+              <p>You don't have permission to access the messaging system. Please contact support if you believe this is an error.</p>
+            </AlertDescription>
+          </Alert>
         </div>
       </ProtectedRoute>
     );
@@ -89,11 +165,21 @@ export function MessagingPage() {
               <p className="text-gray-600">Chat with hosts and guests about your bookings</p>
             </div>
             
-            {unreadCount > 0 && (
-              <Badge className="bg-red-500 text-white">
-                {unreadCount} unread
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <Badge className="bg-red-500 text-white">
+                  {unreadCount} unread
+                </Badge>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefreshAll}
+                disabled={conversationsLoading}
+              >
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -135,70 +221,72 @@ export function MessagingPage() {
         </div>
 
         {/* Main Messaging Interface */}
-        <Card className="h-[600px]">
-          <CardContent className="p-0 h-full">
+        <Card className="h-[calc(100vh-400px)] min-h-[600px] max-h-[800px]">
+          <CardContent className="p-0 h-full overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-3 h-full">
               {/* Conversation List - Hidden on mobile when chat is open */}
               <div className={`lg:col-span-1 border-r border-gray-200 h-full ${
                 isMobileView ? 'hidden lg:block' : 'block'
               }`}>
-                <Tabs defaultValue="all" className="h-full flex flex-col">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                   <div className="p-4 border-b border-gray-200">
                     <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="all" onClick={() => setChatFilters({})}>
-                        All
+                      <TabsTrigger value="all">
+                        All ({conversations.length})
                       </TabsTrigger>
-                      <TabsTrigger 
-                        value="unread" 
-                        onClick={() => setChatFilters({ status: 'unread' })}
-                        className="relative"
-                      >
+                      <TabsTrigger value="unread" className="relative">
                         Unread
                         {unreadCount > 0 && (
                           <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[16px] h-4 flex items-center justify-center rounded-full">
-                            {unreadCount}
+                            {unreadCount > 9 ? '9+' : unreadCount}
                           </Badge>
                         )}
                       </TabsTrigger>
-                      <TabsTrigger 
-                        value="recent" 
-                        onClick={() => setChatFilters({ status: 'recent' })}
-                      >
-                        Recent
+                      <TabsTrigger value="recent">
+                        Recent ({getFilteredConversations('recent').length})
                       </TabsTrigger>
                     </TabsList>
                   </div>
                   
                   <TabsContent value="all" className="flex-1 m-0">
                     <ConversationList
-                      conversations={conversations}
+                      conversations={currentConversations}
                       activeConversationId={activeConversation?.id}
                       currentUserId={user?.id || ''}
                       onConversationSelect={handleConversationSelect}
-                      onMarkAsRead={markConversationAsRead}
+                      onMarkAsRead={handleMarkAsRead}
                       loading={conversationsLoading}
+                      error={conversationsError}
+                      onRefresh={refreshConversations}
+                      onClearError={clearConversationsError}
                     />
                   </TabsContent>
                   
                   <TabsContent value="unread" className="flex-1 m-0">
                     <ConversationList
-                      conversations={getFilteredConversations('unread')}
+                      conversations={currentConversations}
                       activeConversationId={activeConversation?.id}
                       currentUserId={user?.id || ''}
                       onConversationSelect={handleConversationSelect}
-                      onMarkAsRead={markConversationAsRead}
+                      onMarkAsRead={handleMarkAsRead}
                       loading={conversationsLoading}
+                      error={conversationsError}
+                      onRefresh={refreshConversations}
+                      onClearError={clearConversationsError}
                     />
                   </TabsContent>
                   
                   <TabsContent value="recent" className="flex-1 m-0">
                     <ConversationList
-                      conversations={getFilteredConversations('recent')}
+                      conversations={currentConversations}
                       activeConversationId={activeConversation?.id}
                       currentUserId={user?.id || ''}
                       onConversationSelect={handleConversationSelect}
-                      onMarkAsRead={markConversationAsRead}
+                      onMarkAsRead={handleMarkAsRead}
                       loading={conversationsLoading}
+                      error={conversationsError}
+                      onRefresh={refreshConversations}
+                      onClearError={clearConversationsError}
                     />
                   </TabsContent>
                 </Tabs>
@@ -209,11 +297,14 @@ export function MessagingPage() {
                 !isMobileView ? 'hidden lg:block' : 'block'
               }`}>
                 {activeConversation ? (
-                  <ChatInterface
-                    bookingId={activeConversation.booking_id}
-                    currentUserId={user?.id || ''}
-                    onClose={handleBackToList}
-                  />
+                  <div className="h-full overflow-hidden">
+                    <ChatInterface
+                      bookingId={activeConversation.booking_id}
+                      currentUserId={user?.id || ''}
+                      onClose={handleBackToList}
+                      otherParticipant={activeConversation.other_participant}
+                    />
+                  </div>
                 ) : (
                   <div className="h-full flex items-center justify-center bg-gray-50">
                     <div className="text-center">

@@ -79,12 +79,7 @@ export interface MessageNotification {
   unread_count: number;
 }
 
-export interface TypingIndicator {
-  booking_id: string;
-  user_id: string;
-  user_name: string;
-  timestamp: string;
-}
+
 
 // Real-time subscription types
 export interface RealtimeMessagePayload {
@@ -105,6 +100,12 @@ export interface ChatInterfaceProps {
   currentUserId: string;
   onClose?: () => void;
   className?: string;
+  otherParticipant?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    profile_image_url?: string;
+  };
 }
 
 export interface MessageListProps {
@@ -159,7 +160,6 @@ export interface MessageError {
 // Chat settings
 export interface ChatSettings {
   enableRealtime: boolean;
-  enableTypingIndicators: boolean;
   enableReadReceipts: boolean;
   messageRetentionDays: number;
   maxMessagesPerConversation: number;
@@ -170,7 +170,6 @@ export interface ChatSettings {
 // Default settings
 export const DEFAULT_CHAT_SETTINGS: ChatSettings = {
   enableRealtime: true,
-  enableTypingIndicators: true,
   enableReadReceipts: true,
   messageRetentionDays: 365,
   maxMessagesPerConversation: 1000,
@@ -184,7 +183,7 @@ export type ConversationStatus = 'active' | 'archived' | 'blocked';
 
 // Analytics events
 export interface ChatAnalyticsEvent {
-  event: 'message_sent' | 'conversation_opened' | 'message_read' | 'typing_start' | 'typing_stop';
+  event: 'message_sent' | 'conversation_opened' | 'message_read';
   booking_id: string;
   conversation_id?: string;
   timestamp: string;

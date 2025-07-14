@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { useNavigate, useLocation } from "react-router-dom";
 import NotificationBell from "../notifications/NotificationBell";
 import AuthModalIntegrated from "../auth/AuthModalIntegrated";
-import { UnreadBadge, useUnreadCount } from "@/components/messaging";
+import { UnreadBadge } from "@/components/messaging";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -26,7 +26,6 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const { user, signOut, loading } = useAuth();
   const { isAdmin } = useAdminAuth();
-  const { unreadCount } = useUnreadCount();
   const navigate = useNavigate();
   const location = useLocation();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -211,9 +210,7 @@ const Layout = ({ children }: LayoutProps) => {
                         <DropdownMenuItem onClick={() => handleNavigation("/messages")} className="relative">
                           <MessageCircle className="mr-2 h-4 w-4" />
                           <span>Mensajes</span>
-                          {unreadCount > 0 && (
-                            <UnreadBadge count={unreadCount} className="absolute -top-1 -right-1" />
-                          )}
+                          <UnreadBadge className="absolute -top-1 -right-1" size="sm" />
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleNavigation("/races")}>
                           <Trophy className="mr-2 h-4 w-4" />
@@ -306,9 +303,7 @@ const Layout = ({ children }: LayoutProps) => {
                     >
                       <MessageCircle className="h-4 w-4 inline mr-2" />
                       Mensajes
-                      {unreadCount > 0 && (
-                        <UnreadBadge count={unreadCount} className="absolute -top-2 -right-2" />
-                      )}
+                      <UnreadBadge className="absolute -top-2 -right-2" size="sm" />
                     </button>
                     <button 
                       onClick={() => navigate('/races')}
@@ -364,9 +359,7 @@ const Layout = ({ children }: LayoutProps) => {
                         <DropdownMenuItem onClick={() => handleNavigation("/messages")} className="relative">
                           <MessageCircle className="mr-2 h-4 w-4" />
                           <span>Mensajes</span>
-                          {unreadCount > 0 && (
-                            <UnreadBadge count={unreadCount} className="absolute -top-1 -right-1" />
-                          )}
+                          <UnreadBadge className="absolute -top-1 -right-1" size="sm" />
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleNavigation("/profile", "races")}>
                           <Trophy className="mr-2 h-4 w-4" />

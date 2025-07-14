@@ -1,110 +1,174 @@
-import React, { useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import React, { useState, useEffect } from 'react';
+import { X, MessageCircle, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMessagingAccess } from '@/hooks/useMessaging';
 import ChatInterface from './ChatInterface';
-import { Card, CardContent } from '@/components/ui/card';
-import { MessageCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import MessagingErrorBoundary from './MessagingErrorBoundary';
+
+// ==========================================
+// TYPES
+// ==========================================
 
 interface MessagingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  bookingId?: string;
+  bookingId: string;
   currentUserId: string;
-  title?: string;
+  otherParticipantName?: string;
 }
+
+// ==========================================
+// COMPONENTS
+// ==========================================
+
+function AccessDeniedState({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="p-6 text-center">
+      <div className="w-16 h-16 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+        <AlertCircle className="h-8 w-8 text-red-500" />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">Access Denied</h3>
+      <p className="text-gray-600 mb-6">
+        You don't have permission to view this conversation. You must be either the guest or host of this booking.
+      </p>
+      <Button onClick={onClose} className="w-full">
+        Close
+      </Button>
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="p-6 text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p className="text-gray-600">Checking access permissions...</p>
+    </div>
+  );
+}
+
+function ErrorState({ error, onRetry, onClose }: { 
+  error: string; 
+  onRetry: () => void; 
+  onClose: () => void; 
+}) {
+  return (
+    <div className="p-6">
+      <Alert className="border-red-200 bg-red-50 mb-4">
+        <AlertCircle className="h-4 w-4 text-red-600" />
+        <AlertDescription className="text-red-700">
+          {error}
+        </AlertDescription>
+      </Alert>
+      <div className="flex gap-2">
+        <Button onClick={onRetry} className="flex-1">
+          Try Again
+        </Button>
+        <Button variant="outline" onClick={onClose} className="flex-1">
+          Close
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// MAIN COMPONENT
+// ==========================================
 
 export function MessagingModal({
   isOpen,
   onClose,
   bookingId,
   currentUserId,
-  title = 'Chat',
+  otherParticipantName
 }: MessagingModalProps) {
+  const [mounted, setMounted] = useState(false);
   const { hasAccess, loading: accessLoading } = useMessagingAccess(bookingId);
 
-  // Close modal if no booking ID is provided
+  // Handle component mounting
   useEffect(() => {
-    if (isOpen && !bookingId) {
-      onClose();
-    }
-  }, [isOpen, bookingId, onClose]);
+    setMounted(true);
+  }, []);
 
-  const renderContent = () => {
-    if (!bookingId) {
-      return (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No Booking Selected</h3>
-            <p className="text-gray-600">
-              Please select a booking to start a conversation.
-            </p>
-          </CardContent>
-        </Card>
-      );
-    }
+  // Don't render on server
+  if (!mounted) {
+    return null;
+  }
 
-    if (accessLoading) {
-      return (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Loader2 className="h-16 w-16 text-blue-400 mx-auto mb-4 animate-spin" />
-            <h3 className="text-xl font-semibold mb-2">Loading...</h3>
-            <p className="text-gray-600">
-              Checking conversation permissions...
-            </p>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    if (hasAccess === false) {
-      return (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <MessageCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Access Denied</h3>
-            <p className="text-gray-600 mb-6">
-              You don't have permission to access this conversation. 
-              You can only chat with people involved in your bookings.
-            </p>
-            <Button onClick={onClose} variant="outline">
-              Close
-            </Button>
-          </CardContent>
-        </Card>
-      );
-    }
-
+  // Validate required props
+  if (!bookingId || !currentUserId) {
     return (
-      <ChatInterface
-        bookingId={bookingId}
-        currentUserId={currentUserId}
-        onClose={onClose}
-        className="border-0 shadow-none rounded-none"
-      />
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[600px] h-[600px] p-0">
+          <ErrorState
+            error="Missing required information. Please try again."
+            onRetry={onClose}
+            onClose={onClose}
+          />
+        </DialogContent>
+      </Dialog>
     );
+  }
+
+  const handleClose = () => {
+    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-full h-[80vh] p-0 gap-0">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="flex items-center space-x-2">
-            <MessageCircle className="h-5 w-5" />
-            <span>{title}</span>
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="flex-1 p-6 pt-2">
-          {renderContent()}
-        </div>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[800px] h-[80vh] max-h-[600px] p-0 overflow-hidden">
+        <MessagingErrorBoundary
+          fallback={
+            <ErrorState
+              error="The messaging system encountered an error"
+              onRetry={() => window.location.reload()}
+              onClose={handleClose}
+            />
+          }
+        >
+          <DialogHeader className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-blue-600" />
+                <span>
+                  {otherParticipantName ? `Chat with ${otherParticipantName}` : 'Conversation'}
+                </span>
+              </DialogTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleClose}
+                className="rounded-full hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-hidden">
+            {accessLoading ? (
+              <LoadingState />
+            ) : hasAccess === false ? (
+              <AccessDeniedState onClose={handleClose} />
+            ) : hasAccess === true ? (
+              <ChatInterface
+                bookingId={bookingId}
+                currentUserId={currentUserId}
+                onClose={undefined} // No close button in modal - use dialog close
+                className="h-full"
+              />
+            ) : (
+              <ErrorState
+                error="Unable to verify access permissions"
+                onRetry={() => window.location.reload()}
+                onClose={handleClose}
+              />
+            )}
+          </div>
+        </MessagingErrorBoundary>
       </DialogContent>
     </Dialog>
   );

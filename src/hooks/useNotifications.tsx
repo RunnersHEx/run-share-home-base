@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,15 +17,18 @@ interface Notification {
 
 export const useNotifications = () => {
   const { user } = useAuth();
+  const mountedRef = useRef(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchNotifications = async () => {
     if (!user) {
-      setNotifications([]);
-      setUnreadCount(0);
-      setLoading(false);
+      if (mountedRef.current) {
+        setNotifications([]);
+        setUnreadCount(0);
+        setLoading(false);
+      }
       return;
     }
 
@@ -37,6 +40,8 @@ export const useNotifications = () => {
         .select('*')
         .eq('user_id', user.id) // CRÍTICO: Filtrar por user_id
         .order('created_at', { ascending: false });
+
+      if (!mountedRef.current) return;
 
       if (error) {
         console.error('Error fetching notifications:', error);
@@ -52,23 +57,29 @@ export const useNotifications = () => {
         console.warn('Filtered out notifications that do not belong to current user');
       }
 
-      setNotifications(userNotifications);
-      const unread = userNotifications.filter(n => !n.read).length;
-      setUnreadCount(unread);
-      
-      console.log('Unread count:', unread);
+      if (mountedRef.current) {
+        setNotifications(userNotifications);
+        const unread = userNotifications.filter(n => !n.read).length;
+        setUnreadCount(unread);
+        
+        console.log('Unread count:', unread);
+      }
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      toast.error('Error al cargar notificaciones');
-      setNotifications([]);
-      setUnreadCount(0);
+      if (mountedRef.current) {
+        toast.error('Error al cargar notificaciones');
+        setNotifications([]);
+        setUnreadCount(0);
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   const markAsRead = async (notificationId: string) => {
-    if (!user) return;
+    if (!user || !mountedRef.current) return;
 
     try {
       console.log('Marking notification as read:', notificationId);
@@ -79,28 +90,34 @@ export const useNotifications = () => {
         .eq('id', notificationId)
         .eq('user_id', user.id); // CRÍTICO: Verificar que pertenece al usuario
 
+      if (!mountedRef.current) return;
+
       if (error) {
         console.error('Error marking notification as read:', error);
         throw error;
       }
 
       // Actualizar estado local
-      setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-      );
-      
-      // Actualizar contador
-      setUnreadCount(prev => Math.max(0, prev - 1));
-      
-      console.log('Notification marked as read successfully');
+      if (mountedRef.current) {
+        setNotifications(prev => 
+          prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+        );
+        
+        // Actualizar contador
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        
+        console.log('Notification marked as read successfully');
+      }
     } catch (error) {
       console.error('Error marking notification as read:', error);
-      toast.error('Error al marcar como leída');
+      if (mountedRef.current) {
+        toast.error('Error al marcar como leída');
+      }
     }
   };
 
   const markAllAsRead = async () => {
-    if (!user) return;
+    if (!user || !mountedRef.current) return;
 
     try {
       console.log('Marking all notifications as read for user:', user.id);
@@ -110,7 +127,9 @@ export const useNotifications = () => {
       
       if (unreadNotifications.length === 0) {
         console.log('No unread notifications to mark');
-        toast.info('No hay notificaciones sin leer');
+        if (mountedRef.current) {
+          toast.info('No hay notificaciones sin leer');
+        }
         return;
       }
 
@@ -120,30 +139,36 @@ export const useNotifications = () => {
         .eq('user_id', user.id) // CRÍTICO: Solo del usuario actual
         .eq('read', false); // Solo las no leídas
 
+      if (!mountedRef.current) return;
+
       if (error) {
         console.error('Error marking all notifications as read:', error);
         throw error;
       }
 
       // Actualizar estado local
-      setNotifications(prev => 
-        prev.map(n => n.user_id === user.id ? { ...n, read: true } : n)
-      );
-      
-      // Resetear contador
-      setUnreadCount(0);
-      
-      console.log('All notifications marked as read successfully');
-      toast.success('Todas las notificaciones marcadas como leídas');
+      if (mountedRef.current) {
+        setNotifications(prev => 
+          prev.map(n => n.user_id === user.id ? { ...n, read: true } : n)
+        );
+        
+        // Resetear contador
+        setUnreadCount(0);
+        
+        console.log('All notifications marked as read successfully');
+        toast.success('Todas las notificaciones marcadas como leídas');
+      }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
-      toast.error('Error al marcar todas como leídas');
+      if (mountedRef.current) {
+        toast.error('Error al marcar todas como leídas');
+      }
     }
   };
 
   // Suscribirse a cambios en tiempo real
   useEffect(() => {
-    if (!user) return;
+    if (!user || !mountedRef.current) return;
 
     const channel = supabase
       .channel('user-notifications-changes')
@@ -158,7 +183,9 @@ export const useNotifications = () => {
         (payload) => {
           console.log('Real-time notification change:', payload);
           // Refrescar notificaciones cuando hay cambios
-          fetchNotifications();
+          if (mountedRef.current) {
+            fetchNotifications();
+          }
         }
       )
       .subscribe();
@@ -169,7 +196,12 @@ export const useNotifications = () => {
   }, [user]);
 
   useEffect(() => {
+    mountedRef.current = true;
     fetchNotifications();
+    
+    return () => {
+      mountedRef.current = false;
+    };
   }, [user]);
 
   return {

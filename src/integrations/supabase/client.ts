@@ -20,6 +20,11 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     flowType: 'pkce',
     debug: env.VITE_ENVIRONMENT === 'development' || env.VITE_ENVIRONMENT === 'staging'
   },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  },
   global: {
     headers: {
       'x-client-info': 'runners-home-exchange@1.0.0'

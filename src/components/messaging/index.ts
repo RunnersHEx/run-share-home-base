@@ -7,12 +7,10 @@ export { default as UnreadBadge } from './UnreadBadge';
 
 // Re-export hooks for convenience
 export { 
-  useChat, 
-  useMessages, 
-  useConversations, 
-  useTypingIndicator, 
+  useMessaging,
   useUnreadCount,
-  useMessagingAccess 
+  useMessagingAccess,
+  messagingService
 } from '@/hooks/useMessaging';
 
 // Re-export types
@@ -23,7 +21,6 @@ export type {
   ChatState,
   ChatFilters,
   MessageNotification,
-  TypingIndicator,
   ChatInterfaceProps,
   MessageListProps,
   MessageInputProps,

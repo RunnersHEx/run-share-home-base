@@ -1,502 +1,835 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { messagingService } from '@/services/messagingService';
-import {
-  Conversation,
-  Message,
-  MessageFormData,
-  ChatFilters,
-  ChatState,
-  MessageError,
-  RealtimeMessagePayload,
-  RealtimeConversationPayload,
-} from '@/types/messaging';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
-/**
- * Main hook for managing conversations
- * Provides conversation list, unread counts, and real-time updates
- */
-export function useConversations(filters: ChatFilters = {}) {
-  const { user } = useAuth();
-  const [state, setState] = useState<{
-    conversations: Conversation[];
-    loading: boolean;
-    error?: MessageError;
-    unreadCount: number;
-  }>({
-    conversations: [],
-    loading: true,
-    error: undefined,
-    unreadCount: 0,
-  });
+// ==========================================
+// SIMPLIFIED TYPES
+// ==========================================
 
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  // Fetch conversations
-  const fetchConversations = useCallback(async () => {
-    if (!user?.id) return;
-
-    setState(prev => ({ ...prev, loading: true, error: undefined }));
-
-    try {
-      const { data, error } = await messagingService.getConversations(user.id, filters);
-      
-      if (error) {
-        setState(prev => ({ ...prev, error, loading: false }));
-        return;
-      }
-
-      // Get unread count
-      const { data: unreadCount, error: unreadError } = await messagingService.getUnreadCount(user.id);
-      
-      setState(prev => ({
-        ...prev,
-        conversations: data,
-        unreadCount: unreadError ? 0 : unreadCount,
-        loading: false,
-        error: undefined,
-      }));
-    } catch (error) {
-      console.error('Error in fetchConversations:', error);
-      setState(prev => ({
-        ...prev,
-        error: { type: 'network', message: 'Failed to load conversations' },
-        loading: false,
-      }));
-    }
-  }, [user?.id, filters, refreshTrigger]);
-
-  // Real-time subscription for conversations
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const channel = messagingService.subscribeToConversations(user.id, (payload) => {
-      if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-        // Refresh conversations when changes occur
-        setRefreshTrigger(prev => prev + 1);
-      }
-    });
-
-    return () => {
-      messagingService.unsubscribeFromChannel(`conversations:${user.id}`);
-    };
-  }, [user?.id]);
-
-  // Initial fetch
-  useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
-
-  const refresh = useCallback(() => {
-    setRefreshTrigger(prev => prev + 1);
-  }, []);
-
-  const markAsRead = useCallback(async (conversationId: string) => {
-    const conversation = state.conversations.find(c => c.id === conversationId);
-    if (!conversation || !user?.id) return;
-
-    const { error } = await messagingService.markMessagesAsRead(conversation.booking_id, user.id);
-    if (error) {
-      messagingService.showError(error);
-    } else {
-      refresh();
-    }
-  }, [state.conversations, user?.id, refresh]);
-
-  return {
-    conversations: state.conversations,
-    loading: state.loading,
-    error: state.error,
-    unreadCount: state.unreadCount,
-    refresh,
-    markAsRead,
+export interface Message {
+  id: string;
+  booking_id: string;
+  sender_id: string;
+  message: string;
+  message_type: 'text' | 'system';
+  read_at?: string;
+  created_at: string;
+  sender?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    profile_image_url?: string;
   };
 }
 
-/**
- * Hook for managing messages in a specific conversation/booking
- * Provides real-time message updates, sending, and read receipts
- */
-export function useMessages(bookingId: string) {
-  const { user } = useAuth();
-  const [state, setState] = useState<{
-    messages: Message[];
-    loading: boolean;
-    sending: boolean;
-    error?: MessageError;
-    hasMore: boolean;
-  }>({
-    messages: [],
-    loading: true,
-    sending: false,
-    error: undefined,
-    hasMore: true,
-  });
-
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
-
-  // Fetch messages
-  const fetchMessages = useCallback(async (before?: string) => {
-    if (!bookingId) return;
-
-    setState(prev => ({ ...prev, loading: true, error: undefined }));
-
-    try {
-      const { data, error } = await messagingService.getMessages(bookingId, 50, before);
-      
-      if (error) {
-        setState(prev => ({ ...prev, error, loading: false }));
-        return;
-      }
-
-      setState(prev => ({
-        ...prev,
-        messages: before ? [...data, ...prev.messages] : data,
-        loading: false,
-        hasMore: data.length === 50,
-        error: undefined,
-      }));
-
-      // Mark messages as read if this is initial load and user is authenticated
-      if (!before && user?.id) {
-        await messagingService.markMessagesAsRead(bookingId, user.id);
-      }
-    } catch (error) {
-      console.error('Error in fetchMessages:', error);
-      setState(prev => ({
-        ...prev,
-        error: { type: 'network', message: 'Failed to load messages' },
-        loading: false,
-      }));
-    }
-  }, [bookingId, user?.id]);
-
-  // Send message
-  const sendMessage = useCallback(async (messageData: MessageFormData) => {
-    if (!user?.id || state.sending) return;
-
-    setState(prev => ({ ...prev, sending: true, error: undefined }));
-
-    try {
-      const { data, error } = await messagingService.sendMessage(messageData, user.id);
-      
-      if (error) {
-        setState(prev => ({ ...prev, error, sending: false }));
-        messagingService.showError(error);
-        return;
-      }
-
-      // Message will be added via real-time subscription
-      setState(prev => ({ ...prev, sending: false }));
-      setShouldScrollToBottom(true);
-      
-      toast.success('Message sent');
-    } catch (error) {
-      console.error('Error in sendMessage:', error);
-      setState(prev => ({
-        ...prev,
-        error: { type: 'network', message: 'Failed to send message' },
-        sending: false,
-      }));
-      messagingService.showError({ type: 'network', message: 'Failed to send message' });
-    }
-  }, [user?.id, state.sending]);
-
-  // Load more messages (pagination)
-  const loadMore = useCallback(async () => {
-    if (!state.hasMore || state.loading) return;
-
-    const oldestMessage = state.messages[0];
-    if (oldestMessage) {
-      await fetchMessages(oldestMessage.created_at);
-    }
-  }, [state.hasMore, state.loading, state.messages, fetchMessages]);
-
-  // Real-time subscription for messages
-  useEffect(() => {
-    if (!bookingId) return;
-
-    const channel = messagingService.subscribeToMessages(bookingId, (payload) => {
-      if (payload.eventType === 'INSERT') {
-        setState(prev => {
-          // Avoid duplicates
-          const exists = prev.messages.some(msg => msg.id === payload.new.id);
-          if (!exists) {
-            setShouldScrollToBottom(true);
-            return {
-              ...prev,
-              messages: [...prev.messages, payload.new],
-            };
-          }
-          return prev;
-        });
-      } else if (payload.eventType === 'UPDATE') {
-        setState(prev => ({
-          ...prev,
-          messages: prev.messages.map(msg => 
-            msg.id === payload.new.id ? payload.new : msg
-          ),
-        }));
-      }
-    });
-
-    return () => {
-      messagingService.unsubscribeFromChannel(`messages:${bookingId}`);
-    };
-  }, [bookingId]);
-
-  // Initial fetch
-  useEffect(() => {
-    if (bookingId) {
-      fetchMessages();
-    }
-  }, [fetchMessages, bookingId]);
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (shouldScrollToBottom && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      setShouldScrollToBottom(false);
-    }
-  }, [state.messages.length, shouldScrollToBottom]);
-
-  return {
-    messages: state.messages,
-    loading: state.loading,
-    sending: state.sending,
-    error: state.error,
-    hasMore: state.hasMore,
-    sendMessage,
-    loadMore,
-    refresh: fetchMessages,
-    messagesEndRef,
+export interface Conversation {
+  id: string;
+  booking_id: string;
+  participant_1_id: string;
+  participant_2_id: string;
+  last_message_at: string;
+  last_message?: string;
+  unread_count_p1: number;
+  unread_count_p2: number;
+  other_participant?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    profile_image_url?: string;
+    verification_status?: string;
+    average_rating?: number;
+  };
+  booking?: {
+    id: string;
+    race_name?: string;
+    property_title?: string;
+    status: string;
   };
 }
 
-/**
- * Hook for managing typing indicators
- */
-export function useTypingIndicator(bookingId: string) {
-  const { user } = useAuth();
-  const [typingUsers, setTypingUsers] = useState<any[]>([]);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+export interface MessageError {
+  type: 'network' | 'permission' | 'validation' | 'server';
+  message: string;
+  code?: string;
+}
 
-  // Subscribe to typing indicators
-  useEffect(() => {
-    if (!bookingId || !user?.id) return;
+// ==========================================
+// CORE MESSAGING SERVICE (Simplified)
+// ==========================================
 
-    const userName = `${user.first_name} ${user.last_name}`.trim() || 'User';
+class SimplifiedMessagingService {
+  private channels = new Map<string, RealtimeChannel>();
+  private messageCache = new Map<string, Message[]>();
+  private maxCacheSize = 50; // Limit cache size
+  private retryAttempts = new Map<string, number>();
+  private maxRetries = 2; // Reduced retry attempts
+
+  // Clean up all subscriptions
+  cleanup() {
+    this.channels.forEach(channel => {
+      supabase.removeChannel(channel);
+    });
+    this.channels.clear();
+    this.messageCache.clear();
+    this.retryAttempts.clear();
+  }
+
+  // Subscribe to messages for a booking with simplified error handling
+  subscribeToMessages(
+    bookingId: string, 
+    onUpdate: (message: Message) => void,  // Changed: now passes single new message
+    onError: (error: MessageError) => void
+  ): () => void {
+    const channelKey = `messages-${bookingId}`;
     
-    const channel = messagingService.subscribeToTyping(
-      bookingId,
-      user.id,
-      userName,
-      setTypingUsers
-    );
-
-    return () => {
-      messagingService.unsubscribeFromChannel(`typing:${bookingId}`);
-    };
-  }, [bookingId, user?.id, user?.first_name, user?.last_name]);
-
-  const startTyping = useCallback(() => {
-    if (!bookingId || !user?.id) return;
-
-    const userName = `${user.first_name} ${user.last_name}`.trim() || 'User';
-    messagingService.startTyping(bookingId, user.id, userName);
-  }, [bookingId, user?.id, user?.first_name, user?.last_name]);
-
-  const stopTyping = useCallback(() => {
-    if (!bookingId || !user?.id) return;
-
-    const userName = `${user.first_name} ${user.last_name}`.trim() || 'User';
-    messagingService.stopTyping(bookingId, user.id, userName);
-  }, [bookingId, user?.id, user?.first_name, user?.last_name]);
-
-  const handleTyping = useCallback(() => {
-    startTyping();
-
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
+    // Clean up existing subscription
+    const existingChannel = this.channels.get(channelKey);
+    if (existingChannel) {
+      supabase.removeChannel(existingChannel);
     }
 
-    // Set new timeout to stop typing after 1 second of inactivity
-    typingTimeoutRef.current = setTimeout(() => {
-      stopTyping();
-    }, 1000);
-  }, [startTyping, stopTyping]);
+    const channel = supabase
+      .channel(channelKey)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'booking_messages',
+          filter: `booking_id=eq.${bookingId}`,
+        },
+        async (payload) => {
+          try {
+            const newMessage = payload.new as Message;
+            
+            // Get sender info
+            const { data: sender } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name, profile_image_url')
+              .eq('id', newMessage.sender_id)
+              .single();
+
+            const enrichedMessage = { ...newMessage, sender: sender || undefined };
+            
+            // Pass only the new message to the hook for deduplication
+            onUpdate(enrichedMessage);
+          } catch (error) {
+            console.error('Real-time message processing error:', error);
+            onError({
+              type: 'network',
+              message: 'Failed to process real-time message'
+            });
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          const attempts = this.retryAttempts.get(channelKey) || 0;
+          if (attempts < this.maxRetries) {
+            this.retryAttempts.set(channelKey, attempts + 1);
+            setTimeout(() => {
+              this.subscribeToMessages(bookingId, onUpdate, onError);
+            }, 1000 * Math.pow(2, attempts));
+          } else {
+            onError({
+              type: 'network',
+              message: 'Real-time connection failed'
+            });
+          }
+        } else if (status === 'SUBSCRIBED') {
+          this.retryAttempts.delete(channelKey);
+        }
+      });
+
+    this.channels.set(channelKey, channel);
+
+    // Return cleanup function
+    return () => {
+      const ch = this.channels.get(channelKey);
+      if (ch) {
+        supabase.removeChannel(ch);
+        this.channels.delete(channelKey);
+      }
+    };
+  }
+
+  // Fetch messages with pagination
+  async fetchMessages(
+    bookingId: string,
+    page = 0,
+    limit = 50
+  ): Promise<{ data: Message[]; hasMore: boolean; error?: MessageError }> {
+    try {
+      // Check cache first for page 0
+      if (page === 0) {
+        const cached = this.messageCache.get(bookingId);
+        if (cached && cached.length > 0) {
+          return { data: cached, hasMore: cached.length >= limit };
+        }
+      }
+
+      const offset = page * limit;
+      const { data: messages, error } = await supabase
+        .from('booking_messages')
+        .select('*')
+        .eq('booking_id', bookingId)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) {
+        return {
+          data: [],
+          hasMore: false,
+          error: {
+            type: 'server',
+            message: 'Failed to fetch messages',
+            code: error.code
+          }
+        };
+      }
+
+      if (!messages || messages.length === 0) {
+        return { data: [], hasMore: false };
+      }
+
+      // Fetch sender details
+      const senderIds = [...new Set(messages.map(msg => msg.sender_id))];
+      const { data: senders } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, profile_image_url')
+        .in('id', senderIds);
+
+      const sendersMap = new Map();
+      senders?.forEach(sender => sendersMap.set(sender.id, sender));
+
+      const enrichedMessages = messages
+        .map(msg => ({
+          ...msg,
+          sender: sendersMap.get(msg.sender_id)
+        }))
+        .reverse(); // Reverse to show oldest first
+
+      // Cache only first page
+      if (page === 0) {
+        this.messageCache.set(bookingId, enrichedMessages);
+        // Limit cache size
+        if (this.messageCache.size > this.maxCacheSize) {
+          const oldestKey = this.messageCache.keys().next().value;
+          this.messageCache.delete(oldestKey);
+        }
+      }
+
+      return {
+        data: enrichedMessages,
+        hasMore: messages.length >= limit
+      };
+    } catch (error: any) {
+      return {
+        data: [],
+        hasMore: false,
+        error: {
+          type: 'network',
+          message: 'Network error while fetching messages'
+        }
+      };
+    }
+  }
+
+  // Send message with optimistic updates
+  async sendMessage(
+    bookingId: string,
+    message: string,
+    senderId: string
+  ): Promise<{ data?: Message; error?: MessageError }> {
+    // Validation
+    if (!message.trim()) {
+      return {
+        error: {
+          type: 'validation',
+          message: 'Message cannot be empty'
+        }
+      };
+    }
+
+    if (message.length > 2000) {
+      return {
+        error: {
+          type: 'validation',
+          message: 'Message too long (max 2000 characters)'
+        }
+      };
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('booking_messages')
+        .insert({
+          booking_id: bookingId,
+          sender_id: senderId,
+          message: message.trim(),
+          message_type: 'text'
+        })
+        .select('*')
+        .single();
+
+      if (error) {
+        let errorMessage = 'Failed to send message';
+        let errorType: MessageError['type'] = 'server';
+
+        if (error.code === '23503') {
+          errorMessage = 'You are not authorized to send messages in this conversation';
+          errorType = 'permission';
+        } else if (error.code === '42501') {
+          errorMessage = 'Permission denied. You may not be part of this booking.';
+          errorType = 'permission';
+        }
+
+        return {
+          error: {
+            type: errorType,
+            message: errorMessage,
+            code: error.code
+          }
+        };
+      }
+
+      // Get sender info
+      const { data: sender } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, profile_image_url')
+        .eq('id', senderId)
+        .single();
+
+      const enrichedMessage = {
+        ...data,
+        sender: sender || undefined
+      };
+
+      // Update cache
+      const cached = this.messageCache.get(bookingId) || [];
+      const updated = [...cached, enrichedMessage];
+      this.messageCache.set(bookingId, updated);
+
+      // Dispatch event for unread count refresh
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('message-sent', { detail: { bookingId, senderId } }));
+      }
+
+      return { data: enrichedMessage };
+    } catch (error: any) {
+      return {
+        error: {
+          type: 'network',
+          message: 'Network error while sending message'
+        }
+      };
+    }
+  }
+
+  // Mark messages as read (best effort - no UI blocking)
+  async markAsRead(bookingId: string, userId: string): Promise<void> {
+    try {
+      await supabase.rpc('mark_messages_as_read', {
+        p_booking_id: bookingId,
+        p_user_id: userId,
+      });
+      
+      // Invalidate unread count cache to force refresh
+      this.unreadCountCache = null;
+    } catch (error) {
+      // Silent failure for read receipts - not critical for UX
+      console.warn('Failed to mark messages as read:', error);
+    }
+  }
+
+  // Mark conversation as read immediately (for when conversation is opened)
+  async markConversationAsRead(bookingId: string, userId: string): Promise<void> {
+    try {
+      // Update local cache first for immediate UI update
+      this.unreadCountCache = null;
+      
+      // Dispatch event for immediate UI refresh
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('conversation-read', { detail: { bookingId, userId } }));
+      }
+      
+      // Mark messages as read in the database
+      await this.markAsRead(bookingId, userId);
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.warn('Failed to mark conversation as read:', error);
+      return Promise.resolve(); // Don't throw - this is best effort
+    }
+  }
+
+  // Get unread count with caching
+  private unreadCountCache: { count: number; timestamp: number; userId: string } | null = null;
+  private unreadCountCacheTimeout = 10000; // 10 seconds
+
+  async getUnreadCount(userId: string): Promise<number> {
+    try {
+      // Check cache
+      if (this.unreadCountCache &&
+          this.unreadCountCache.userId === userId &&
+          Date.now() - this.unreadCountCache.timestamp < this.unreadCountCacheTimeout) {
+        return this.unreadCountCache.count;
+      }
+
+      const { data, error } = await supabase.rpc('get_user_unread_count', {
+        p_user_id: userId,
+      });
+
+      if (error) {
+        console.warn('Failed to get unread count:', error);
+        return 0;
+      }
+
+      const count = typeof data === 'number' ? data : 0;
+      
+      // Update cache
+      this.unreadCountCache = {
+        count,
+        timestamp: Date.now(),
+        userId
+      };
+
+      return count;
+    } catch (error) {
+      console.warn('Error getting unread count:', error);
+      return 0;
+    }
+  }
+
+  // Invalidate caches
+  invalidateCache(bookingId?: string) {
+    if (bookingId) {
+      this.messageCache.delete(bookingId);
+    } else {
+      this.messageCache.clear();
+    }
+    this.unreadCountCache = null;
+  }
+}
+
+// Singleton instance
+const messagingService = new SimplifiedMessagingService();
+
+// ==========================================
+// SIMPLIFIED MESSAGING HOOK
+// ==========================================
+
+export function useMessaging(bookingId?: string) {
+  const { user } = useAuth();
+  const [state, setState] = useState({
+    messages: [] as Message[],
+    conversations: [] as Conversation[],
+    unreadCount: 0,
+    loading: false,
+    sending: false,
+    error: null as MessageError | null,
+    hasMoreMessages: false,
+    currentPage: 0
+  });
+
+  const cleanupRef = useRef<(() => void) | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mountedRef = useRef(true);
 
   // Cleanup on unmount
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
+      mountedRef.current = false;
+      if (cleanupRef.current) {
+        cleanupRef.current();
       }
-      stopTyping();
     };
-  }, [stopTyping]);
-
-  return {
-    typingUsers,
-    handleTyping,
-    startTyping,
-    stopTyping,
-  };
-}
-
-/**
- * Hook for comprehensive chat state management
- * Combines conversations and active conversation management
- */
-export function useChat() {
-  const { user } = useAuth();
-  const [activeConversation, setActiveConversation] = useState<Conversation | undefined>();
-  const [chatFilters, setChatFilters] = useState<ChatFilters>({});
-  
-  const conversationsData = useConversations(chatFilters);
-  const messagesData = useMessages(activeConversation?.booking_id || '');
-
-  const openConversation = useCallback((conversation: Conversation) => {
-    setActiveConversation(conversation);
   }, []);
 
-  const closeConversation = useCallback(() => {
-    setActiveConversation(undefined);
-  }, []);
+  // Load messages for specific booking
+  const loadMessages = useCallback(async (page = 0, append = false) => {
+    if (!bookingId || !user?.id || !mountedRef.current) return;
 
-  const openConversationByBooking = useCallback(async (bookingId: string) => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+
+    const result = await messagingService.fetchMessages(bookingId, page);
+
+    if (!mountedRef.current) return;
+
+    if (result.error) {
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: result.error!
+      }));
+      return;
+    }
+
+    setState(prev => ({
+      ...prev,
+      messages: append ? [...prev.messages, ...result.data] : result.data,
+      hasMoreMessages: result.hasMore,
+      currentPage: page,
+      loading: false,
+      error: null
+    }));
+
+    // Mark messages as read
+    if (result.data.length > 0) {
+      messagingService.markAsRead(bookingId, user.id);
+    }
+  }, [bookingId, user?.id]);
+
+  // Load more messages (pagination)
+  const loadMoreMessages = useCallback(() => {
+    if (state.hasMoreMessages && !state.loading) {
+      loadMessages(state.currentPage + 1, true);
+    }
+  }, [state.hasMoreMessages, state.loading, state.currentPage, loadMessages]);
+
+  // Send message
+  const sendMessage = useCallback(async (message: string) => {
+    if (!bookingId || !user?.id || !message.trim() || state.sending) return;
+
+    setState(prev => ({ ...prev, sending: true, error: null }));
+
+    // Optimistic update
+    const optimisticMessage: Message = {
+      id: `temp-${Date.now()}`,
+      booking_id: bookingId,
+      sender_id: user.id,
+      message: message.trim(),
+      message_type: 'text',
+      created_at: new Date().toISOString(),
+      sender: {
+        id: user.id,
+        first_name: user.first_name || 'You',
+        last_name: user.last_name || '',
+        profile_image_url: user.profile_image_url
+      }
+    };
+
+    setState(prev => ({
+      ...prev,
+      messages: [...prev.messages, optimisticMessage]
+    }));
+
+    // Send to server
+    const result = await messagingService.sendMessage(bookingId, message, user.id);
+
+    if (!mountedRef.current) return;
+
+    if (result.error) {
+      // Remove optimistic message on error
+      setState(prev => ({
+        ...prev,
+        messages: prev.messages.filter(msg => msg.id !== optimisticMessage.id),
+        sending: false,
+        error: result.error!
+      }));
+      toast.error(result.error.message);
+      return;
+    }
+
+    // Replace optimistic message with real message
+    setState(prev => ({
+      ...prev,
+      messages: prev.messages.map(msg =>
+        msg.id === optimisticMessage.id ? result.data! : msg
+      ),
+      sending: false,
+      error: null
+    }));
+
+    // Scroll to bottom
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+
+  }, [bookingId, user, state.sending]);
+
+  // Load conversations
+  const loadConversations = useCallback(async () => {
+    if (!user?.id || !mountedRef.current) return;
+
+    setState(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      // Simplified conversation query
+      const { data: conversations, error } = await supabase
+        .from('conversations')
+        .select(`
+          *,
+          booking:bookings!inner(
+            id,
+            race:races(name),
+            property:properties(title),
+            status
+          )
+        `)
+        .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
+        .order('last_message_at', { ascending: false });
+
+      if (!mountedRef.current) return;
+
+      if (error) {
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          error: {
+            type: 'server',
+            message: 'Failed to load conversations',
+            code: error.code
+          }
+        }));
+        return;
+      }
+
+      // Get other participants
+      const otherParticipantIds = conversations?.map(conv =>
+        conv.participant_1_id === user.id ? conv.participant_2_id : conv.participant_1_id
+      ) || [];
+
+      const { data: participants } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, profile_image_url, verification_status, average_rating')
+        .in('id', otherParticipantIds);
+
+      const participantsMap = new Map();
+      participants?.forEach(p => participantsMap.set(p.id, p));
+
+      const enrichedConversations = conversations?.map(conv => ({
+        ...conv,
+        other_participant: participantsMap.get(
+          conv.participant_1_id === user.id ? conv.participant_2_id : conv.participant_1_id
+        ),
+        booking: conv.booking ? {
+          ...conv.booking,
+          race_name: conv.booking.race?.name,
+          property_title: conv.booking.property?.title
+        } : undefined
+      })) || [];
+
+      setState(prev => ({
+        ...prev,
+        conversations: enrichedConversations,
+        loading: false,
+        error: null
+      }));
+
+    } catch (error: any) {
+      if (!mountedRef.current) return;
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: {
+          type: 'network',
+          message: 'Network error loading conversations'
+        }
+      }));
+    }
+  }, [user?.id]);
+
+  // Load unread count
+  const loadUnreadCount = useCallback(async () => {
     if (!user?.id) return;
 
-    // First check if conversation already exists in our list
-    const existing = conversationsData.conversations.find(c => c.booking_id === bookingId);
-    if (existing) {
-      setActiveConversation(existing);
-      return;
+    const count = await messagingService.getUnreadCount(user.id);
+    
+    if (mountedRef.current) {
+      setState(prev => ({ ...prev, unreadCount: count }));
     }
+  }, [user?.id]);
 
-    // If not in list, fetch it directly
-    const { data, error } = await messagingService.getConversationByBooking(bookingId);
-    if (error) {
-      messagingService.showError(error);
-      return;
-    }
+  // Set up real-time subscriptions for specific booking
+  useEffect(() => {
+    if (!bookingId || !user?.id || !mountedRef.current) return;
 
-    if (data) {
-      setActiveConversation(data);
+    const cleanup = messagingService.subscribeToMessages(
+      bookingId,
+      (newMessage) => {
+        if (mountedRef.current) {
+          setState(prev => {
+            // Check if message already exists (avoid duplicates)
+            const messageExists = prev.messages.some(msg => 
+              msg.id === newMessage.id || 
+              (msg.id.startsWith('temp-') && 
+               msg.message === newMessage.message && 
+               msg.sender_id === newMessage.sender_id &&
+               Math.abs(new Date(msg.created_at).getTime() - new Date(newMessage.created_at).getTime()) < 5000)
+            );
+            
+            if (messageExists) {
+              // Replace optimistic message with real message if it's a temp message
+              return {
+                ...prev,
+                messages: prev.messages.map(msg => 
+                  msg.id.startsWith('temp-') && 
+                  msg.message === newMessage.message && 
+                  msg.sender_id === newMessage.sender_id
+                    ? newMessage
+                    : msg
+                )
+              };
+            } else {
+              // Add new message from other users
+              return {
+                ...prev,
+                messages: [...prev.messages, newMessage]
+              };
+            }
+          });
+        }
+      },
+      (error) => {
+        if (mountedRef.current) {
+          setState(prev => ({ ...prev, error }));
+        }
+      }
+    );
+
+    cleanupRef.current = cleanup;
+
+    return cleanup;
+  }, [bookingId, user?.id]);
+
+  // Initial data loading
+  useEffect(() => {
+    if (bookingId) {
+      loadMessages();
     } else {
-      // No conversation exists yet - it will be created when first message is sent
-      // For now, we'll create a minimal conversation object for UI purposes
-      const { data: booking } = await messagingService.getConversationByBooking(bookingId);
-      // This is a placeholder - the real conversation will be created when messaging starts
-      toast.info('Start a conversation by sending the first message');
+      loadConversations();
     }
-  }, [user?.id, conversationsData.conversations]);
+    loadUnreadCount();
+  }, [bookingId, loadMessages, loadConversations, loadUnreadCount]);
 
-  // Auto-refresh conversations when active conversation changes
-  useEffect(() => {
-    if (activeConversation) {
-      conversationsData.refresh();
+  // Refresh functions
+  const refresh = useCallback(() => {
+    messagingService.invalidateCache(bookingId);
+    if (bookingId) {
+      loadMessages();
+    } else {
+      loadConversations();
     }
-  }, [activeConversation?.id]);
+    loadUnreadCount();
+  }, [bookingId, loadMessages, loadConversations, loadUnreadCount]);
 
-  // Cleanup subscriptions on unmount
-  useEffect(() => {
-    return () => {
-      messagingService.unsubscribeAll();
-    };
+  const clearError = useCallback(() => {
+    setState(prev => ({ ...prev, error: null }));
   }, []);
 
+  // Mark conversation as read
+  const markConversationAsRead = useCallback(async (conversationBookingId: string) => {
+    if (!user?.id) return;
+    
+    await messagingService.markConversationAsRead(conversationBookingId, user.id);
+    
+    // Refresh unread count after marking as read
+    setTimeout(() => {
+      if (mountedRef.current) {
+        loadUnreadCount();
+      }
+    }, 100);
+  }, [user?.id, loadUnreadCount]);
+
   return {
-    // Conversations
-    conversations: conversationsData.conversations,
-    conversationsLoading: conversationsData.loading,
-    conversationsError: conversationsData.error,
-    unreadCount: conversationsData.unreadCount,
-    refreshConversations: conversationsData.refresh,
-    markConversationAsRead: conversationsData.markAsRead,
-
-    // Active conversation
-    activeConversation,
-    openConversation,
-    closeConversation,
-    openConversationByBooking,
-
-    // Messages
-    messages: messagesData.messages,
-    messagesLoading: messagesData.loading,
-    messagesSending: messagesData.sending,
-    messagesError: messagesData.error,
-    hasMoreMessages: messagesData.hasMore,
-    sendMessage: messagesData.sendMessage,
-    loadMoreMessages: messagesData.loadMore,
-    messagesEndRef: messagesData.messagesEndRef,
-
-    // Filters
-    chatFilters,
-    setChatFilters,
-
-    // Utility
-    user,
+    // Data
+    messages: state.messages,
+    conversations: state.conversations,
+    unreadCount: state.unreadCount,
+    
+    // State
+    loading: state.loading,
+    sending: state.sending,
+    error: state.error,
+    hasMoreMessages: state.hasMoreMessages,
+    
+    // Actions
+    sendMessage,
+    loadMoreMessages,
+    refresh,
+    clearError,
+    markConversationAsRead,
+    
+    // Refs
+    messagesEndRef
   };
 }
 
-/**
- * Hook for global unread message count (for navbar badge)
- */
+// Export service for cleanup
+export { messagingService };
+
+// ==========================================
+// UTILITY HOOKS
+// ==========================================
+
+// Simple unread count hook with auto-refresh
 export function useUnreadCount() {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const mountedRef = useRef(true);
 
-  const fetchUnreadCount = useCallback(async () => {
+  const refresh = useCallback(async () => {
     if (!user?.id) {
       setUnreadCount(0);
       setLoading(false);
       return;
     }
 
-    try {
-      const { data, error } = await messagingService.getUnreadCount(user.id);
-      setUnreadCount(error ? 0 : data);
-    } catch (error) {
-      console.error('Error fetching unread count:', error);
-      setUnreadCount(0);
-    } finally {
+    const count = await messagingService.getUnreadCount(user.id);
+    if (mountedRef.current) {
+      setUnreadCount(count);
       setLoading(false);
     }
   }, [user?.id]);
 
-  // Subscribe to conversation updates to refresh count
+  // Setup auto-refresh every 5 seconds
   useEffect(() => {
-    if (!user?.id) return;
-
-    const channel = messagingService.subscribeToConversations(user.id, () => {
-      fetchUnreadCount();
-    });
-
+    mountedRef.current = true;
+    
+    // Initial load
+    refresh();
+    
+    // Setup interval for auto-refresh
+    refreshIntervalRef.current = setInterval(refresh, 5000);
+    
     return () => {
-      messagingService.unsubscribeFromChannel(`conversations:${user.id}`);
+      mountedRef.current = false;
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
     };
-  }, [user?.id, fetchUnreadCount]);
+  }, [refresh]);
 
-  // Initial fetch
+  // Listen for custom events to refresh immediately
   useEffect(() => {
-    fetchUnreadCount();
-  }, [fetchUnreadCount]);
+    const handleConversationRead = () => {
+      if (mountedRef.current) {
+        refresh();
+      }
+    };
 
-  return {
-    unreadCount,
-    loading,
-    refresh: fetchUnreadCount,
-  };
+    // Listen for conversation read events
+    window.addEventListener('conversation-read', handleConversationRead);
+    window.addEventListener('message-sent', handleConversationRead);
+    
+    return () => {
+      window.removeEventListener('conversation-read', handleConversationRead);
+      window.removeEventListener('message-sent', handleConversationRead);
+    };
+  }, [refresh]);
+
+  return { unreadCount, loading, refresh };
 }
 
-/**
- * Hook for validating messaging access
- */
+// Access validation hook
 export function useMessagingAccess(bookingId?: string) {
   const { user } = useAuth();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
@@ -511,10 +844,15 @@ export function useMessagingAccess(bookingId?: string) {
       }
 
       try {
-        const access = await messagingService.validateBookingAccess(bookingId, user.id);
-        setHasAccess(access);
-      } catch (error) {
-        console.error('Error checking messaging access:', error);
+        const { data, error } = await supabase
+          .from('bookings')
+          .select('id')
+          .eq('id', bookingId)
+          .or(`guest_id.eq.${user.id},host_id.eq.${user.id}`)
+          .single();
+
+        setHasAccess(!error && !!data);
+      } catch {
         setHasAccess(false);
       } finally {
         setLoading(false);
@@ -524,8 +862,5 @@ export function useMessagingAccess(bookingId?: string) {
     checkAccess();
   }, [bookingId, user?.id]);
 
-  return {
-    hasAccess,
-    loading,
-  };
+  return { hasAccess, loading };
 }
