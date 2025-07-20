@@ -1,1 +1,1 @@
-// Cache buster - created to trigger HMR reload\n// This file can be deleted after the server restarts\nexport const cacheBuster = Date.now();\n
+// Temporary development file removed for production

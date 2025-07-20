@@ -5,7 +5,7 @@ import { BookingFormData } from "@/types/booking";
 
 interface SpecialRequestsSectionProps {
   formData: Partial<BookingFormData>;
-  setFormData: (data: Partial<BookingFormData>) => void;
+  setFormData: (data: Partial<BookingFormData> | ((prev: Partial<BookingFormData>) => Partial<BookingFormData>)) => void;
 }
 
 export const SpecialRequestsSection = ({ formData, setFormData }: SpecialRequestsSectionProps) => {
@@ -18,7 +18,7 @@ export const SpecialRequestsSection = ({ formData, setFormData }: SpecialRequest
       <CardContent>
         <Textarea
           value={formData.special_requests || ''}
-          onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
+          onChange={(e) => setFormData(prev => ({ ...prev, special_requests: e.target.value }))}
           placeholder="Ej: Restricciones dietéticas, necesidad de desayuno temprano, solicitud de transporte, alergias, etc."
           className="min-h-[80px]"
           maxLength={300}

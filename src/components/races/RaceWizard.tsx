@@ -9,6 +9,7 @@ import TechnicalStep from "./wizard/TechnicalStep";
 import LogisticsStep from "./wizard/LogisticsStep";
 import { ExperienceStep } from "./wizard/ExperienceStep";
 import { PhotosStep } from "./wizard/PhotosStep";
+import RaceWizardErrorBoundary from "./wizard/RaceWizardErrorBoundary";
 import { RaceFormData } from "@/types/race";
 import { useRaces } from "@/hooks/useRaces";
 import { toast } from "sonner";
@@ -132,74 +133,83 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
     console.log('Step valid:', isStepValid());
   }, [formData, currentStep]);
 
+  // Safety check for step bounds
+  if (currentStep < 1 || currentStep > STEPS.length) {
+    console.warn('RaceWizard: Step out of bounds, resetting to step 1');
+    setCurrentStep(1);
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
-        <Card>
-          <CardHeader className="border-b">
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-2xl">Crear Nueva Carrera</CardTitle>
-                <p className="text-gray-600 mt-1">
-                  Paso {currentStep} de {STEPS.length}: {STEPS[currentStep - 1].title}
-                </p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-            <div className="mt-4">
-              <div className="flex justify-between text-sm text-gray-600 mb-2">
-                <span>Progreso</span>
-                <span>{Math.round(progress)}%</span>
-              </div>
-              <Progress value={progress} className="h-2" />
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-8">
-            <CurrentStepComponent
-              formData={formData}
-              onUpdate={updateFormData}
-              onNext={handleNext}
-              onPrev={handlePrevious}
-            />
-
-            <div className="flex justify-between mt-8 pt-6 border-t">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentStep === 1}
-              >
-                Anterior
-              </Button>
-
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={onClose}>
-                  Cancelar
+        <RaceWizardErrorBoundary onReset={() => setCurrentStep(1)}>
+          <Card>
+            <CardHeader className="border-b">
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-2xl">Crear Nueva Carrera</CardTitle>
+                  <p className="text-gray-600 mt-1">
+                    Paso {currentStep} de {STEPS.length}: {STEPS[currentStep - 1].title}
+                  </p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={onClose}>
+                  <X className="w-5 h-5" />
                 </Button>
-                
-                {currentStep === STEPS.length ? (
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={!isStepValid() || isSubmitting}
-                    className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
-                  >
-                    {isSubmitting ? "Creando..." : "Crear Carrera"}
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleNext}
-                    disabled={!isStepValid()}
-                    className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
-                  >
-                    Siguiente
-                  </Button>
-                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="mt-4">
+                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                  <span>Progreso</span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-8">
+              <CurrentStepComponent
+                formData={formData}
+                onUpdate={updateFormData}
+                onNext={handleNext}
+                onPrev={handlePrevious}
+              />
+
+              <div className="flex justify-between mt-8 pt-6 border-t">
+                <Button
+                  variant="outline"
+                  onClick={handlePrevious}
+                  disabled={currentStep === 1}
+                >
+                  Anterior
+                </Button>
+
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={onClose}>
+                    Cancelar
+                  </Button>
+                  
+                  {currentStep === STEPS.length ? (
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={!isStepValid() || isSubmitting}
+                      className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
+                    >
+                      {isSubmitting ? "Creando..." : "Crear Carrera"}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleNext}
+                      disabled={!isStepValid()}
+                      className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
+                    >
+                      Siguiente
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </RaceWizardErrorBoundary>
       </div>
     </div>
   );

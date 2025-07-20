@@ -3,10 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RaceFormData } from "@/types/race";
 import { useProperties } from "@/hooks/useProperties";
-import { CalendarDays, FileText, Home } from "lucide-react";
+import { CalendarDays, FileText } from "lucide-react";
 
 interface BasicInfoStepProps {
   formData: Partial<RaceFormData>;
@@ -15,8 +14,11 @@ interface BasicInfoStepProps {
   onPrev: () => void;
 }
 
-export const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProps) => {
+const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProps) => {
   const { properties } = useProperties();
+
+  // Ensure properties is an array to prevent rendering issues
+  const safeProperties = Array.isArray(properties) ? properties : [];
 
   return (
     <div className="space-y-6">
@@ -94,25 +96,29 @@ export const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoS
 
           <div>
             <Label htmlFor="property-select">Propiedad Asociada *</Label>
-            <Select 
-              value={formData.property_id || ""} 
-              onValueChange={(value) => onUpdate({ property_id: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona la propiedad donde se alojarán los guests" />
-              </SelectTrigger>
-              <SelectContent>
-                {properties.map((property) => (
-                  <SelectItem key={property.id} value={property.id}>
-                    <div className="flex items-center">
-                      <Home className="h-4 w-4 mr-2" />
-                      <span>{property.title} - {property.locality}</span>
-                    </div>
-                  </SelectItem>
+            <div className="relative">
+              <select
+                id="property-select"
+                value={formData.property_id || ""}
+                onChange={(e) => onUpdate({ property_id: e.target.value })}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none cursor-pointer"
+              >
+                <option value="" disabled>
+                  Selecciona la propiedad donde se alojarán los guests
+                </option>
+                {safeProperties.map((property) => (
+                  <option key={property.id} value={property.id}>
+                    {property.title} - {property.locality}
+                  </option>
                 ))}
-              </SelectContent>
-            </Select>
-            {properties.length === 0 && (
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+            {safeProperties.length === 0 && (
               <p className="text-sm text-amber-600 mt-1">
                 Primero debes crear una propiedad en la sección "Mi Propiedad"
               </p>
@@ -123,3 +129,5 @@ export const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoS
     </div>
   );
 };
+
+export { BasicInfoStep };

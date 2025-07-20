@@ -16,6 +16,9 @@ interface BookingSummarySectionProps {
   userPointsBalance: number;
   calculateStayDuration: () => number;
   formatDate: (dateString: string) => string;
+  dynamicPoints?: number;
+  originalPoints?: number;
+  availabilityChecked?: boolean;
 }
 
 export const BookingSummarySection = ({ 
@@ -26,8 +29,15 @@ export const BookingSummarySection = ({
   setAgreedToTerms, 
   userPointsBalance, 
   calculateStayDuration, 
-  formatDate 
+  formatDate,
+  dynamicPoints,
+  originalPoints,
+  availabilityChecked
 }: BookingSummarySectionProps) => {
+  const finalPoints = dynamicPoints || race.points_cost;
+  const hasPointsChanged = dynamicPoints && originalPoints && dynamicPoints !== originalPoints;
+  
+
   return (
     <Card>
       <CardHeader>
@@ -48,33 +58,74 @@ export const BookingSummarySection = ({
             <p className="font-medium">{property.title}</p>
             <p className="text-sm text-gray-500">{property.locality}</p>
           </div>
-          {formData.check_in_date && formData.check_out_date && (
-            <>
-              <div>
-                <p className="text-sm text-gray-600">Estancia</p>
-                <p className="font-medium">
-                  {calculateStayDuration()} {calculateStayDuration() === 1 ? 'noche' : 'noches'}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {formatDate(formData.check_in_date)} - {formatDate(formData.check_out_date)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Guests</p>
-                <p className="font-medium">{formData.guests_count} {formData.guests_count === 1 ? 'guest' : 'guests'}</p>
-              </div>
-            </>
+          <div>
+            <p className="text-sm text-gray-600">Huéspedes</p>
+            <p className="font-medium">{formData.guests_count || 1} {(formData.guests_count || 1) === 1 ? 'huésped' : 'huéspedes'}</p>
+          </div>
+          {formData.check_in_date && formData.check_out_date && calculateStayDuration() > 0 && (
+            <div>
+              <p className="text-sm text-gray-600">Estancia</p>
+              <p className="font-medium">
+                {calculateStayDuration()} {calculateStayDuration() === 1 ? 'noche' : 'noches'}
+              </p>
+              <p className="text-sm text-gray-500">
+                {formatDate(formData.check_in_date)} - {formatDate(formData.check_out_date)}
+              </p>
+            </div>
           )}
         </div>
 
-        <div className="border-t pt-4">
-          <div className="flex justify-between items-center text-lg font-semibold">
-            <span>Costo Total:</span>
-            <span className="text-blue-600">{race.points_cost} puntos</span>
-          </div>
-          <div className="flex justify-between items-center text-sm text-gray-600 mt-1">
-            <span>Tu balance actual:</span>
-            <span>{userPointsBalance} puntos</span>
+        <div className="border-t pt-4 space-y-3">
+          {/* Availability Status */}
+          {formData.check_in_date && formData.check_out_date && (
+            <div className="flex items-center justify-between p-2 rounded-lg">
+              <span className="text-sm font-medium">Estado de disponibilidad:</span>
+              <span className={`text-sm font-medium ${
+                availabilityChecked 
+                  ? 'text-green-600' 
+                  : 'text-yellow-600'
+              }`}>
+                {availabilityChecked ? '✓ Disponible' : 'Verificando...'}
+              </span>
+            </div>
+          )}
+          
+          {/* Price Breakdown */}
+          <div className="space-y-2">
+            {hasPointsChanged && (
+              <div className="flex justify-between items-center text-sm text-gray-600">
+                <span>Precio base:</span>
+                <span className="line-through">{originalPoints} puntos</span>
+              </div>
+            )}
+            
+            <div className="flex justify-between items-center text-lg font-semibold">
+              <span>Costo Total:</span>
+              <div className="flex items-center space-x-2">
+                <span className={`${hasPointsChanged ? 'text-orange-600' : 'text-blue-600'}`}>
+                  {finalPoints} puntos
+                </span>
+                {hasPointsChanged && (
+                  <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded">
+                    Ajustado por demanda
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center text-sm text-gray-600">
+              <span>Tu balance actual:</span>
+              <span className={userPointsBalance >= finalPoints ? 'text-green-600' : 'text-red-600'}>
+                {userPointsBalance} puntos
+              </span>
+            </div>
+            
+            {userPointsBalance >= finalPoints && (
+              <div className="flex justify-between items-center text-sm text-green-600">
+                <span>Balance restante:</span>
+                <span>{userPointsBalance - finalPoints} puntos</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -89,11 +140,20 @@ export const BookingSummarySection = ({
           </Label>
         </div>
 
-        {userPointsBalance < race.points_cost && (
+        {userPointsBalance < finalPoints && (
           <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
             <AlertTriangle className="w-5 h-5 text-red-500" />
             <p className="text-sm text-red-700">
-              No tienes suficientes puntos para esta reserva. Necesitas {race.points_cost - userPointsBalance} puntos más.
+              No tienes suficientes puntos para esta reserva. Necesitas {finalPoints - userPointsBalance} puntos más.
+            </p>
+          </div>
+        )}
+        
+        {!availabilityChecked && formData.check_in_date && formData.check_out_date && (
+          <div className="flex items-center space-x-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <AlertTriangle className="w-5 h-5 text-yellow-500" />
+            <p className="text-sm text-yellow-700">
+              Verificando disponibilidad en tiempo real...
             </p>
           </div>
         )}

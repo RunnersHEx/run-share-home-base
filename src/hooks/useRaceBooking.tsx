@@ -2,6 +2,9 @@
 import { useState } from "react";
 import { Race } from "@/types/race";
 import { Property } from "@/types/property";
+import { BookingFormData } from "@/types/booking";
+import { useBookings } from "@/hooks/useBookings";
+import { toast } from "sonner";
 
 interface DiscoverRace {
   id: string;
@@ -28,21 +31,35 @@ interface DiscoverRace {
 
 export const useRaceBooking = (race: DiscoverRace) => {
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const { createBookingRequest } = useBookings();
 
   const handleBookingRequest = () => {
     setShowBookingModal(true);
   };
 
-  const handleBookingSubmit = async (bookingData: any) => {
-    console.log('Booking request submitted:', bookingData);
-    setShowBookingModal(false);
+  const handleBookingSubmit = async (bookingData: BookingFormData) => {
+    try {
+      // Call the actual booking service to create the request
+      const result = await createBookingRequest(bookingData);
+      
+      if (result) {
+        setShowBookingModal(false);
+        return result;
+      } else {
+        throw new Error('Failed to create booking request');
+      }
+    } catch (error) {
+      throw error; // Re-throw so the modal can handle the error
+    }
   };
 
-  // Transform our race data to match the expected Race type with ALL required properties
+  // For booking, we need to use the host's actual property
+  // Since the race data doesn't include property_id, we'll use the host_id as the property owner
+  // and let the backend handle the property lookup
   const raceForBooking: Race = {
     id: race.id,
     host_id: race.host.id,
-    property_id: `property_${race.host.id}`,
+    property_id: race.host.id, // Temporary - backend should resolve this to actual property
     name: race.name,
     description: race.highlights,
     race_date: race.date,
@@ -67,9 +84,9 @@ export const useRaceBooking = (race: DiscoverRace) => {
     updated_at: new Date().toISOString()
   };
 
-  // Mock property data with ALL required properties including optional approval_status
+  // Use the host's property - backend should resolve this
   const propertyForBooking: Property = {
-    id: `property_${race.host.id}`,
+    id: race.host.id, // Will be resolved to actual property by backend
     owner_id: race.host.id,
     title: `Alojamiento en ${race.location}`,
     description: `Alojamiento disponible para la carrera ${race.name}`,
@@ -88,7 +105,7 @@ export const useRaceBooking = (race: DiscoverRace) => {
     runner_instructions: null,
     cancellation_policy: 'flexible',
     is_active: true,
-    approval_status: 'approved', // Add the optional field
+    approval_status: 'approved',
     total_bookings: 0,
     average_rating: 0,
     points_earned: 0,

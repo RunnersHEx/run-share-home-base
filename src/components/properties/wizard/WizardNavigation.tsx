@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useMemo, memo } from "react";
 
 interface Step {
   id: number;
@@ -29,9 +30,26 @@ const WizardNavigation = ({
   onNextStep, 
   onSubmit 
 }: WizardNavigationProps) => {
+  // Memoize button text to prevent unnecessary re-renders
+  const submitButtonText = useMemo(() => {
+    if (isSubmitting) {
+      return isEditing ? "Actualizando..." : "Creando...";
+    }
+    return isEditing ? "Actualizar Propiedad" : "Crear Propiedad";
+  }, [isSubmitting, isEditing]);
+
+  const isLastStep = currentStep === steps.length;
+  const currentStepTitle = steps && steps[currentStep - 1]?.title || "";
+  
+  // Defensive check to prevent rendering with invalid data
+  if (!steps || steps.length === 0 || currentStep < 1 || currentStep > steps.length) {
+    return null;
+  }
+
   return (
     <div className="flex items-center justify-between p-6 border-t flex-shrink-0">
       <Button
+        key="prev-button"
         variant="outline"
         onClick={onPrevStep}
         disabled={currentStep === 1}
@@ -41,19 +59,21 @@ const WizardNavigation = ({
       </Button>
 
       <div className="text-sm text-gray-600">
-        {steps[currentStep - 1].title}
+        {currentStepTitle}
       </div>
 
-      {currentStep === steps.length ? (
+      {isLastStep ? (
         <Button
+          key="submit-button"
           onClick={onSubmit}
           disabled={isSubmitting}
           className="bg-runner-blue-600 hover:bg-runner-blue-700"
         >
-          {isSubmitting ? (isEditing ? "Actualizando..." : "Creando...") : (isEditing ? "Actualizar Propiedad" : "Crear Propiedad")}
+          {submitButtonText}
         </Button>
       ) : (
         <Button
+          key="next-button"
           onClick={onNextStep}
           disabled={!canProceed}
           className="bg-runner-blue-600 hover:bg-runner-blue-700"
@@ -66,4 +86,4 @@ const WizardNavigation = ({
   );
 };
 
-export default WizardNavigation;
+export default memo(WizardNavigation);

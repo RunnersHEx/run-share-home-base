@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   User, 
   Heart, 
@@ -27,6 +28,24 @@ interface ProfileLayoutProps {
 
 const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayoutProps) => {
   const { profile, progress } = useProfile();
+  const { profile: authProfile, user } = useAuth();
+  
+  // ✅ SMART FALLBACK: Use AuthContext data when useProfile has no meaningful data
+  const hasValidProfileData = profile && profile.id && (profile.first_name || profile.last_name || profile.email);
+  const displayProfile = hasValidProfileData ? profile : authProfile;
+  const displayName = displayProfile?.first_name && displayProfile?.last_name 
+    ? `${displayProfile.first_name} ${displayProfile.last_name}`
+    : user?.email?.split('@')[0] || 'Usuario';
+  const displayEmail = displayProfile?.email || user?.email || '';
+  
+  console.log('ProfileLayout: Smart fallback logic', {
+    useProfileExists: !!profile,
+    useProfileHasValidData: hasValidProfileData,
+    authProfileExists: !!authProfile,
+    usingAuthFallback: !hasValidProfileData && !!authProfile,
+    displayName,
+    verificationStatus: displayProfile?.verification_status
+  });
 
   const sections = [
     { id: "personal", label: "Información Personal", icon: User },
@@ -44,7 +63,17 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
   ];
 
   const getVerificationBadge = () => {
-    switch (profile?.verification_status) {
+    // ✅ DEBUG: Log verification status in ProfileLayout
+    console.log('ProfileLayout: getVerificationBadge called', {
+      useProfileExists: !!profile,
+      authProfileExists: !!authProfile,
+      displayProfileExists: !!displayProfile,
+      verificationStatus: displayProfile?.verification_status,
+      profileId: displayProfile?.id
+    });
+    
+    switch (displayProfile?.verification_status) {
+      case 'verified':
       case 'approved':
         return <Badge className="bg-green-100 text-green-700 border-green-200">Verificado</Badge>;
       case 'rejected':
@@ -66,14 +95,18 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
               {/* Profile Header */}
               <div className="text-center mb-6">
                 <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-3">
-                  {profile?.first_name?.charAt(0) || 'U'}{profile?.last_name?.charAt(0) || ''}
+                  {displayProfile?.first_name?.charAt(0) || displayName.charAt(0) || 'U'}{displayProfile?.last_name?.charAt(0) || displayName.charAt(1) || ''}
                 </div>
                 <h3 className="font-semibold text-lg">
-                  {profile?.first_name} {profile?.last_name}
+                  {displayName}
                 </h3>
-                <p className="text-sm text-gray-600">{profile?.email}</p>
+                <p className="text-sm text-gray-600">{displayEmail}</p>
                 <div className="mt-2">
                   {getVerificationBadge()}
+                </div>
+                {/* ✅ DEBUG: Profile source indicator */}
+                <div className="mt-1 text-xs text-gray-500">
+                  Fuente: {hasValidProfileData ? 'useProfile' : authProfile ? 'AuthContext' : 'ninguna'}
                 </div>
               </div>
 

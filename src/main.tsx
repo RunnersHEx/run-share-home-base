@@ -4,8 +4,12 @@ import App from './App.tsx'
 import './index.css'
 import './lib/envValidation' // Validate environment variables before app starts
 import { logger } from './lib/logger'
+import { initializeBackgroundJobs } from './services/backgroundJobScheduler'
 
 logger.debug("Application starting");
+
+// Initialize background jobs for automated booking processes
+initializeBackgroundJobs();
 
 const rootElement = document.getElementById("root");
 

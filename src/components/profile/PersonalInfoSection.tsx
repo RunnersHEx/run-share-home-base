@@ -8,6 +8,7 @@ import { Save, Edit, X } from "lucide-react";
 import { ProfileAvatarSection } from "./personal/ProfileAvatarSection";
 import { BasicInfoFields } from "./personal/BasicInfoFields";
 import { EmergencyContactFields } from "./personal/EmergencyContactFields";
+import { dateUtils } from "@/utils/dateUtils";
 
 const PersonalInfoSection = () => {
   const { profile, updateProfile } = useProfile();
@@ -18,7 +19,7 @@ const PersonalInfoSection = () => {
     first_name: profile?.first_name || '',
     last_name: profile?.last_name || '',
     phone: profile?.phone || '',
-    birth_date: profile?.birth_date || '',
+    birth_date: dateUtils.formatForInput(profile?.birth_date),
     emergency_contact_name: profile?.emergency_contact_name || '',
     emergency_contact_phone: profile?.emergency_contact_phone || '',
   });
@@ -41,7 +42,7 @@ const PersonalInfoSection = () => {
       first_name: profile?.first_name || '',
       last_name: profile?.last_name || '',
       phone: profile?.phone || '',
-      birth_date: profile?.birth_date || '',
+      birth_date: dateUtils.formatForInput(profile?.birth_date),
       emergency_contact_name: profile?.emergency_contact_name || '',
       emergency_contact_phone: profile?.emergency_contact_phone || '',
     });
@@ -54,7 +55,7 @@ const PersonalInfoSection = () => {
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
         phone: profile.phone || '',
-        birth_date: profile.birth_date || '',
+        birth_date: dateUtils.formatForInput(profile.birth_date),
         emergency_contact_name: profile.emergency_contact_name || '',
         emergency_contact_phone: profile.emergency_contact_phone || '',
       });

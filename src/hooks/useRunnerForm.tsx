@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { RunningExperience } from "@/types/profile";
 
 export interface RunnerFormData {
   // Información básica
@@ -15,7 +16,7 @@ export interface RunnerFormData {
   
   // Información del corredor
   bio: string;
-  running_experience: string;
+  running_experience: RunningExperience | null;
   preferred_distances: string[];
   running_modalities: string[];
   personal_records: Record<string, string>;
@@ -36,37 +37,80 @@ export const useRunnerForm = () => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  // Simplified form state management - same for all users regardless of roles
   const [formData, setFormData] = useState<any>({
     bio: '',
-    running_experience: '',
+    running_experience: null,
     preferred_distances: [],
     running_modalities: [],
     personal_records: {},
     races_completed_this_year: 0
   });
+  
+  // Prevent re-renders during state transitions
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Sincronizar formData con profile cuando cambie
+  // Simplified form synchronization - prevent conflicts for dual-role users
   useEffect(() => {
-    if (profile) {
-      setFormData({
+    if (profile && !isUpdating && !isSaving && !isEditing) {
+      const safeFormData = {
         bio: profile.bio || '',
-        running_experience: profile.running_experience || '',
-        preferred_distances: profile.preferred_distances || [],
-        running_modalities: profile.running_modalities || [],
-        personal_records: profile.personal_records || {},
-        races_completed_this_year: profile.races_completed_this_year || 0
-      });
+        running_experience: profile.running_experience || null,
+        preferred_distances: Array.isArray(profile.preferred_distances) ? [...profile.preferred_distances] : [],
+        running_modalities: Array.isArray(profile.running_modalities) ? [...profile.running_modalities] : [],
+        personal_records: profile.personal_records && typeof profile.personal_records === 'object' 
+          ? { ...profile.personal_records } 
+          : {},
+        races_completed_this_year: Number(profile.races_completed_this_year) || 0
+      };
+      
+      // Only update form data on initial load or when explicitly not editing
+      if (!isInitialized) {
+        setFormData(safeFormData);
+        setIsInitialized(true);
+      }
     }
-  }, [profile]);
+  }, [profile, isUpdating, isSaving, isInitialized, isEditing]);
 
   const handleSave = async () => {
-    if (!profile) return;
+    if (!profile || isUpdating || isSaving) return;
 
+    // Prevent any state synchronization during save
+    setIsUpdating(true);
     setIsSaving(true);
+    
     try {
-      const success = await updateProfile(formData);
+      console.log('useRunnerForm: Saving runner form data:', formData);
+      
+      const dataToSave = {
+        bio: formData.bio || '',
+        running_experience: formData.running_experience || null,
+        preferred_distances: Array.isArray(formData.preferred_distances) 
+          ? [...formData.preferred_distances] 
+          : [],
+        running_modalities: Array.isArray(formData.running_modalities) 
+          ? [...formData.running_modalities] 
+          : [],
+        personal_records: (formData.personal_records && typeof formData.personal_records === 'object' && !Array.isArray(formData.personal_records)) 
+          ? { ...formData.personal_records }
+          : {},
+        races_completed_this_year: Number(formData.races_completed_this_year) || 0
+      };
+      
+      console.log('useRunnerForm: Data to save:', dataToSave);
+      
+      const success = await updateProfile(dataToSave);
       if (success) {
-        setIsEditing(false);
+        // Force a clean state reset after successful save
+        setTimeout(() => {
+          setIsEditing(false);
+          // Force component remount by updating a key
+          const event = new CustomEvent('profile-updated', { 
+            detail: { timestamp: Date.now() } 
+          });
+          window.dispatchEvent(event);
+        }, 100);
         toast.success("Información actualizada correctamente");
       }
     } catch (error) {
@@ -74,22 +118,33 @@ export const useRunnerForm = () => {
       toast.error("Error al guardar la información");
     } finally {
       setIsSaving(false);
+      setIsUpdating(false);
     }
   };
 
   const handleCancel = () => {
-    // Restaurar datos originales del perfil
-    if (profile) {
-      setFormData({
-        bio: profile.bio || '',
-        running_experience: profile.running_experience || '',
-        preferred_distances: profile.preferred_distances || [],
-        running_modalities: profile.running_modalities || [],
-        personal_records: profile.personal_records || {},
-        races_completed_this_year: profile.races_completed_this_year || 0
-      });
-    }
-    setIsEditing(false);
+    if (isUpdating || isSaving) return;
+    
+    setIsUpdating(true);
+    
+    // Prevent any state synchronization during cancel
+    const originalData = profile ? {
+      bio: profile.bio || '',
+      running_experience: profile.running_experience || null,
+      preferred_distances: Array.isArray(profile.preferred_distances) ? [...profile.preferred_distances] : [],
+      running_modalities: Array.isArray(profile.running_modalities) ? [...profile.running_modalities] : [],
+      personal_records: profile.personal_records && typeof profile.personal_records === 'object' 
+        ? { ...profile.personal_records } 
+        : {},
+      races_completed_this_year: Number(profile.races_completed_this_year) || 0
+    } : formData;
+    
+    // Use setTimeout to prevent DOM conflicts
+    setTimeout(() => {
+      setFormData(originalData);
+      setIsEditing(false);
+      setIsUpdating(false);
+    }, 50);
   };
 
   const saveRunnerProfile = async (formData: RunnerFormData) => {
@@ -152,6 +207,7 @@ export const useRunnerForm = () => {
     isEditing,
     setIsEditing,
     isSaving,
+    isUpdating, // Export the updating state
     handleSave,
     handleCancel,
     saveRunnerProfile,

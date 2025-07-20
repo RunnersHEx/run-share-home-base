@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Booking, BookingFormData, BookingFilters, BookingStats, BookingMessage, PointsTransaction } from "@/types/booking";
 import { BookingService } from "@/services/bookingService";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useBookings = (filters?: BookingFilters) => {
   const { user } = useAuth();
@@ -26,12 +27,9 @@ export const useBookings = (filters?: BookingFilters) => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching bookings for user:', user.id);
       const data = await BookingService.fetchUserBookings(user.id, filters);
-      console.log('Fetched bookings:', data);
       setBookings(data);
     } catch (error) {
-      console.error('Error fetching bookings:', error);
       setError('Error al cargar las reservas');
       toast.error('Error al cargar las reservas');
     } finally {
@@ -54,7 +52,6 @@ export const useBookings = (filters?: BookingFilters) => {
     if (!user) return null;
 
     try {
-      console.log('Creating booking request:', bookingData);
       
       // Verificar balance de puntos
       const balance = await BookingService.checkUserPointsBalance(user.id);
@@ -64,14 +61,12 @@ export const useBookings = (filters?: BookingFilters) => {
       }
 
       const data = await BookingService.createBookingRequest(bookingData, user.id);
-      console.log('Created booking request:', data);
       
       await fetchBookings();
       await fetchStats();
       toast.success('Solicitud de reserva enviada correctamente');
       return data;
     } catch (error) {
-      console.error('Error creating booking request:', error);
       toast.error('Error al crear la solicitud de reserva');
       return null;
     }
@@ -93,12 +88,44 @@ export const useBookings = (filters?: BookingFilters) => {
     }
   };
 
-  const cancelBooking = async (bookingId: string, refundPoints = false) => {
+  const cancelBooking = async (bookingId: string, cancelledBy: 'guest' | 'host' = 'guest', reason?: string) => {
     try {
-      await BookingService.cancelBooking(bookingId, refundPoints);
+      // Determine if refund should be given based on timing
+      const booking = bookings?.find(b => b.id === bookingId);
+      if (!booking) {
+        toast.error('Reserva no encontrada');
+        return false;
+      }
+
+      const now = new Date();
+      const checkInDate = new Date(booking.check_in_date);
+      const daysUntilCheckIn = Math.ceil((checkInDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      let refundPoints = true;
+      let warningMessage = '';
+      
+      if (cancelledBy === 'guest' && daysUntilCheckIn < 7) {
+        refundPoints = false;
+        warningMessage = 'Cancelación tardía: no se reembolsarán los puntos.';
+      } else if (cancelledBy === 'host' && daysUntilCheckIn < 60) {
+        warningMessage = 'Cancelación de host: se aplicará una penalización de 30 puntos.';
+      }
+      
+      // Show warning if applicable
+      if (warningMessage) {
+        const confirmed = window.confirm(`${warningMessage} ¿Continuar con la cancelación?`);
+        if (!confirmed) return false;
+      }
+      
+      await BookingService.cancelBooking(bookingId, cancelledBy, refundPoints);
       await fetchBookings();
       await fetchStats();
+      
       toast.success('Reserva cancelada correctamente');
+      if (!refundPoints && cancelledBy === 'guest') {
+        toast.warning('Los puntos no fueron reembolsados debido a la cancelación tardía');
+      }
+      
       return true;
     } catch (error) {
       console.error('Error cancelling booking:', error);
@@ -106,6 +133,80 @@ export const useBookings = (filters?: BookingFilters) => {
       return false;
     }
   };
+
+  const confirmBooking = async (bookingId: string) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ 
+          status: 'confirmed',
+          confirmed_at: new Date().toISOString()
+        })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+      
+      await fetchBookings();
+      await fetchStats();
+      toast.success('Reserva confirmada');
+      return true;
+    } catch (error) {
+      console.error('Error confirming booking:', error);
+      toast.error('Error al confirmar la reserva');
+      return false;
+    }
+  };
+
+  const completeBooking = async (bookingId: string) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+      
+      await fetchBookings();
+      await fetchStats();
+      toast.success('Reserva completada');
+      return true;
+    } catch (error) {
+      console.error('Error completing booking:', error);
+      toast.error('Error al completar la reserva');
+      return false;
+    }
+  };
+
+  const getBookingsByStatus = (status: string) => {
+    return bookings?.filter(b => b.status === status) || [];
+  };
+
+  const getPendingHostRequests = () => {
+    return bookings?.filter(
+      b => b.status === 'pending' && b.host_id === user?.id
+    ) || [];
+  };
+
+  const getUpcomingBookings = () => {
+    const today = new Date().toISOString().split('T')[0];
+    return bookings?.filter(
+      b => ['accepted', 'confirmed'].includes(b.status) && b.check_in_date >= today
+    ) || [];
+  };
+
+  // Auto-refresh bookings every 5 minutes for real-time updates
+  useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(() => {
+      fetchBookings();
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearInterval(interval);
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -123,7 +224,12 @@ export const useBookings = (filters?: BookingFilters) => {
     createBookingRequest,
     respondToBooking,
     cancelBooking,
-    refetchBookings: fetchBookings
+    confirmBooking,
+    completeBooking,
+    refetchBookings: fetchBookings,
+    getBookingsByStatus,
+    getPendingHostRequests,
+    getUpcomingBookings
   };
 };
 
