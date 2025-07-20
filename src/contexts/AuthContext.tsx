@@ -63,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // ✅ Computed properties based on profile data (safe when profile is null) - FIXED
   const canHost = profile?.is_host ?? true; // Allow hosting if profile is null or is_host is true
   const canGuest = profile?.is_guest ?? true; // Allow guest mode if profile is null or is_guest is true
-  const isVerified = profile?.verification_status === 'verified'; // Only verified if explicitly verified
+  const isVerified = profile?.verification_status === 'verified' || profile?.verification_status === 'approved'; // Verified if status is 'verified' or 'approved'
 
   // ✅ Load profile data when user changes
   const loadUserProfile = async (userId: string) => {

@@ -6,7 +6,7 @@ import { BookingFormData } from "@/types/booking";
 
 interface MessageSectionProps {
   formData: Partial<BookingFormData>;
-  setFormData: (data: Partial<BookingFormData>) => void;
+  setFormData: (data: Partial<BookingFormData> | ((prev: Partial<BookingFormData>) => Partial<BookingFormData>)) => void;
 }
 
 export const MessageSection = ({ formData, setFormData }: MessageSectionProps) => {
@@ -24,7 +24,7 @@ export const MessageSection = ({ formData, setFormData }: MessageSectionProps) =
       <CardContent>
         <Textarea
           value={formData.request_message || ''}
-          onChange={(e) => setFormData({ ...formData, request_message: e.target.value })}
+          onChange={(e) => setFormData(prev => ({ ...prev, request_message: e.target.value }))}
           placeholder="Cuéntale al host sobre ti: ¿Por qué quieres correr esta carrera? ¿Qué esperas de la experiencia? ¿Cuál es tu experiencia en running? ¿Tienes alguna pregunta específica?"
           className="min-h-[120px]"
           maxLength={500}

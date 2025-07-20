@@ -8,19 +8,17 @@ import CTASection from "@/components/home/CTASection";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
-  console.log("Index component is rendering - using unified Layout system");
   
   const { user } = useAuth();
 
   // Esta función será pasada a los componentes pero la gestión real del modal
   // está en Layout.tsx que detecta automáticamente cuando se debe abrir
   const handleAuthModal = (mode: "login" | "register") => {
-    console.log("Index: Auth modal called with mode:", mode);
     // El Layout maneja automáticamente la apertura del modal
     // mediante los eventos de los botones
   };
 
-  console.log("Index component rendering complete - unified system");
+
 
   return (
     <div className="min-h-screen">

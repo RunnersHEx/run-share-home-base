@@ -19,6 +19,7 @@ import NotificationBell from "../notifications/NotificationBell";
 import AuthModalIntegrated from "../auth/AuthModalIntegrated";
 import { UnreadBadge } from "@/components/messaging";
 
+
 interface LayoutProps {
   children: React.ReactNode;
 }
@@ -33,18 +34,9 @@ const Layout = ({ children }: LayoutProps) => {
 
   const isHomePage = location.pathname === '/';
 
-  console.log('Layout: Current state:', {
-    hasUser: !!user,
-    userEmail: user?.email || 'none',
-    loading,
-    isAdmin,
-    showAuthModal,
-    authMode,
-    isHomePage
-  });
+
 
   const handleAuthModal = (mode: "login" | "register") => {
-    console.log('Layout: Opening auth modal with mode:', mode);
     setAuthMode(mode);
     setShowAuthModal(true);
   };
@@ -52,7 +44,6 @@ const Layout = ({ children }: LayoutProps) => {
   // Escuchar eventos personalizados de los botones de la homepage
   useEffect(() => {
     const handleOpenAuthModal = (event: CustomEvent) => {
-      console.log('Layout: Custom event received:', event.detail);
       const { mode } = event.detail;
       handleAuthModal(mode);
     };
@@ -65,10 +56,8 @@ const Layout = ({ children }: LayoutProps) => {
   }, []);
 
   const handleSignOut = async () => {
-    console.log('Layout: Initiating sign out process');
     try {
       await signOut();
-      console.log('Layout: Sign out successful');
       navigate("/");
     } catch (error) {
       console.error('Layout: Sign out error:', error);
@@ -386,18 +375,12 @@ const Layout = ({ children }: LayoutProps) => {
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        console.log('Layout: Header login button clicked');
-                        handleAuthModal("login");
-                      }}
+                      onClick={() => handleAuthModal("login")}
                     >
                       Iniciar Sesión
                     </Button>
                     <Button
-                      onClick={() => {
-                        console.log('Layout: Header register button clicked');
-                        handleAuthModal("register");
-                      }}
+                      onClick={() => handleAuthModal("register")}
                       className="bg-runner-blue-600 hover:bg-runner-blue-700"
                     >
                       Únete a la Comunidad
@@ -412,14 +395,13 @@ const Layout = ({ children }: LayoutProps) => {
 
       {children}
 
+
+
       {showAuthModal && (
         <AuthModalIntegrated
           mode={authMode}
           isOpen={showAuthModal}
-          onClose={() => {
-            console.log('Layout: Manually closing auth modal');
-            setShowAuthModal(false);
-          }}
+          onClose={() => setShowAuthModal(false)}
           onModeChange={setAuthMode}
         />
       )}

@@ -1,6 +1,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { dateUtils } from "@/utils/dateUtils";
 
 interface BasicInfoFieldsProps {
   formData: any;
@@ -10,6 +11,10 @@ interface BasicInfoFieldsProps {
 }
 
 export const BasicInfoFields = ({ formData, profile, isEditing, handleInputChange }: BasicInfoFieldsProps) => {
+  const displayBirthDate = isEditing 
+    ? dateUtils.formatForInput(formData.birth_date) 
+    : dateUtils.formatForInput(profile?.birth_date);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
@@ -51,7 +56,7 @@ export const BasicInfoFields = ({ formData, profile, isEditing, handleInputChang
         <Input
           id="birth_date"
           type="date"
-          value={isEditing ? formData.birth_date : (profile?.birth_date || '')}
+          value={displayBirthDate}
           onChange={(e) => handleInputChange('birth_date', e.target.value)}
           disabled={!isEditing}
           className={!isEditing ? "bg-gray-50 cursor-not-allowed" : ""}

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { PropertyFormData, Property } from "@/types/property";
 import { useProperties } from "@/hooks/useProperties";
 import { toast } from "sonner";
@@ -36,11 +36,11 @@ export const usePropertyWizardLogic = (propertyId?: string, initialData?: Proper
   const [acknowledgedImportantNote, setAcknowledgedImportantNote] = useState(false);
   const [acceptedCancellationPolicy, setAcceptedCancellationPolicy] = useState(false);
 
-  const updateFormData = (updates: Partial<PropertyFormData>) => {
+  const updateFormData = useCallback((updates: Partial<PropertyFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
-  };
+  }, []);
 
-  const canProceed = (currentStep: number) => {
+  const canProceed = useCallback((currentStep: number) => {
     switch (currentStep) {
       case 1:
         return formData.title.trim() !== "" && formData.description.trim() !== "";
@@ -55,9 +55,9 @@ export const usePropertyWizardLogic = (propertyId?: string, initialData?: Proper
       default:
         return false;
     }
-  };
+  }, [formData.title, formData.description, formData.provinces.length, formData.locality, formData.full_address, acknowledgedImportantNote, acceptedCancellationPolicy]);
 
-  const handleSubmit = async (photos: PhotoPreview[]) => {
+  const handleSubmit = useCallback(async (photos: PhotoPreview[]) => {
     setIsSubmitting(true);
     try {
       let propertyResult;
@@ -90,7 +90,7 @@ export const usePropertyWizardLogic = (propertyId?: string, initialData?: Proper
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [propertyId, initialData, formData, updateProperty, createProperty, uploadPropertyImage, onClose]);
 
   return {
     formData,

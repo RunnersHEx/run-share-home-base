@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { RaceDetailContent } from "./RaceDetailContent";
 import { RaceHostCard } from "./RaceHostCard";
 import { RaceBookingCard } from "./RaceBookingCard";
@@ -49,6 +49,9 @@ export const RaceDetailModal = ({ race, isOpen, onClose }: RaceDetailModalProps)
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">{race.name}</DialogTitle>
+            <DialogDescription className="sr-only">
+              Detalles de la carrera {race.name} en {race.location}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid md:grid-cols-3 gap-6">

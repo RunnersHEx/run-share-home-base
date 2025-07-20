@@ -8,7 +8,7 @@ import { Race } from "@/types/race";
 
 interface StayDetailsSectionProps {
   formData: Partial<BookingFormData>;
-  setFormData: (data: Partial<BookingFormData>) => void;
+  setFormData: (data: Partial<BookingFormData> | ((prev: Partial<BookingFormData>) => Partial<BookingFormData>)) => void;
   property: Property;
   race: Race;
 }
@@ -31,10 +31,10 @@ export const StayDetailsSection = ({ formData, setFormData, property, race }: St
               id="check_in_date"
               type="date"
               value={formData.check_in_date || ''}
-              onChange={(e) => setFormData({ ...formData, check_in_date: e.target.value })}
+              onChange={(e) => setFormData(prev => ({ ...prev, check_in_date: e.target.value }))}
               className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
-              placeholder="dd/mm/yyyy"
+              min={new Date().toISOString().split('T')[0]} // No dates in the past
             />
           </div>
           <div>
@@ -43,10 +43,10 @@ export const StayDetailsSection = ({ formData, setFormData, property, race }: St
               id="check_out_date"
               type="date"
               value={formData.check_out_date || ''}
-              onChange={(e) => setFormData({ ...formData, check_out_date: e.target.value })}
+              onChange={(e) => setFormData(prev => ({ ...prev, check_out_date: e.target.value }))}
               className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
-              placeholder="dd/mm/yyyy"
+              min={formData.check_in_date || new Date().toISOString().split('T')[0]} // Must be after check-in
             />
           </div>
         </div>
@@ -57,7 +57,10 @@ export const StayDetailsSection = ({ formData, setFormData, property, race }: St
             <select
               id="guests_count"
               value={formData.guests_count || 1}
-              onChange={(e) => setFormData({ ...formData, guests_count: parseInt(e.target.value) })}
+              onChange={(e) => {
+                const guestCount = parseInt(e.target.value, 10);
+                setFormData(prev => ({ ...prev, guests_count: guestCount }));
+              }}
               className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             >
@@ -77,7 +80,7 @@ export const StayDetailsSection = ({ formData, setFormData, property, race }: St
               id="estimated_arrival_time"
               type="time"
               value={formData.estimated_arrival_time || ''}
-              onChange={(e) => setFormData({ ...formData, estimated_arrival_time: e.target.value })}
+              onChange={(e) => setFormData(prev => ({ ...prev, estimated_arrival_time: e.target.value }))}
               className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -91,7 +94,7 @@ export const StayDetailsSection = ({ formData, setFormData, property, race }: St
               id="guest_phone"
               type="tel"
               value={formData.guest_phone || ''}
-              onChange={(e) => setFormData({ ...formData, guest_phone: e.target.value })}
+              onChange={(e) => setFormData(prev => ({ ...prev, guest_phone: e.target.value }))}
               className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="+34 600 000 000"
               required

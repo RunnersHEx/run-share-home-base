@@ -11,6 +11,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 export interface Message {
   id: string;
   booking_id: string;
+  conversation_id?: string;
   sender_id: string;
   message: string;
   message_type: 'text' | 'system';
@@ -237,7 +238,7 @@ class SimplifiedMessagingService {
     }
   }
 
-  // Send message with optimistic updates
+  // Send message with optimistic updates and conversation handling
   async sendMessage(
     bookingId: string,
     message: string,
@@ -263,10 +264,62 @@ class SimplifiedMessagingService {
     }
 
     try {
+      // First, ensure conversation exists
+      const { data: existingConversation } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('booking_id', bookingId)
+        .single();
+
+      let conversationId = existingConversation?.id;
+
+      // If conversation doesn't exist, create it
+      if (!conversationId) {
+        // Get booking details to create conversation
+        const { data: booking, error: bookingError } = await supabase
+          .from('bookings')
+          .select('guest_id, host_id')
+          .eq('id', bookingId)
+          .single();
+
+        if (bookingError || !booking) {
+          return {
+            error: {
+              type: 'server',
+              message: 'Booking not found or access denied'
+            }
+          };
+        }
+
+        // Create conversation
+        const { data: newConversation, error: conversationError } = await supabase
+          .from('conversations')
+          .insert({
+            booking_id: bookingId,
+            participant_1_id: booking.guest_id,
+            participant_2_id: booking.host_id
+          })
+          .select('id')
+          .single();
+
+        if (conversationError || !newConversation) {
+          return {
+            error: {
+              type: 'server',
+              message: 'Failed to create conversation'
+            }
+          };
+        }
+
+        conversationId = newConversation.id;
+      }
+
+      // Insert message with conversation_id
       const { data, error } = await supabase
         .from('booking_messages')
         .insert({
           booking_id: bookingId,
+          conversation_id: conversationId,
           sender_id: senderId,
           message: message.trim(),
           message_type: 'text'
@@ -312,6 +365,9 @@ class SimplifiedMessagingService {
       const updated = [...cached, enrichedMessage];
       this.messageCache.set(bookingId, updated);
 
+      // Update conversation unread count for the recipient
+      await this.updateConversationUnreadCount(bookingId, senderId);
+
       // Dispatch event for unread count refresh
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('message-sent', { detail: { bookingId, senderId } }));
@@ -328,13 +384,16 @@ class SimplifiedMessagingService {
     }
   }
 
-  // Mark messages as read (best effort - no UI blocking)
+  // Mark messages as read (using direct SQL since function doesn't exist)
   async markAsRead(bookingId: string, userId: string): Promise<void> {
     try {
-      await supabase.rpc('mark_messages_as_read', {
-        p_booking_id: bookingId,
-        p_user_id: userId,
-      });
+      // Update messages directly instead of using missing function
+      await supabase
+        .from('booking_messages')
+        .update({ read_at: new Date().toISOString() })
+        .eq('booking_id', bookingId)
+        .neq('sender_id', userId)
+        .is('read_at', null);
       
       // Invalidate unread count cache to force refresh
       this.unreadCountCache = null;
@@ -358,6 +417,24 @@ class SimplifiedMessagingService {
       // Mark messages as read in the database
       await this.markAsRead(bookingId, userId);
       
+      // Reset unread count for this user in the conversation
+      const { data: conversation } = await supabase
+        .from('conversations')
+        .select('participant_1_id, participant_2_id')
+        .eq('booking_id', bookingId)
+        .single();
+
+      if (conversation) {
+        const updateField = conversation.participant_1_id === userId 
+          ? 'unread_count_p1' 
+          : 'unread_count_p2';
+        
+        await supabase
+          .from('conversations')
+          .update({ [updateField]: 0 })
+          .eq('booking_id', bookingId);
+      }
+      
       return Promise.resolve();
     } catch (error) {
       console.warn('Failed to mark conversation as read:', error);
@@ -378,16 +455,23 @@ class SimplifiedMessagingService {
         return this.unreadCountCache.count;
       }
 
-      const { data, error } = await supabase.rpc('get_user_unread_count', {
-        p_user_id: userId,
-      });
+      // Calculate unread count directly since function doesn't exist
+      const { data: conversations } = await supabase
+        .from('conversations')
+        .select('participant_1_id, participant_2_id, unread_count_p1, unread_count_p2')
+        .or(`participant_1_id.eq.${userId},participant_2_id.eq.${userId}`);
 
-      if (error) {
-        console.warn('Failed to get unread count:', error);
+      if (!conversations) {
         return 0;
       }
 
-      const count = typeof data === 'number' ? data : 0;
+      const count = conversations.reduce((total, conv) => {
+        // Get the unread count for this user
+        const userUnreadCount = conv.participant_1_id === userId 
+          ? conv.unread_count_p1 
+          : conv.unread_count_p2;
+        return total + (userUnreadCount || 0);
+      }, 0);
       
       // Update cache
       this.unreadCountCache = {
@@ -400,6 +484,43 @@ class SimplifiedMessagingService {
     } catch (error) {
       console.warn('Error getting unread count:', error);
       return 0;
+    }
+  }
+
+  // Update conversation unread counts (since no database trigger exists)
+  async updateConversationUnreadCount(bookingId: string, senderId: string): Promise<void> {
+    try {
+      // Get conversation
+      const { data: conversation } = await supabase
+        .from('conversations')
+        .select('id, participant_1_id, participant_2_id, unread_count_p1, unread_count_p2')
+        .eq('booking_id', bookingId)
+        .single();
+
+      if (!conversation) {
+        return;
+      }
+
+      // Determine which participant's unread count to increment
+      const isParticipant1Sender = conversation.participant_1_id === senderId;
+      const updateField = isParticipant1Sender ? 'unread_count_p2' : 'unread_count_p1';
+      const currentCount = isParticipant1Sender 
+        ? conversation.unread_count_p2 
+        : conversation.unread_count_p1;
+
+      // Update conversation with new unread count and last message info
+      await supabase
+        .from('conversations')
+        .update({
+          [updateField]: (currentCount || 0) + 1,
+          last_message_at: new Date().toISOString()
+        })
+        .eq('id', conversation.id);
+
+      // Invalidate cache
+      this.unreadCountCache = null;
+    } catch (error) {
+      console.warn('Failed to update conversation unread count:', error);
     }
   }
 

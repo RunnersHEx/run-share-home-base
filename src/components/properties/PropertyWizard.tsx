@@ -1,9 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import WizardHeader from "./wizard/WizardHeader";
 import WizardProgress from "./wizard/WizardProgress";
 import WizardNavigation from "./wizard/WizardNavigation";
 import WizardStepRenderer from "./wizard/WizardStepRenderer";
+import WizardErrorBoundary from "./wizard/WizardErrorBoundary";
 import { usePropertyWizardLogic } from "./wizard/usePropertyWizardLogic";
 import { Property } from "@/types/property";
 
@@ -59,65 +60,76 @@ const PropertyWizard = ({ onClose, propertyId, initialData }: PropertyWizardProp
     }
   }, [initialData]);
 
-  const progress = (currentStep / STEPS.length) * 100;
+  const progress = useMemo(() => (currentStep / STEPS.length) * 100, [currentStep]);
 
-  const nextStep = () => {
+  const nextStep = useCallback(() => {
     if (currentStep < STEPS.length) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep(prev => prev + 1);
     }
-  };
+  }, [currentStep]);
 
-  const prevStep = () => {
+  const prevStep = useCallback(() => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep(prev => prev - 1);
     }
-  };
+  }, [currentStep]);
 
-  const onSubmit = () => {
+  const onSubmit = useCallback(() => {
     handleSubmit(photos);
-  };
+  }, [handleSubmit, photos]);
+
+  const currentStepData = useMemo(() => STEPS[currentStep - 1], [currentStep]);
+
+  // Defensive check to prevent rendering with invalid state
+  if (currentStep < 1 || currentStep > STEPS.length) {
+    console.error('PropertyWizard: Invalid current step', currentStep);
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <WizardHeader 
-          isEditing={!!propertyId}
-          currentStepDescription={STEPS[currentStep - 1].description}
-          onClose={onClose}
-        />
-
-        <WizardProgress 
-          currentStep={currentStep}
-          steps={STEPS}
-          progress={progress}
-        />
-
-        <div className="flex-1 overflow-y-auto p-6 min-h-0">
-          <WizardStepRenderer
-            currentStep={currentStep}
-            formData={formData}
-            updateFormData={updateFormData}
-            acknowledgedImportantNote={acknowledgedImportantNote}
-            setAcknowledgedImportantNote={setAcknowledgedImportantNote}
-            acceptedCancellationPolicy={acceptedCancellationPolicy}
-            setAcceptedCancellationPolicy={setAcceptedCancellationPolicy}
-            photos={photos}
-            setPhotos={setPhotos}
-            nextStep={nextStep}
-            prevStep={prevStep}
+        <WizardErrorBoundary onReset={() => setCurrentStep(1)}>
+          <WizardHeader 
+            isEditing={!!propertyId}
+            currentStepDescription={currentStepData.description}
+            onClose={onClose}
           />
-        </div>
 
-        <WizardNavigation
-          currentStep={currentStep}
-          steps={STEPS}
-          canProceed={canProceed(currentStep)}
-          isSubmitting={isSubmitting}
-          isEditing={!!propertyId}
-          onPrevStep={prevStep}
-          onNextStep={nextStep}
-          onSubmit={onSubmit}
-        />
+          <WizardProgress 
+            currentStep={currentStep}
+            steps={STEPS}
+            progress={progress}
+          />
+
+          <div className="flex-1 overflow-y-auto p-6 min-h-0">
+            <WizardStepRenderer
+              key={`step-${currentStep}`}
+              currentStep={currentStep}
+              formData={formData}
+              updateFormData={updateFormData}
+              acknowledgedImportantNote={acknowledgedImportantNote}
+              setAcknowledgedImportantNote={setAcknowledgedImportantNote}
+              acceptedCancellationPolicy={acceptedCancellationPolicy}
+              setAcceptedCancellationPolicy={setAcceptedCancellationPolicy}
+              photos={photos}
+              setPhotos={setPhotos}
+              nextStep={nextStep}
+              prevStep={prevStep}
+            />
+          </div>
+
+          <WizardNavigation
+            currentStep={currentStep}
+            steps={STEPS}
+            canProceed={canProceed(currentStep)}
+            isSubmitting={isSubmitting}
+            isEditing={!!propertyId}
+            onPrevStep={prevStep}
+            onNextStep={nextStep}
+            onSubmit={onSubmit}
+          />
+        </WizardErrorBoundary>
       </div>
     </div>
   );

@@ -23,9 +23,12 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-runner-gradient">
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0"
         style={{
-          backgroundImage: `linear-gradient(rgba(30, 64, 175, 0.8), rgba(5, 150, 105, 0.6)), url('/lovable-uploads/a989eba0-bb19-4efd-bcfc-3c1f8870d2cb.png')`
+          backgroundImage: `url('/lovable-uploads/hero-banner.png')`,
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
         }}
       />
       

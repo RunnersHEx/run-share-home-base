@@ -4,12 +4,13 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/contexts/AuthContext";
 import { Shield, Upload, CheckCircle, AlertCircle, FileText, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const VerificationSection = () => {
-  const { profile, uploadVerificationDoc, uploadAvatar, refetchProfile } = useProfile();
+  const { profile, loading, progress, uploadVerificationDoc, uploadAvatar, refetchProfile, refreshAuthProfile } = useProfile();
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const racePhotoInputRef = useRef<HTMLInputElement>(null);
@@ -40,7 +41,6 @@ const VerificationSection = () => {
               documents_count: (profile?.verification_documents?.length || 0) + 1
             }
           });
-          console.log('Email notification sent successfully');
           toast.success('Documento subido y admin notificado');
         } catch (error) {
           console.error('Error sending notification email:', error);
@@ -68,19 +68,14 @@ const VerificationSection = () => {
     setUploadingDoc('race_photo');
     
     try {
-      console.log('Starting race photo upload...');
-      
       // 1. Subir como foto de perfil (para que aparezca en "Mi Perfil")
       const avatarUrl = await uploadAvatar(file);
-      console.log('Avatar uploaded, URL:', avatarUrl);
       
       if (avatarUrl) {
         // 2. También registrar en verification_documents para el proceso de verificación
         const currentDocs = profile?.verification_documents || [];
         const racePhotoDoc = `race_photo_${Date.now()}.jpg`;
         const newDocs = currentDocs.filter(doc => !doc.includes('race_photo')).concat([racePhotoDoc]);
-        
-        console.log('Updating verification documents:', newDocs);
         
         // Actualizar los documentos de verificación
         const { error: updateError } = await supabase
@@ -95,7 +90,6 @@ const VerificationSection = () => {
 
         // 3. Enviar email de notificación al admin
         try {
-          console.log('Sending verification email...');
           const response = await supabase.functions.invoke('send-verification-email', {
             body: {
               user_id: profile?.id,
@@ -104,7 +98,6 @@ const VerificationSection = () => {
               documents_count: newDocs.length
             }
           });
-          console.log('Email function response:', response);
           toast.success('Foto en carrera subida y admin notificado por email');
         } catch (emailError) {
           console.error('Error sending notification email:', emailError);
@@ -112,13 +105,7 @@ const VerificationSection = () => {
         }
 
         // 4. Refrescar inmediatamente para mostrar los cambios
-        console.log('Refreshing profile immediately...');
         await refetchProfile();
-        
-        // Forzar actualización adicional para asegurar sincronización
-        setTimeout(async () => {
-          await refetchProfile();
-        }, 500);
       }
     } catch (error) {
       console.error('Error uploading race photo:', error);
