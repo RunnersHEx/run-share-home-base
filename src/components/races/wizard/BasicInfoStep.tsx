@@ -20,6 +20,23 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
   // Ensure properties is an array to prevent rendering issues
   const safeProperties = Array.isArray(properties) ? properties : [];
 
+  // Handle race date changes to validate registration deadline
+  const handleRaceDateChange = (newRaceDate: string) => {
+    const updates: Partial<RaceFormData> = { race_date: newRaceDate };
+    
+    // If there's a registration deadline and it's not before the new race date, clear it
+    if (formData.registration_deadline && newRaceDate) {
+      const raceDate = new Date(newRaceDate);
+      const deadlineDate = new Date(formData.registration_deadline);
+      
+      if (deadlineDate >= raceDate) {
+        updates.registration_deadline = "";
+      }
+    }
+    
+    onUpdate(updates);
+  };
+
   return (
     <div className="space-y-6">
       {/* Race Name */}
@@ -77,8 +94,9 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
                 id="race-date"
                 type="date"
                 value={formData.race_date || ""}
-                onChange={(e) => onUpdate({ race_date: e.target.value })}
+                onChange={(e) => handleRaceDateChange(e.target.value)}
                 placeholder="dd/mm/yyyy"
+                min={new Date().toISOString().split('T')[0]}
               />
             </div>
 
@@ -89,8 +107,13 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
                 type="date"
                 value={formData.registration_deadline || ""}
                 onChange={(e) => onUpdate({ registration_deadline: e.target.value })}
+                min={new Date().toISOString().split('T')[0]}
+                max={formData.race_date ? formData.race_date : undefined}
                 placeholder="dd/mm/yyyy"
               />
+              <p className="text-sm text-gray-600 mt-1">
+                Debe ser anterior a la fecha de la carrera
+              </p>
             </div>
           </div>
 

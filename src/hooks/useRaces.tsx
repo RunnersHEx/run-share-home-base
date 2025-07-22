@@ -86,7 +86,34 @@ export const useRaces = () => {
         return null;
       }
 
-      const data = await RaceService.createRace(raceData, user.id);
+      // Handle registration_deadline validation and default setting
+      const raceDate = new Date(raceData.race_date);
+      let registrationDeadline = raceData.registration_deadline;
+      
+      if (!registrationDeadline) {
+        // Set default registration deadline to 7 days before race date
+        const defaultDeadline = new Date(raceDate);
+        defaultDeadline.setDate(raceDate.getDate() - 7);
+        registrationDeadline = defaultDeadline.toISOString().split('T')[0];
+        console.log('useRaces: Setting default registration deadline:', registrationDeadline);
+      } else {
+        // Validate that registration deadline is before race date
+        const deadlineDate = new Date(registrationDeadline);
+        if (deadlineDate >= raceDate) {
+          toast.error('La fecha límite de inscripción debe ser anterior a la fecha de la carrera');
+          return null;
+        }
+      }
+
+      // Update race data with the validated/default registration deadline
+      const validatedRaceData = {
+        ...raceData,
+        registration_deadline: registrationDeadline
+      };
+      
+      console.log('useRaces: Creating race with validated data:', validatedRaceData);
+
+      const data = await RaceService.createRace(validatedRaceData, user.id);
       console.log('useRaces: Created race:', data);
       
       if (data) {
