@@ -1,17 +1,25 @@
-import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { CheckCircle, AlertCircle, Info, CheckCheck } from "lucide-react";
+import { CheckCircle, AlertCircle, Info, CheckCheck, WifiOff, Wifi } from "lucide-react";
 
 interface NotificationListProps {
   onClose: () => void;
+  notificationData: {
+    notifications: any[];
+    loading: boolean;
+    unreadCount: number;
+    markAsRead: (id: string) => Promise<void>;
+    markAllAsRead: () => Promise<void>;
+    connectionStatus: 'disconnected' | 'connecting' | 'connected';
+    refetch: () => Promise<void>;
+  };
 }
 
-const NotificationList = ({ onClose }: NotificationListProps) => {
-  const { notifications, loading, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+const NotificationList = ({ onClose, notificationData }: NotificationListProps) => {
+  const { notifications, loading, unreadCount, markAsRead, markAllAsRead, connectionStatus, refetch } = notificationData;
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -25,7 +33,6 @@ const NotificationList = ({ onClose }: NotificationListProps) => {
   };
 
   const handleMarkAllAsRead = async () => {
-    console.log('Handling mark all as read, unread count:', unreadCount);
     if (unreadCount > 0) {
       await markAllAsRead();
     }
@@ -41,18 +48,45 @@ const NotificationList = ({ onClose }: NotificationListProps) => {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="font-semibold">Notificaciones</h3>
-        {unreadCount > 0 && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleMarkAllAsRead}
-            className="text-xs hover:bg-blue-50 flex items-center gap-1"
-          >
-            <CheckCheck className="h-3 w-3" />
-            Marcar todas como leídas ({unreadCount})
-          </Button>
+      <div className="p-4 border-b space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold">Notificaciones</h3>
+          {unreadCount > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleMarkAllAsRead}
+              className="text-xs hover:bg-blue-50 flex items-center gap-1"
+            >
+              <CheckCheck className="h-3 w-3" />
+              Marcar todas como leídas ({unreadCount})
+            </Button>
+          )}
+        </div>
+        
+        {/* Connection Status - Only show when there are issues */}
+        {connectionStatus !== 'connected' && (
+          <div className="flex items-center gap-2 text-xs">
+            {connectionStatus === 'connecting' ? (
+              <>
+                <div className="h-3 w-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-blue-600">Conectando...</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="h-3 w-3 text-red-500" />
+                <span className="text-red-600">Desconectado</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={refetch}
+                  className="text-xs text-blue-600 hover:text-blue-700 p-0 h-auto"
+                >
+                  Reintentar
+                </Button>
+              </>
+            )}
+          </div>
         )}
       </div>
 
@@ -65,38 +99,47 @@ const NotificationList = ({ onClose }: NotificationListProps) => {
           <div className="space-y-0">
             {notifications.map((notification, index) => (
               <div key={notification.id}>
-                <div
-                  className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                    !notification.read ? 'bg-blue-50 border-l-2 border-l-blue-500' : ''
-                  }`}
-                  onClick={() => {
-                    console.log('Clicking notification:', notification.id, 'read:', notification.read);
-                    if (!notification.read) {
-                      markAsRead(notification.id);
+                {(() => {
+                  // Use robust read detection for styling
+                  const isRead = notification.read === true || notification.read === 'true' || notification.read === 1;
+                  
+                  return (
+                    <div
+                      className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                        !isRead ? 'bg-blue-50 border-l-2 border-l-blue-500' : ''
+                      }`}
+                  onClick={async () => {
+                    // Use the same robust read detection logic
+                    const isRead = notification.read === true || notification.read === 'true' || notification.read === 1;
+                    
+                    if (!isRead) {
+                      await markAsRead(notification.id);
                     }
                   }}
                 >
-                  <div className="flex items-start space-x-3">
-                    {getIcon(notification.type)}
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
-                        {notification.title}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-2">
-                        {formatDistanceToNow(new Date(notification.created_at), { 
-                          addSuffix: true, 
-                          locale: es 
-                        })}
-                      </p>
+                      <div className="flex items-start space-x-3">
+                        {getIcon(notification.type)}
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${!isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+                            {notification.title}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-2">
+                            {formatDistanceToNow(new Date(notification.created_at), { 
+                              addSuffix: true, 
+                              locale: es 
+                            })}
+                          </p>
+                        </div>
+                        {!isRead && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
+                        )}
+                      </div>
                     </div>
-                    {!notification.read && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
-                    )}
-                  </div>
-                </div>
+                  );
+                })()}
                 {index < notifications.length - 1 && <Separator />}
               </div>
             ))}
