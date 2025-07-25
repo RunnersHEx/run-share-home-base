@@ -66,6 +66,7 @@ class SimplifiedMessagingService {
   private maxCacheSize = 50; // Limit cache size
   private retryAttempts = new Map<string, number>();
   private maxRetries = 2; // Reduced retry attempts
+  private activeConversations = new Set<string>(); // Track active/open conversations
 
   // Clean up all subscriptions
   cleanup() {
@@ -75,13 +76,28 @@ class SimplifiedMessagingService {
     this.channels.clear();
     this.messageCache.clear();
     this.retryAttempts.clear();
+    this.activeConversations.clear();
+  }
+
+  // Track active/open conversations to prevent unread count increment
+  setConversationActive(bookingId: string, isActive: boolean) {
+    if (isActive) {
+      this.activeConversations.add(bookingId);
+    } else {
+      this.activeConversations.delete(bookingId);
+    }
+  }
+
+  isConversationActive(bookingId: string): boolean {
+    return this.activeConversations.has(bookingId);
   }
 
   // Subscribe to messages for a booking with simplified error handling
   subscribeToMessages(
     bookingId: string, 
     onUpdate: (message: Message) => void,  // Changed: now passes single new message
-    onError: (error: MessageError) => void
+    onError: (error: MessageError) => void,
+    isActive: boolean = false  // New: to know if chat is currently active/open
   ): () => void {
     const channelKey = `messages-${bookingId}`;
     
@@ -116,6 +132,13 @@ class SimplifiedMessagingService {
             
             // Pass only the new message to the hook for deduplication
             onUpdate(enrichedMessage);
+            
+            // If this conversation is active and the message is from someone else,
+            // correct the unread count since the user is seeing the message
+            if (isActive && newMessage.sender_id !== enrichedMessage.sender?.id) {
+              // We'll need the current user ID for this - pass it through the subscription
+              // For now, we'll handle this in the hook level
+            }
           } catch (error) {
             console.error('Real-time message processing error:', error);
             onError({
@@ -137,6 +160,74 @@ class SimplifiedMessagingService {
             onError({
               type: 'network',
               message: 'Real-time connection failed'
+            });
+          }
+        } else if (status === 'SUBSCRIBED') {
+          this.retryAttempts.delete(channelKey);
+        }
+      });
+
+    this.channels.set(channelKey, channel);
+
+    // Return cleanup function
+    return () => {
+      const ch = this.channels.get(channelKey);
+      if (ch) {
+        supabase.removeChannel(ch);
+        this.channels.delete(channelKey);
+      }
+    };
+  }
+
+  // Subscribe to conversations for real-time list updates
+  subscribeToConversations(
+    userId: string,
+    onUpdate: () => void,
+    onError: (error: MessageError) => void
+  ): () => void {
+    const channelKey = `conversations-${userId}`;
+    
+    // Clean up existing subscription
+    const existingChannel = this.channels.get(channelKey);
+    if (existingChannel) {
+      supabase.removeChannel(existingChannel);
+    }
+
+    const channel = supabase
+      .channel(channelKey)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations',
+          filter: `participant_1_id=eq.${userId},participant_2_id=eq.${userId}`,
+        },
+        async (payload) => {
+          try {
+            // Trigger refresh of conversations
+            onUpdate();
+          } catch (error) {
+            console.error('Real-time conversation processing error:', error);
+            onError({
+              type: 'network',
+              message: 'Failed to process real-time conversation update'
+            });
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          const attempts = this.retryAttempts.get(channelKey) || 0;
+          if (attempts < this.maxRetries) {
+            this.retryAttempts.set(channelKey, attempts + 1);
+            setTimeout(() => {
+              this.subscribeToConversations(userId, onUpdate, onError);
+            }, 1000 * Math.pow(2, attempts));
+          } else {
+            onError({
+              type: 'network',
+              message: 'Real-time conversation connection failed'
             });
           }
         } else if (status === 'SUBSCRIBED') {
@@ -365,8 +456,8 @@ class SimplifiedMessagingService {
       const updated = [...cached, enrichedMessage];
       this.messageCache.set(bookingId, updated);
 
-      // Update conversation unread count for the recipient
-      await this.updateConversationUnreadCount(bookingId, senderId);
+      // Note: Unread count should be updated by database triggers or real-time subscriptions
+      // Removed manual updateConversationUnreadCount call to prevent double counting
 
       // Dispatch event for unread count refresh
       if (typeof window !== 'undefined') {
@@ -442,6 +533,44 @@ class SimplifiedMessagingService {
     }
   }
 
+  // Correct unread count for active conversations (called after message is received)
+  async correctUnreadCountForActiveConversation(bookingId: string, userId: string): Promise<void> {
+    if (!this.isConversationActive(bookingId)) {
+      return; // Only correct count if conversation is active
+    }
+
+    try {
+      // Get conversation to determine which field to update
+      const { data: conversation } = await supabase
+        .from('conversations')
+        .select('participant_1_id, participant_2_id, unread_count_p1, unread_count_p2')
+        .eq('booking_id', bookingId)
+        .single();
+
+      if (!conversation) return;
+
+      // Determine which participant's unread count to decrement
+      const isParticipant1 = conversation.participant_1_id === userId;
+      const updateField = isParticipant1 ? 'unread_count_p1' : 'unread_count_p2';
+      const currentCount = isParticipant1 
+        ? conversation.unread_count_p1 
+        : conversation.unread_count_p2;
+
+      // If there's an unread count, decrement it since the conversation is active
+      if (currentCount > 0) {
+        await supabase
+          .from('conversations')
+          .update({ [updateField]: Math.max(0, currentCount - 1) })
+          .eq('booking_id', bookingId);
+
+        // Invalidate cache
+        this.unreadCountCache = null;
+      }
+    } catch (error) {
+      console.warn('Failed to correct unread count for active conversation:', error);
+    }
+  }
+
   // Get unread count with caching
   private unreadCountCache: { count: number; timestamp: number; userId: string } | null = null;
   private unreadCountCacheTimeout = 10000; // 10 seconds
@@ -484,43 +613,6 @@ class SimplifiedMessagingService {
     } catch (error) {
       console.warn('Error getting unread count:', error);
       return 0;
-    }
-  }
-
-  // Update conversation unread counts (since no database trigger exists)
-  async updateConversationUnreadCount(bookingId: string, senderId: string): Promise<void> {
-    try {
-      // Get conversation
-      const { data: conversation } = await supabase
-        .from('conversations')
-        .select('id, participant_1_id, participant_2_id, unread_count_p1, unread_count_p2')
-        .eq('booking_id', bookingId)
-        .single();
-
-      if (!conversation) {
-        return;
-      }
-
-      // Determine which participant's unread count to increment
-      const isParticipant1Sender = conversation.participant_1_id === senderId;
-      const updateField = isParticipant1Sender ? 'unread_count_p2' : 'unread_count_p1';
-      const currentCount = isParticipant1Sender 
-        ? conversation.unread_count_p2 
-        : conversation.unread_count_p1;
-
-      // Update conversation with new unread count and last message info
-      await supabase
-        .from('conversations')
-        .update({
-          [updateField]: (currentCount || 0) + 1,
-          last_message_at: new Date().toISOString()
-        })
-        .eq('id', conversation.id);
-
-      // Invalidate cache
-      this.unreadCountCache = null;
-    } catch (error) {
-      console.warn('Failed to update conversation unread count:', error);
     }
   }
 
@@ -603,76 +695,6 @@ export function useMessaging(bookingId?: string) {
       messagingService.markAsRead(bookingId, user.id);
     }
   }, [bookingId, user?.id]);
-
-  // Load more messages (pagination)
-  const loadMoreMessages = useCallback(() => {
-    if (state.hasMoreMessages && !state.loading) {
-      loadMessages(state.currentPage + 1, true);
-    }
-  }, [state.hasMoreMessages, state.loading, state.currentPage, loadMessages]);
-
-  // Send message
-  const sendMessage = useCallback(async (message: string) => {
-    if (!bookingId || !user?.id || !message.trim() || state.sending) return;
-
-    setState(prev => ({ ...prev, sending: true, error: null }));
-
-    // Optimistic update
-    const optimisticMessage: Message = {
-      id: `temp-${Date.now()}`,
-      booking_id: bookingId,
-      sender_id: user.id,
-      message: message.trim(),
-      message_type: 'text',
-      created_at: new Date().toISOString(),
-      sender: {
-        id: user.id,
-        first_name: user.first_name || 'You',
-        last_name: user.last_name || '',
-        profile_image_url: user.profile_image_url
-      }
-    };
-
-    setState(prev => ({
-      ...prev,
-      messages: [...prev.messages, optimisticMessage]
-    }));
-
-    // Send to server
-    const result = await messagingService.sendMessage(bookingId, message, user.id);
-
-    if (!mountedRef.current) return;
-
-    if (result.error) {
-      // Remove optimistic message on error
-      setState(prev => ({
-        ...prev,
-        messages: prev.messages.filter(msg => msg.id !== optimisticMessage.id),
-        sending: false,
-        error: result.error!
-      }));
-      toast.error(result.error.message);
-      return;
-    }
-
-    // Replace optimistic message with real message
-    setState(prev => ({
-      ...prev,
-      messages: prev.messages.map(msg =>
-        msg.id === optimisticMessage.id ? result.data! : msg
-      ),
-      sending: false,
-      error: null
-    }));
-
-    // Scroll to bottom
-    setTimeout(() => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
-
-  }, [bookingId, user, state.sending]);
 
   // Load conversations
   const loadConversations = useCallback(async () => {
@@ -767,67 +789,87 @@ export function useMessaging(bookingId?: string) {
     }
   }, [user?.id]);
 
-  // Set up real-time subscriptions for specific booking
-  useEffect(() => {
-    if (!bookingId || !user?.id || !mountedRef.current) return;
-
-    const cleanup = messagingService.subscribeToMessages(
-      bookingId,
-      (newMessage) => {
-        if (mountedRef.current) {
-          setState(prev => {
-            // Check if message already exists (avoid duplicates)
-            const messageExists = prev.messages.some(msg => 
-              msg.id === newMessage.id || 
-              (msg.id.startsWith('temp-') && 
-               msg.message === newMessage.message && 
-               msg.sender_id === newMessage.sender_id &&
-               Math.abs(new Date(msg.created_at).getTime() - new Date(newMessage.created_at).getTime()) < 5000)
-            );
-            
-            if (messageExists) {
-              // Replace optimistic message with real message if it's a temp message
-              return {
-                ...prev,
-                messages: prev.messages.map(msg => 
-                  msg.id.startsWith('temp-') && 
-                  msg.message === newMessage.message && 
-                  msg.sender_id === newMessage.sender_id
-                    ? newMessage
-                    : msg
-                )
-              };
-            } else {
-              // Add new message from other users
-              return {
-                ...prev,
-                messages: [...prev.messages, newMessage]
-              };
-            }
-          });
-        }
-      },
-      (error) => {
-        if (mountedRef.current) {
-          setState(prev => ({ ...prev, error }));
-        }
-      }
-    );
-
-    cleanupRef.current = cleanup;
-
-    return cleanup;
-  }, [bookingId, user?.id]);
-
-  // Initial data loading
-  useEffect(() => {
-    if (bookingId) {
-      loadMessages();
-    } else {
-      loadConversations();
+  // Load more messages (pagination)
+  const loadMoreMessages = useCallback(() => {
+    if (state.hasMoreMessages && !state.loading) {
+      loadMessages(state.currentPage + 1, true);
     }
-    loadUnreadCount();
-  }, [bookingId, loadMessages, loadConversations, loadUnreadCount]);
+  }, [state.hasMoreMessages, state.loading, state.currentPage, loadMessages]);
+
+  // Send message
+  const sendMessage = useCallback(async (message: string) => {
+    if (!bookingId || !user?.id || !message.trim() || state.sending) return;
+
+    setState(prev => ({ ...prev, sending: true, error: null }));
+
+    // Optimistic update
+    const optimisticMessage: Message = {
+      id: `temp-${Date.now()}`,
+      booking_id: bookingId,
+      sender_id: user.id,
+      message: message.trim(),
+      message_type: 'text',
+      created_at: new Date().toISOString(),
+      sender: {
+        id: user.id,
+        first_name: user.first_name || 'You',
+        last_name: user.last_name || '',
+        profile_image_url: user.profile_image_url
+      }
+    };
+
+    setState(prev => ({
+      ...prev,
+      messages: [...prev.messages, optimisticMessage]
+    }));
+
+    // Send to server
+    const result = await messagingService.sendMessage(bookingId, message, user.id);
+
+    if (!mountedRef.current) return;
+
+    if (result.error) {
+      // Remove optimistic message on error
+      setState(prev => ({
+        ...prev,
+        messages: prev.messages.filter(msg => msg.id !== optimisticMessage.id),
+        sending: false,
+        error: result.error!
+      }));
+      toast.error(result.error.message);
+      return;
+    }
+
+    // Replace optimistic message with real message only if it exists
+    setState(prev => {
+      const hasOptimisticMessage = prev.messages.some(msg => msg.id === optimisticMessage.id);
+      if (hasOptimisticMessage) {
+        return {
+          ...prev,
+          messages: prev.messages.map(msg =>
+            msg.id === optimisticMessage.id ? result.data! : msg
+          ),
+          sending: false,
+          error: null
+        };
+      } else {
+        // Optimistic message was already removed or replaced, just update state
+        return {
+          ...prev,
+          sending: false,
+          error: null
+        };
+      }
+    });
+
+    // Scroll to bottom
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+
+  }, [bookingId, user, state.sending]);
 
   // Refresh functions
   const refresh = useCallback(() => {
@@ -857,6 +899,113 @@ export function useMessaging(bookingId?: string) {
       }
     }, 100);
   }, [user?.id, loadUnreadCount]);
+
+  // Set up real-time subscriptions for specific booking
+  useEffect(() => {
+    if (!bookingId || !user?.id || !mountedRef.current) return;
+
+    // Mark this conversation as active
+    messagingService.setConversationActive(bookingId, true);
+
+    // Cleanup any existing subscription first
+    if (cleanupRef.current) {
+      cleanupRef.current();
+      cleanupRef.current = null;
+    }
+
+    const cleanup = messagingService.subscribeToMessages(
+      bookingId,
+      (newMessage) => {
+        if (mountedRef.current) {
+          setState(prev => {
+            // Check if this exact message already exists by ID
+            const exactMessageExists = prev.messages.some(msg => msg.id === newMessage.id);
+            if (exactMessageExists) {
+              return prev; // Do nothing if exact message already exists
+            }
+            
+            // Look for temporary message to replace
+            const tempMessageIndex = prev.messages.findIndex(msg => 
+              msg.id.startsWith('temp-') && 
+              msg.message === newMessage.message && 
+              msg.sender_id === newMessage.sender_id &&
+              Math.abs(new Date(msg.created_at).getTime() - new Date(newMessage.created_at).getTime()) < 5000
+            );
+            
+            if (tempMessageIndex !== -1) {
+              // Replace the temporary message with the real message
+              const updatedMessages = [...prev.messages];
+              updatedMessages[tempMessageIndex] = newMessage;
+              return {
+                ...prev,
+                messages: updatedMessages
+              };
+            } else {
+              // Add new message (from other users or if no temp message found)
+              return {
+                ...prev,
+                messages: [...prev.messages, newMessage]
+              };
+            }
+          });
+          
+          // If this message is from someone else and conversation is active,
+          // correct the unread count since user is seeing the message
+          if (newMessage.sender_id !== user.id) {
+            setTimeout(() => {
+              messagingService.correctUnreadCountForActiveConversation(bookingId, user.id);
+            }, 1000); // Small delay to let database triggers finish
+          }
+        }
+      },
+      (error) => {
+        if (mountedRef.current) {
+          setState(prev => ({ ...prev, error }));
+        }
+      },
+      true // isActive = true since this is an active chat
+    );
+
+    cleanupRef.current = () => {
+      cleanup();
+      // Mark conversation as inactive when cleanup
+      messagingService.setConversationActive(bookingId, false);
+    };
+
+    return cleanupRef.current;
+  }, [bookingId, user?.id]);
+
+  // Set up real-time subscriptions for conversation list (when no specific booking)
+  useEffect(() => {
+    if (bookingId || !user?.id || !mountedRef.current) return; // Only for conversation list mode
+
+    const cleanup = messagingService.subscribeToConversations(
+      user.id,
+      () => {
+        // Refresh conversations when changes detected
+        if (mountedRef.current) {
+          loadConversations();
+        }
+      },
+      (error) => {
+        if (mountedRef.current) {
+          setState(prev => ({ ...prev, error }));
+        }
+      }
+    );
+
+    return cleanup;
+  }, [bookingId, user?.id, loadConversations]);
+
+  // Initial data loading
+  useEffect(() => {
+    if (bookingId) {
+      loadMessages();
+    } else {
+      loadConversations();
+    }
+    loadUnreadCount();
+  }, [bookingId, loadMessages, loadConversations, loadUnreadCount]);
 
   return {
     // Data
