@@ -5,13 +5,13 @@ export interface Race {
   property_id: string;
   name: string;
   description?: string;
+  province: string;
   race_date: string;
   registration_deadline?: string;
   modalities: RaceModality[];
   terrain_profile: TerrainProfile[];
   distances: RaceDistance[];
   has_wave_starts: boolean;
-  start_location?: string;
   distance_from_property?: number;
   official_website?: string;
   registration_cost?: number;
@@ -58,6 +58,7 @@ export type RaceImageCategory = 'route' | 'elevation' | 'landscape' | 'finish' |
 export interface RaceFormData {
   name: string;
   description?: string;
+  province: string;
   race_date: string;
   registration_deadline?: string;
   property_id: string;
@@ -65,7 +66,6 @@ export interface RaceFormData {
   terrain_profile: TerrainProfile[];
   distances: RaceDistance[];
   has_wave_starts: boolean;
-  start_location?: string;
   distance_from_property?: number;
   official_website?: string;
   registration_cost?: number;

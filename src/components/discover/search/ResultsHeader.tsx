@@ -21,11 +21,13 @@ export const ResultsHeader = ({
   sortBy,
   onSortChange
 }: ResultsHeaderProps) => {
+  console.log('📊 RESULTS HEADER - Received count:', resultsCount, 'Type:', typeof resultsCount);
+  
   return (
     <div className="flex justify-between items-center mb-6">
       <div className="flex items-center gap-4">
         <h2 className="text-xl font-semibold text-gray-900">
-          {resultsCount} carreras encontradas
+          {resultsCount} races found
         </h2>
         
         <Button

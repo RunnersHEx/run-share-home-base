@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -23,6 +23,30 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
   const [maxGuests, setMaxGuests] = useState<number>(filters.maxGuests || 1);
   const [selectedProvince, setSelectedProvince] = useState<string>(filters.province || "");
   const [selectedMonth, setSelectedMonth] = useState<string>(filters.month || "");
+  const [selectedRadius, setSelectedRadius] = useState<string>("");
+  const [selectedRating, setSelectedRating] = useState<string>("");
+
+  // Sync local state with filters prop when it changes
+  useEffect(() => {
+    setSelectedModalities(filters.modalities || []);
+    setSelectedDistances(filters.distances || []);
+    setSelectedTerrainProfiles(filters.terrainProfiles || []);
+    setMaxGuests(filters.maxGuests || 1);
+    setSelectedProvince(filters.province || "");
+    setSelectedMonth(filters.month || "");
+    // Note: radius and rating are not part of filters yet
+  }, [filters]);
+
+  // Auto-apply filters when any filter changes
+  const applyFilters = (newFilters: Partial<RaceFilters>) => {
+    const updatedFilters: RaceFilters = {
+      ...filters,
+      ...newFilters
+    };
+    
+    console.log('Auto-applying filters:', updatedFilters);
+    onFiltersChange(updatedFilters);
+  };
 
   const handleModalityChange = (modality: RaceModality, checked: boolean) => {
     const updated = checked 
@@ -30,6 +54,11 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
       : selectedModalities.filter(m => m !== modality);
     setSelectedModalities(updated);
     console.log('Modalities updated:', updated);
+    
+    // Auto-apply filter
+    applyFilters({
+      modalities: updated.length > 0 ? updated : undefined
+    });
   };
 
   const handleDistanceChange = (distance: RaceDistance, checked: boolean) => {
@@ -38,6 +67,11 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
       : selectedDistances.filter(d => d !== distance);
     setSelectedDistances(updated);
     console.log('Distances updated:', updated);
+    
+    // Auto-apply filter
+    applyFilters({
+      distances: updated.length > 0 ? updated : undefined
+    });
   };
 
   const handleTerrainChange = (terrain: TerrainProfile, checked: boolean) => {
@@ -46,6 +80,53 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
       : selectedTerrainProfiles.filter(t => t !== terrain);
     setSelectedTerrainProfiles(updated);
     console.log('Terrain profiles updated:', updated);
+    
+    // Auto-apply filter
+    applyFilters({
+      terrainProfiles: updated.length > 0 ? updated : undefined
+    });
+  };
+
+  const handleProvinceChange = (province: string) => {
+    setSelectedProvince(province);
+    console.log('Province updated:', province);
+    
+    // Auto-apply filter
+    applyFilters({
+      province: province || undefined
+    });
+  };
+
+  const handleMonthChange = (month: string) => {
+    setSelectedMonth(month);
+    console.log('Month updated:', month);
+    
+    // Auto-apply filter
+    applyFilters({
+      month: month || undefined
+    });
+  };
+
+  const handleMaxGuestsChange = (guests: number) => {
+    setMaxGuests(guests);
+    console.log('Max guests updated:', guests);
+    
+    // Auto-apply filter
+    applyFilters({
+      maxGuests: guests > 1 ? guests : undefined
+    });
+  };
+
+  const handleRadiusChange = (radius: string) => {
+    setSelectedRadius(radius);
+    console.log('Radius updated:', radius);
+    // Note: radius is not part of RaceFilters interface yet, so we skip auto-apply for now
+  };
+
+  const handleRatingChange = (rating: string) => {
+    setSelectedRating(rating);
+    console.log('Rating updated:', rating);
+    // Note: rating is not part of RaceFilters interface yet, so we skip auto-apply for now
   };
 
   const clearAllFilters = () => {
@@ -57,6 +138,8 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
     setMaxGuests(1);
     setSelectedProvince("");
     setSelectedMonth("");
+    setSelectedRadius("");
+    setSelectedRating("");
   };
 
   const handleSearch = () => {
@@ -92,9 +175,11 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
       <CardContent className="space-y-6">
         <LocationFilters
           selectedProvince={selectedProvince}
-          onProvinceChange={setSelectedProvince}
+          onProvinceChange={handleProvinceChange}
           selectedMonth={selectedMonth}
-          onMonthChange={setSelectedMonth}
+          onMonthChange={handleMonthChange}
+          selectedRadius={selectedRadius}
+          onRadiusChange={handleRadiusChange}
         />
 
         <Separator />
@@ -112,7 +197,9 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
 
         <AccommodationFilters
           maxGuests={maxGuests}
-          onMaxGuestsChange={setMaxGuests}
+          onMaxGuestsChange={handleMaxGuestsChange}
+          selectedRating={selectedRating}
+          onRatingChange={handleRatingChange}
         />
 
         {/* Action Buttons */}

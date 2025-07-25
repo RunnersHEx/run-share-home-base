@@ -3,6 +3,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { ErrorSuppressor } from '@/utils/errorSuppressor';
 import { errorTracker } from '@/lib/errorTracking';
 
 interface Props {
@@ -21,14 +22,22 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    // Only show error UI for significant errors
+    if (ErrorSuppressor.shouldHandleError(error)) {
+      return { hasError: true, error };
+    }
+    // For suppressed errors, don't change state (don't show error UI)
+    return { hasError: false };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    errorTracker.trackError(error, {
-      componentStack: errorInfo.componentStack,
-      errorBoundary: true
-    });
+    // Only track significant errors
+    if (ErrorSuppressor.shouldHandleError(error, errorInfo)) {
+      errorTracker.trackError(error, {
+        componentStack: errorInfo.componentStack,
+        errorBoundary: true
+      });
+    }
   }
 
   private handleRetry = () => {

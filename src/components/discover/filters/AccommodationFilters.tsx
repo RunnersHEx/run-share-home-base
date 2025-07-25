@@ -1,16 +1,34 @@
 
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CustomSelect } from "@/components/ui/custom";
 import { Users } from "lucide-react";
 
 interface AccommodationFiltersProps {
   maxGuests: number;
   onMaxGuestsChange: (guests: number) => void;
+  selectedRating: string;
+  onRatingChange: (rating: string) => void;
 }
+
+const guestOptions = [
+  { value: "1", label: "1 huésped" },
+  { value: "2", label: "2 huéspedes" },
+  { value: "3", label: "3 huéspedes" },
+  { value: "4", label: "4 huéspedes" }
+];
+
+const ratingOptions = [
+  { value: "any", label: "Cualquier rating" },
+  { value: "4.0", label: "4.0+ estrellas" },
+  { value: "4.5", label: "4.5+ estrellas" },
+  { value: "4.8", label: "4.8+ estrellas" }
+];
 
 export const AccommodationFilters = ({
   maxGuests,
-  onMaxGuestsChange
+  onMaxGuestsChange,
+  selectedRating,
+  onRatingChange
 }: AccommodationFiltersProps) => {
   return (
     <div className="space-y-4">
@@ -23,33 +41,24 @@ export const AccommodationFilters = ({
         {/* Número máximo de huéspedes */}
         <div>
           <Label className="text-sm font-medium">Número máximo huéspedes</Label>
-          <Select value={maxGuests.toString()} onValueChange={(value) => onMaxGuestsChange(parseInt(value))}>
-            <SelectTrigger className="mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">1 huésped</SelectItem>
-              <SelectItem value="2">2 huéspedes</SelectItem>
-              <SelectItem value="3">3 huéspedes</SelectItem>
-              <SelectItem value="4">4 huéspedes</SelectItem>
-            </SelectContent>
-          </Select>
+          <CustomSelect
+            value={maxGuests.toString()}
+            onValueChange={(value) => onMaxGuestsChange(parseInt(value))}
+            options={guestOptions}
+            className="mt-1"
+          />
         </div>
 
         {/* Rating mínimo */}
         <div>
           <Label className="text-sm font-medium">Rating mínimo del host</Label>
-          <Select>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Cualquier rating" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="any">Cualquier rating</SelectItem>
-              <SelectItem value="4.0">4.0+ estrellas</SelectItem>
-              <SelectItem value="4.5">4.5+ estrellas</SelectItem>
-              <SelectItem value="4.8">4.8+ estrellas</SelectItem>
-            </SelectContent>
-          </Select>
+          <CustomSelect
+            value={selectedRating}
+            onValueChange={onRatingChange}
+            options={ratingOptions}
+            placeholder="Cualquier rating"
+            className="mt-1"
+          />
         </div>
       </div>
     </div>

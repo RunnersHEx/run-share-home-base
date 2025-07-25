@@ -82,73 +82,80 @@ const DiscoverRaces = () => {
     };
   }, []);
 
-  const filteredRaces = useMemo(() => {
-    console.log('Filtering races. Total races:', races.length);
-    console.log('Applied filters:', filters);
-    console.log('Search query:', searchQuery);
+  // Force component re-render when filters change
+  const [, setForceUpdate] = useState({});
+  const triggerUpdate = () => setForceUpdate({});
 
-    return races.filter(race => {
+  const filteredRaces = useMemo(() => {
+    const result = races.filter(race => {
       // Text search
-      if (searchQuery && !race.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
-          !race.location.toLowerCase().includes(searchQuery.toLowerCase())) {
-        console.log(`Race ${race.name} filtered out by text search`);
-        return false;
+      if (searchQuery) {
+        const queryLower = searchQuery.toLowerCase();
+        const nameMatch = race.name.toLowerCase().includes(queryLower);
+        const locationMatch = race.location.toLowerCase().includes(queryLower);
+        if (!nameMatch && !locationMatch) {
+          return false;
+        }
       }
       
-      // Province filter
-      if (filters.province && !race.location.toLowerCase().includes(filters.province.toLowerCase())) {
-        console.log(`Race ${race.name} filtered out by province. Location: ${race.location}, Filter: ${filters.province}`);
-        return false;
+      // Province filter - check if current filter matches race
+      if (filters.province) {
+        const filterProvince = filters.province.toLowerCase();
+        const raceProvince = (race.province || '').toLowerCase();
+        const raceLocation = (race.location || '').toLowerCase();
+        
+        const provinceMatch = raceProvince.includes(filterProvince) || raceLocation.includes(filterProvince);
+        if (!provinceMatch) {
+          return false;
+        }
       }
       
       // Modality filter
       if (filters.modalities && filters.modalities.length > 0) {
-        const hasMatchingModality = filters.modalities.some(modality => 
-          race.modalities.includes(modality)
-        );
+        const hasMatchingModality = filters.modalities.some(modality => {
+          return race.modalities.includes(modality);
+        });
         if (!hasMatchingModality) {
-          console.log(`Race ${race.name} filtered out by modality`);
           return false;
         }
       }
       
       // Distance filter
       if (filters.distances && filters.distances.length > 0) {
-        const hasMatchingDistance = filters.distances.some(distance => 
-          race.distances.includes(distance)
-        );
+        const hasMatchingDistance = filters.distances.some(distance => {
+          return race.distances.includes(distance);
+        });
         if (!hasMatchingDistance) {
-          console.log(`Race ${race.name} filtered out by distance`);
           return false;
         }
       }
       
       // Month filter
       if (filters.month) {
-        const raceMonth = new Date(race.date).getMonth() + 1;
+        const raceDate = new Date(race.date);
+        const raceMonth = raceDate.getMonth() + 1;
         const filterMonth = parseInt(filters.month);
         if (raceMonth !== filterMonth) {
-          console.log(`Race ${race.name} filtered out by month. Race month: ${raceMonth}, Filter month: ${filterMonth}`);
           return false;
         }
       }
       
       // Max guests filter
       if (filters.maxGuests && race.maxGuests && race.maxGuests < filters.maxGuests) {
-        console.log(`Race ${race.name} filtered out by max guests`);
         return false;
       }
       
       // Only show available races
       if (!race.available) {
-        console.log(`Race ${race.name} filtered out - not available`);
         return false;
       }
 
-      console.log(`Race ${race.name} passed all filters`);
       return true;
     });
-  }, [races, searchQuery, filters]);
+    
+    console.log('🎯 FILTER DEBUG - Total races:', races.length, 'Filtered result:', result.length, 'Filters:', filters);
+    return result;
+  }, [races, searchQuery, filters, JSON.stringify(filters)]);
 
   const handleSaveRace = (raceId: string) => {
     if (!mountedRef.current) return;
@@ -175,10 +182,8 @@ const DiscoverRaces = () => {
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
     if (!mountedRef.current) return;
-    
-    console.log('Filters changed:', newFilters);
     setFilters(newFilters);
-    fetchRaces(newFilters);
+    triggerUpdate(); // Force re-render
   };
 
   const handleClearFilters = () => {
@@ -214,11 +219,10 @@ const DiscoverRaces = () => {
     );
   }
 
-  console.log('Rendering DiscoverRaces. Filtered races:', filteredRaces.length);
-
   return (
     <div className="min-h-screen bg-gray-50">
       <HeroSearchSection 
+        key={JSON.stringify(filters)} // Force re-render when filters change
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         filters={filters}
@@ -241,8 +245,13 @@ const DiscoverRaces = () => {
 
           {/* Main Content */}
           <div className="flex-1">
+            {(() => {
+              console.log('🚀 BEFORE ResultsHeader - filteredRaces.length:', filteredRaces?.length, 'filteredRaces:', filteredRaces);
+              return null;
+            })()}
             <ResultsHeader
-              resultsCount={filteredRaces.length}
+              key={`results-${filteredRaces?.length || 0}`}
+              resultsCount={filteredRaces?.length || 0}
               showFilters={showFilters}
               onToggleFilters={() => setShowFilters(!showFilters)}
               viewMode={viewMode}
@@ -254,7 +263,7 @@ const DiscoverRaces = () => {
             {/* Results Grid */}
             {viewMode === "grid" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredRaces.map((race) => (
+                {filteredRaces?.map((race) => (
                   <RaceCard
                     key={race.id}
                     race={race}
@@ -262,14 +271,14 @@ const DiscoverRaces = () => {
                     onSave={() => handleSaveRace(race.id)}
                     onViewDetails={() => handleViewDetails(race)}
                   />
-                ))}
+                )) || []}
               </div>
             ) : (
               <MapView />
             )}
 
             {/* Empty State */}
-            {filteredRaces.length === 0 && (
+            {(!filteredRaces || filteredRaces.length === 0) && (
               <EmptyState onClearFilters={handleClearFilters} />
             )}
           </div>

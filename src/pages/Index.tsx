@@ -26,8 +26,8 @@ const Index = () => {
       <HeroSection onAuthModal={handleAuthModal} />
       
       {/* Quick Search integrated into Hero */}
-      <section className="relative overflow-hidden page-gradient -mt-16 pt-16">
-        <div className="container mx-auto px-4 pb-16">
+      <section className="relative page-gradient -mt-16 pt-16 pb-32">
+        <div className="container mx-auto px-4">
           <QuickSearchSection />
         </div>
       </section>

@@ -71,7 +71,7 @@ export const useRaces = () => {
       console.log('useRaces: Creating race with data:', raceData);
       
       // Validate required fields
-      if (!raceData.name || !raceData.race_date || !raceData.property_id) {
+      if (!raceData.name || !raceData.province || !raceData.race_date || !raceData.property_id) {
         toast.error('Por favor completa todos los campos obligatorios');
         return null;
       }
@@ -86,7 +86,39 @@ export const useRaces = () => {
         return null;
       }
 
-      const data = await RaceService.createRace(raceData, user.id);
+      if (!raceData.max_guests || raceData.max_guests < 1 || raceData.max_guests > 4) {
+        toast.error('El número máximo de huéspedes debe ser entre 1 y 4');
+        return null;
+      }
+
+      // Handle registration_deadline validation and default setting
+      const raceDate = new Date(raceData.race_date);
+      let registrationDeadline = raceData.registration_deadline;
+      
+      if (!registrationDeadline) {
+        // Set default registration deadline to 7 days before race date
+        const defaultDeadline = new Date(raceDate);
+        defaultDeadline.setDate(raceDate.getDate() - 7);
+        registrationDeadline = defaultDeadline.toISOString().split('T')[0];
+        console.log('useRaces: Setting default registration deadline:', registrationDeadline);
+      } else {
+        // Validate that registration deadline is before race date
+        const deadlineDate = new Date(registrationDeadline);
+        if (deadlineDate >= raceDate) {
+          toast.error('La fecha límite de inscripción debe ser anterior a la fecha de la carrera');
+          return null;
+        }
+      }
+
+      // Update race data with the validated/default registration deadline
+      const validatedRaceData = {
+        ...raceData,
+        registration_deadline: registrationDeadline
+      };
+      
+      console.log('useRaces: Creating race with validated data:', validatedRaceData);
+
+      const data = await RaceService.createRace(validatedRaceData, user.id);
       console.log('useRaces: Created race:', data);
       
       if (data) {
@@ -108,8 +140,16 @@ export const useRaces = () => {
 
   const updateRace = async (id: string, updates: Partial<RaceFormData>) => {
     try {
-      await RaceService.updateRace(id, updates);
-      await fetchRaces();
+      // Get the updated race data from server
+      const updatedRace = await RaceService.updateRace(id, updates);
+      
+      // Immediately update local state with the server response
+      setRaces(prevRaces => 
+        prevRaces.map(race => 
+          race.id === id ? updatedRace : race
+        )
+      );
+      
       toast.success('Carrera actualizada correctamente');
       return true;
     } catch (error) {

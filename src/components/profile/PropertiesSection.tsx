@@ -116,9 +116,6 @@ const PropertiesSection = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Badge variant={property.is_active ? "default" : "secondary"}>
-                          {property.is_active ? "Activa" : "Inactiva"}
-                        </Badge>
                         <PropertyEditButton 
                           property={property}
                           onPropertyUpdated={() => handleEditProperty(property)}
@@ -130,7 +127,7 @@ const PropertiesSection = () => {
                       {property.description}
                     </p>
 
-                    <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-4 gap-3 mb-4">
                       <div className="text-center">
                         <div className="flex items-center justify-center text-gray-600 mb-1">
                           <Users className="h-4 w-4 mr-1" />
@@ -144,6 +141,13 @@ const PropertiesSection = () => {
                           <span className="text-sm font-medium">{property.bedrooms}</span>
                         </div>
                         <span className="text-xs text-gray-500">Habitaciones</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center text-gray-600 mb-1">
+                          <Bed className="h-4 w-4 mr-1" />
+                          <span className="text-sm font-medium">{property.beds}</span>
+                        </div>
+                        <span className="text-xs text-gray-500">Camas</span>
                       </div>
                       <div className="text-center">
                         <div className="flex items-center justify-center text-gray-600 mb-1">

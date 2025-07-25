@@ -4,7 +4,7 @@ import { useProperties } from "@/hooks/useProperties";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Home, MapPin, Users, Star } from "lucide-react";
+import { Plus, Home, MapPin, Users, Star, Bed, Bath } from "lucide-react";
 import { useState } from "react";
 import PropertyWizard from "@/components/properties/PropertyWizard";
 
@@ -74,11 +74,6 @@ const Properties = () => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Home className="h-12 w-12 text-gray-400" />
                   </div>
-                  <div className="absolute top-2 right-2">
-                    <Badge variant={property.is_active ? "default" : "secondary"}>
-                      {property.is_active ? "Activa" : "Inactiva"}
-                    </Badge>
-                  </div>
                 </div>
                 <CardHeader>
                   <CardTitle className="text-lg">{property.title}</CardTitle>
@@ -94,7 +89,18 @@ const Properties = () => {
                         <Users className="h-4 w-4 mr-1" />
                         {property.max_guests} huéspedes
                       </span>
-                      <span>{property.bedrooms} habitaciones</span>
+                      <span className="flex items-center">
+                        <Bed className="h-4 w-4 mr-1" />
+                        {property.bedrooms} habitaciones
+                      </span>
+                      <span className="flex items-center">
+                        <Bed className="h-4 w-4 mr-1" />
+                        {property.beds} camas
+                      </span>
+                      <span className="flex items-center">
+                        <Bath className="h-4 w-4 mr-1" />
+                        {property.bathrooms} baños
+                      </span>
                     </div>
                     {property.average_rating && (
                       <div className="flex items-center">

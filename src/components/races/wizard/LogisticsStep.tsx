@@ -17,7 +17,8 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
     return formData.points_cost && 
            formData.points_cost > 0 && 
            formData.max_guests && 
-           formData.max_guests > 0;
+           formData.max_guests > 0 &&
+           formData.max_guests <= 4;
   };
 
   return (
@@ -147,12 +148,29 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
               max="4"
               value={formData.max_guests || ''}
               onChange={(e) => {
-                const value = parseInt(e.target.value) || 1;
-                const limitedValue = Math.min(Math.max(value, 1), 4);
-                onUpdate({ max_guests: limitedValue });
+                const value = e.target.value;
+                if (value === '') {
+                  onUpdate({ max_guests: undefined });
+                  return;
+                }
+                
+                const numValue = parseInt(value);
+                if (isNaN(numValue)) {
+                  return; // Don't update if not a valid number
+                }
+                
+                // Allow 1-4, restrict anything above 4 to 4, anything below 1 to 1
+                if (numValue > 4) {
+                  onUpdate({ max_guests: 4 });
+                } else if (numValue < 1) {
+                  onUpdate({ max_guests: 1 });
+                } else {
+                  // Keep the exact value if it's between 1-4
+                  onUpdate({ max_guests: numValue });
+                }
               }}
               className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="2"
+              placeholder="4"
             />
             <p className="text-sm text-gray-500 mt-1">
               Considera la capacidad de tu propiedad y tu disponibilidad como anfitrión (máximo 4 guests)

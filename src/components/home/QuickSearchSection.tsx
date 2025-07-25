@@ -3,9 +3,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, MapPin, Calendar, Trophy } from "lucide-react";
 import { RaceFilters } from "@/types/race";
+import { CustomSelect } from "@/components/ui/custom";
 
 const QuickSearchSection = () => {
   const navigate = useNavigate();
@@ -25,24 +25,71 @@ const QuickSearchSection = () => {
     "Vizcaya", "Zamora", "Zaragoza"
   ];
 
+  const provinceOptions = spanishProvinces.map(province => ({
+    value: province,
+    label: province
+  }));
+
+  const monthOptions = [
+    { value: "1", label: "Enero" },
+    { value: "2", label: "Febrero" },
+    { value: "3", label: "Marzo" },
+    { value: "4", label: "Abril" },
+    { value: "5", label: "Mayo" },
+    { value: "6", label: "Junio" },
+    { value: "7", label: "Julio" },
+    { value: "8", label: "Agosto" },
+    { value: "9", label: "Septiembre" },
+    { value: "10", label: "Octubre" },
+    { value: "11", label: "Noviembre" },
+    { value: "12", label: "Diciembre" }
+  ];
+
+  const modalityOptions = [
+    { value: "road", label: "Asfalto" },
+    { value: "trail", label: "Trail/Montaña" }
+  ];
+
+  const distanceOptions = [
+    { value: "ultra", label: "Ultra" },
+    { value: "marathon", label: "Maratón" },
+    { value: "half_marathon", label: "Media Maratón" },
+    { value: "20k", label: "20K" },
+    { value: "15k", label: "15K" },
+    { value: "10k", label: "10K" },
+    { value: "5k", label: "5K" }
+  ];
+
   const handleSearch = () => {
+    // Define default values that match the placeholders
+    const defaultProvince = "Valencia";
+    const defaultMonth = "1"; // Enero
+    const defaultModality = "road"; // Asfalto
+    const defaultDistance = "10k"; // 10K
+    
+    // Use selected values or fallback to defaults
+    const finalProvince = selectedProvince || defaultProvince;
+    const finalMonth = selectedMonth || defaultMonth;
+    const finalModality = selectedModality || defaultModality;
+    const finalDistance = selectedDistance || defaultDistance;
+    
     // Build filters object
     const filters: RaceFilters = {};
     
-    if (selectedProvince) {
-      filters.province = selectedProvince;
+    if (finalProvince) {
+      filters.province = finalProvince;
     }
     
-    if (selectedMonth) {
-      filters.month = selectedMonth;
+    if (finalMonth) {
+      filters.month = finalMonth;
     }
     
-    if (selectedModality) {
-      filters.modalities = [selectedModality as any];
+    if (finalModality) {
+      filters.modalities = [finalModality as any];
     }
     
-    if (selectedDistance) {
-      filters.distances = [selectedDistance as any];
+    if (finalDistance) {
+      filters.distances = [finalDistance as any];
     }
 
     console.log('QuickSearch: Navigating with filters:', filters);
@@ -55,20 +102,20 @@ const QuickSearchSection = () => {
       searchParams.set('q', searchQuery);
     }
     
-    if (selectedProvince) {
-      searchParams.set('province', selectedProvince);
+    if (finalProvince) {
+      searchParams.set('province', finalProvince);
     }
     
-    if (selectedMonth) {
-      searchParams.set('month', selectedMonth);
+    if (finalMonth) {
+      searchParams.set('month', finalMonth);
     }
     
-    if (selectedModality) {
-      searchParams.set('modality', selectedModality);
+    if (finalModality) {
+      searchParams.set('modality', finalModality);
     }
     
-    if (selectedDistance) {
-      searchParams.set('distance', selectedDistance);
+    if (finalDistance) {
+      searchParams.set('distance', finalDistance);
     }
 
     const queryString = searchParams.toString();
@@ -79,7 +126,7 @@ const QuickSearchSection = () => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl p-8 -mt-12 relative z-10 mx-4">
+    <div className="bg-white rounded-2xl shadow-2xl p-8 -mt-12 relative z-10 mx-4" style={{ position: 'relative', zIndex: 1000 }}>
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
           Encuentra tu próxima aventura
@@ -89,25 +136,20 @@ const QuickSearchSection = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6" style={{ position: 'relative', zIndex: 1000 }}>
         {/* Destino */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
             <MapPin className="w-4 h-4 text-[#1E40AF]" />
             Destino
           </label>
-          <Select value={selectedProvince} onValueChange={setSelectedProvince}>
-            <SelectTrigger className="h-12">
-              <SelectValue placeholder="Valencia" />
-            </SelectTrigger>
-            <SelectContent>
-              {spanishProvinces.map((province) => (
-                <SelectItem key={province} value={province}>
-                  {province}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CustomSelect
+            value={selectedProvince}
+            onValueChange={setSelectedProvince}
+            options={provinceOptions}
+            placeholder="Valencia"
+            className="w-full"
+          />
         </div>
 
         {/* Mes */}
@@ -116,25 +158,13 @@ const QuickSearchSection = () => {
             <Calendar className="w-4 h-4 text-[#1E40AF]" />
             Mes
           </label>
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="h-12">
-              <SelectValue placeholder="Enero" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Enero</SelectItem>
-              <SelectItem value="2">Febrero</SelectItem>
-              <SelectItem value="3">Marzo</SelectItem>
-              <SelectItem value="4">Abril</SelectItem>
-              <SelectItem value="5">Mayo</SelectItem>
-              <SelectItem value="6">Junio</SelectItem>
-              <SelectItem value="7">Julio</SelectItem>
-              <SelectItem value="8">Agosto</SelectItem>
-              <SelectItem value="9">Septiembre</SelectItem>
-              <SelectItem value="10">Octubre</SelectItem>
-              <SelectItem value="11">Noviembre</SelectItem>
-              <SelectItem value="12">Diciembre</SelectItem>
-            </SelectContent>
-          </Select>
+          <CustomSelect
+            value={selectedMonth}
+            onValueChange={setSelectedMonth}
+            options={monthOptions}
+            placeholder="Enero"
+            className="w-full"
+          />
         </div>
 
         {/* Modalidad de Carrera */}
@@ -143,15 +173,13 @@ const QuickSearchSection = () => {
             <Trophy className="w-4 h-4 text-[#1E40AF]" />
             Modalidad de Carrera
           </label>
-          <Select value={selectedModality} onValueChange={setSelectedModality}>
-            <SelectTrigger className="h-12">
-              <SelectValue placeholder="Asfalto" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="road">Asfalto</SelectItem>
-              <SelectItem value="trail">Trail/Montaña</SelectItem>
-            </SelectContent>
-          </Select>
+          <CustomSelect
+            value={selectedModality}
+            onValueChange={setSelectedModality}
+            options={modalityOptions}
+            placeholder="Asfalto"
+            className="w-full"
+          />
         </div>
 
         {/* Distancia Carrera */}
@@ -159,20 +187,13 @@ const QuickSearchSection = () => {
           <label className="text-sm font-medium text-gray-700">
             Distancia Carrera
           </label>
-          <Select value={selectedDistance} onValueChange={setSelectedDistance}>
-            <SelectTrigger className="h-12">
-              <SelectValue placeholder="10K" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ultra">Ultra</SelectItem>
-              <SelectItem value="marathon">Maratón</SelectItem>
-              <SelectItem value="half_marathon">Media Maratón</SelectItem>
-              <SelectItem value="20k">20K</SelectItem>
-              <SelectItem value="15k">15K</SelectItem>
-              <SelectItem value="10k">10K</SelectItem>
-              <SelectItem value="5k">5K</SelectItem>
-            </SelectContent>
-          </Select>
+          <CustomSelect
+            value={selectedDistance}
+            onValueChange={setSelectedDistance}
+            options={distanceOptions}
+            placeholder="10K"
+            className="w-full"
+          />
         </div>
 
         {/* Search Button */}

@@ -11,16 +11,16 @@ export const EmptyState = ({ onClearFilters }: EmptyStateProps) => {
     <div className="text-center py-12">
       <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
       <h3 className="text-xl font-semibold text-gray-900 mb-2">
-        No se encontraron carreras
+        No races found
       </h3>
       <p className="text-gray-600 mb-6">
-        Prueba ajustando tus filtros de búsqueda para encontrar más opciones
+        Try adjusting your search filters to find more options.
       </p>
       <Button 
         onClick={onClearFilters}
         variant="outline"
       >
-        Limpiar filtros
+        Clean filters
       </Button>
     </div>
   );
