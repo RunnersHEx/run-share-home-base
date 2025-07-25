@@ -17,6 +17,8 @@ import { toast } from "sonner";
 interface RaceWizardProps {
   onClose: () => void;
   onSuccess: () => void;
+  editingRace?: any; // Race data for editing
+  isEditMode?: boolean;
 }
 
 const STEPS = [
@@ -27,7 +29,7 @@ const STEPS = [
   { id: 5, title: "Fotos y Documentación", component: PhotosStep }
 ];
 
-export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
+export const RaceWizard = ({ onClose, onSuccess, editingRace, isEditMode = false }: RaceWizardProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<RaceFormData>>({
     modalities: [],
@@ -38,7 +40,34 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
     max_guests: 1
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { createRace } = useRaces();
+  const { createRace, updateRace } = useRaces();
+
+  // Initialize form data with editing race data if in edit mode
+  useEffect(() => {
+    if (isEditMode && editingRace) {
+      console.log('Loading race data for editing:', editingRace);
+      setFormData({
+        name: editingRace.name || '',
+        description: editingRace.description || '',
+        province: editingRace.province || '',
+        race_date: editingRace.race_date || '',
+        registration_deadline: editingRace.registration_deadline || '',
+        property_id: editingRace.property_id || '',
+        modalities: editingRace.modalities || [],
+        terrain_profile: editingRace.terrain_profile || [],
+        distances: editingRace.distances || [],
+        has_wave_starts: editingRace.has_wave_starts || false,
+        distance_from_property: editingRace.distance_from_property || 0,
+        official_website: editingRace.official_website || '',
+        registration_cost: editingRace.registration_cost || 0,
+        points_cost: editingRace.points_cost || 100,
+        max_guests: editingRace.max_guests || 1,
+        highlights: editingRace.highlights || '',
+        local_tips: editingRace.local_tips || '',
+        weather_notes: editingRace.weather_notes || ''
+      });
+    }
+  }, [isEditMode, editingRace]);
 
   const handleNext = () => {
     if (currentStep < STEPS.length) {
@@ -60,7 +89,7 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
     
     try {
       // Validate required fields
-      if (!formData.name || !formData.race_date || !formData.property_id) {
+      if (!formData.name || !formData.province || !formData.race_date || !formData.property_id) {
         toast.error('Por favor completa todos los campos obligatorios');
         setIsSubmitting(false);
         return;
@@ -78,20 +107,27 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
         return;
       }
 
-      console.log('Creating race with validated data:', formData);
-      const result = await createRace(formData as RaceFormData);
+      console.log(isEditMode ? 'Updating race with validated data:' : 'Creating race with validated data:', formData);
+      
+      let result;
+      if (isEditMode && editingRace) {
+        result = await updateRace(editingRace.id, formData as RaceFormData);
+      } else {
+        result = await createRace(formData as RaceFormData);
+      }
       
       if (result) {
-        console.log('Race created successfully:', result);
-        toast.success('¡Carrera creada exitosamente!');
+        console.log(isEditMode ? 'Race updated successfully:' : 'Race created successfully:', result);
+        toast.success(isEditMode ? '¡Carrera actualizada exitosamente!' : '¡Carrera creada exitosamente!');
+        console.log('Calling onSuccess callback');
         onSuccess();
       } else {
-        console.log('Race creation failed');
-        toast.error('Error al crear la carrera. Por favor intenta de nuevo.');
+        console.log(isEditMode ? 'Race update failed' : 'Race creation failed');
+        toast.error(isEditMode ? 'Error al actualizar la carrera. Por favor intenta de nuevo.' : 'Error al crear la carrera. Por favor intenta de nuevo.');
       }
     } catch (error) {
-      console.error('Error creating race:', error);
-      toast.error('Error al crear la carrera. Verifica que todos los campos estén completos.');
+      console.error(isEditMode ? 'Error updating race:' : 'Error creating race:', error);
+      toast.error(isEditMode ? 'Error al actualizar la carrera. Verifica que todos los campos estén completos.' : 'Error al crear la carrera. Verifica que todos los campos estén completos.');
     } finally {
       setIsSubmitting(false);
     }
@@ -112,11 +148,11 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
   const isStepValid = () => {
     switch (currentStep) {
       case 1:
-        return formData.name && formData.race_date && formData.property_id;
+        return formData.name && formData.province && formData.race_date && formData.property_id;
       case 2:
         return formData.modalities?.length && formData.distances?.length;
       case 3:
-        return formData.points_cost !== undefined && formData.max_guests;
+        return formData.points_cost !== undefined && formData.max_guests && formData.max_guests > 0 && formData.max_guests <= 4;
       case 4:
         return true; // Optional step
       case 5:
@@ -148,7 +184,7 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
             <CardHeader className="border-b">
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle className="text-2xl">Crear Nueva Carrera</CardTitle>
+                  <CardTitle className="text-2xl">{isEditMode ? 'Editar Carrera' : 'Crear Nueva Carrera'}</CardTitle>
                   <p className="text-gray-600 mt-1">
                     Paso {currentStep} de {STEPS.length}: {STEPS[currentStep - 1].title}
                   </p>
@@ -194,7 +230,7 @@ export const RaceWizard = ({ onClose, onSuccess }: RaceWizardProps) => {
                       disabled={!isStepValid() || isSubmitting}
                       className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
                     >
-                      {isSubmitting ? "Creando..." : "Crear Carrera"}
+                      {isSubmitting ? (isEditMode ? "Actualizando..." : "Creando...") : (isEditMode ? "Actualizar Carrera" : "Crear Carrera")}
                     </Button>
                   ) : (
                     <Button

@@ -71,7 +71,7 @@ export const useRaces = () => {
       console.log('useRaces: Creating race with data:', raceData);
       
       // Validate required fields
-      if (!raceData.name || !raceData.race_date || !raceData.property_id) {
+      if (!raceData.name || !raceData.province || !raceData.race_date || !raceData.property_id) {
         toast.error('Por favor completa todos los campos obligatorios');
         return null;
       }
@@ -83,6 +83,11 @@ export const useRaces = () => {
 
       if (!raceData.distances || raceData.distances.length === 0) {
         toast.error('Por favor selecciona al menos una distancia');
+        return null;
+      }
+
+      if (!raceData.max_guests || raceData.max_guests < 1 || raceData.max_guests > 4) {
+        toast.error('El número máximo de huéspedes debe ser entre 1 y 4');
         return null;
       }
 
@@ -135,8 +140,16 @@ export const useRaces = () => {
 
   const updateRace = async (id: string, updates: Partial<RaceFormData>) => {
     try {
-      await RaceService.updateRace(id, updates);
-      await fetchRaces();
+      // Get the updated race data from server
+      const updatedRace = await RaceService.updateRace(id, updates);
+      
+      // Immediately update local state with the server response
+      setRaces(prevRaces => 
+        prevRaces.map(race => 
+          race.id === id ? updatedRace : race
+        )
+      );
+      
       toast.success('Carrera actualizada correctamente');
       return true;
     } catch (error) {

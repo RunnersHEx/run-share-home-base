@@ -2,10 +2,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Search, MapPin, Calendar, Grid3X3, Map as MapIcon, X } from "lucide-react";
 import { RaceFilters } from "@/types/race";
+import { CustomSelect } from "@/components/ui/custom";
 
 interface HeroSearchSectionProps {
   searchQuery: string;
@@ -24,30 +24,84 @@ export const HeroSearchSection = ({
   viewMode,
   onViewModeChange
 }: HeroSearchSectionProps) => {
+  const spanishProvinces = [
+    "A Coruña", "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz",
+    "Baleares", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
+    "Córdoba", "Cuenca", "Girona", "Granada", "Guadalajara", "Gipuzkoa", "Huelva", "Huesca",
+    "Jaén", "León", "Lleida", "La Rioja", "Lugo", "Madrid", "Málaga", "Murcia", "Navarra",
+    "Ourense", "Palencia", "Las Palmas", "Pontevedra", "Salamanca", "Santa Cruz de Tenerife",
+    "Segovia", "Sevilla", "Soria", "Tarragona", "Teruel", "Toledo", "Valencia", "Valladolid",
+    "Vizcaya", "Zamora", "Zaragoza"
+  ];
+
+  const provinceOptions = spanishProvinces.map(province => ({
+    value: province,
+    label: province
+  }));
+
+  const monthOptions = [
+    { value: "1", label: "Enero" },
+    { value: "2", label: "Febrero" },
+    { value: "3", label: "Marzo" },
+    { value: "4", label: "Abril" },
+    { value: "5", label: "Mayo" },
+    { value: "6", label: "Junio" },
+    { value: "7", label: "Julio" },
+    { value: "8", label: "Agosto" },
+    { value: "9", label: "Septiembre" },
+    { value: "10", label: "Octubre" },
+    { value: "11", label: "Noviembre" },
+    { value: "12", label: "Diciembre" }
+  ];
+
+  const modalityOptions = [
+    { value: "road", label: "Ruta/Asfalto" },
+    { value: "trail", label: "Trail/Montaña" }
+  ];
+
+  const distanceOptions = [
+    { value: "ultra", label: "Ultra" },
+    { value: "marathon", label: "Maratón" },
+    { value: "half_marathon", label: "Media Maratón" },
+    { value: "20k", label: "20K" },
+    { value: "15k", label: "15K" },
+    { value: "10k", label: "10K" },
+    { value: "5k", label: "5K" }
+  ];
   const clearFilter = (filterKey: keyof RaceFilters) => {
-    onFiltersChange({ ...filters, [filterKey]: undefined });
+    const newFilters = { ...filters };
+    delete newFilters[filterKey];
+    onFiltersChange(newFilters);
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== undefined && value !== '');
+  const hasActiveFilters = Object.keys(filters).some(key => {
+    const value = filters[key as keyof RaceFilters];
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    return value !== undefined && value !== '';
+  });
 
   // Helper function to handle modality changes
   const handleModalityChange = (value: string) => {
-    if (!value) {
-      const { modalities, ...rest } = filters;
-      onFiltersChange(rest);
+    const newFilters = { ...filters };
+    if (value) {
+      newFilters.modalities = [value as any];
     } else {
-      onFiltersChange({ ...filters, modalities: [value as any] });
+      delete newFilters.modalities;
     }
+    onFiltersChange(newFilters);
   };
 
   // Helper function to handle distance changes
   const handleDistanceChange = (value: string) => {
-    if (!value) {
-      const { distances, ...rest } = filters;
-      onFiltersChange(rest);
+    const newFilters = { ...filters };
+    if (value) {
+      newFilters.distances = [value as any];
     } else {
-      onFiltersChange({ ...filters, distances: [value as any] });
+      delete newFilters.distances;
     }
+    onFiltersChange(newFilters);
   };
 
   // Helper function to get current modality value
@@ -74,95 +128,102 @@ export const HeroSearchSection = ({
         </div>
 
         {/* Search Bar */}
-        <div className="max-w-4xl mx-auto mb-8">
+        <div className="max-w-6xl mx-auto mb-8">
           <div className="bg-white rounded-xl shadow-xl p-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Main Search Input */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  placeholder="Buscar por carrera, ciudad o provincia..."
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  className="pl-10 h-12 text-lg border-0 focus:ring-2 focus:ring-[#1E40AF]"
+            {/* Main Search Input */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                placeholder="Buscar por carrera, ciudad o provincia..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="pl-10 h-12 text-lg border-0 focus:ring-2 focus:ring-[#1E40AF] text-gray-900 placeholder:text-gray-500"
+              />
+            </div>
+
+            {/* Filter Row */}
+            <div className="flex flex-col sm:flex-row gap-3 items-center">
+              {/* Filter Dropdowns */}
+              <div className="flex flex-wrap sm:flex-nowrap gap-3 flex-1">
+                <CustomSelect
+                  value={filters.province || ''}
+                  onValueChange={(value) => {
+                    const newFilters = { ...filters };
+                    if (value) {
+                      newFilters.province = value;
+                    } else {
+                      delete newFilters.province;
+                    }
+                    onFiltersChange(newFilters);
+                  }}
+                  options={provinceOptions}
+                  placeholder="Provincia"
+                  className="w-full sm:w-40"
+                />
+
+                <CustomSelect
+                  value={filters.month || ''}
+                  onValueChange={(value) => {
+                    const newFilters = { ...filters };
+                    if (value) {
+                      newFilters.month = value;
+                    } else {
+                      delete newFilters.month;
+                    }
+                    onFiltersChange(newFilters);
+                  }}
+                  options={monthOptions}
+                  placeholder="Mes"
+                  className="w-full sm:w-36"
+                />
+
+                <CustomSelect
+                  value={getCurrentModality()}
+                  onValueChange={(value) => {
+                    handleModalityChange(value);
+                  }}
+                  options={modalityOptions}
+                  placeholder="Modalidad"
+                  className="w-full sm:w-40"
+                />
+
+                <CustomSelect
+                  value={getCurrentDistance()}
+                  onValueChange={(value) => {
+                    handleDistanceChange(value);
+                  }}
+                  options={distanceOptions}
+                  placeholder="Distancia"
+                  className="w-full sm:w-40"
                 />
               </div>
 
-              {/* Quick Filters */}
-              <div className="flex flex-wrap lg:flex-nowrap gap-3">
-                <Select
-                  value={filters.month || ''}
-                  onValueChange={(value) => onFiltersChange({ ...filters, month: value || undefined })}
+              {/* View Mode Toggle */}
+              <div className="flex border rounded-lg bg-gray-50">
+                <Button
+                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => onViewModeChange("grid")}
+                  className={`h-12 px-4 rounded-r-none ${
+                    viewMode === "grid" 
+                      ? "bg-blue-600 text-white hover:bg-blue-700" 
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
                 >
-                  <SelectTrigger className="w-40 h-12 border-0">
-                    <SelectValue placeholder="Mes" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Enero</SelectItem>
-                    <SelectItem value="2">Febrero</SelectItem>
-                    <SelectItem value="3">Marzo</SelectItem>
-                    <SelectItem value="4">Abril</SelectItem>
-                    <SelectItem value="5">Mayo</SelectItem>
-                    <SelectItem value="6">Junio</SelectItem>
-                    <SelectItem value="7">Julio</SelectItem>
-                    <SelectItem value="8">Agosto</SelectItem>
-                    <SelectItem value="9">Septiembre</SelectItem>
-                    <SelectItem value="10">Octubre</SelectItem>
-                    <SelectItem value="11">Noviembre</SelectItem>
-                    <SelectItem value="12">Diciembre</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={getCurrentModality()}
-                  onValueChange={handleModalityChange}
+                  <Grid3X3 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "map" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => onViewModeChange("map")}
+                  className={`h-12 px-4 rounded-l-none ${
+                    viewMode === "map" 
+                      ? "bg-blue-600 text-white hover:bg-blue-700" 
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
                 >
-                  <SelectTrigger className="w-44 h-12 border-0">
-                    <SelectValue placeholder="Modalidad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="road">Ruta/Asfalto</SelectItem>
-                    <SelectItem value="trail">Trail/Montaña</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={getCurrentDistance()}
-                  onValueChange={handleDistanceChange}
-                >
-                  <SelectTrigger className="w-44 h-12 border-0">
-                    <SelectValue placeholder="Distancia" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ultra">Ultra</SelectItem>
-                    <SelectItem value="marathon">Maratón</SelectItem>
-                    <SelectItem value="half_marathon">Media Maratón</SelectItem>
-                    <SelectItem value="20k">20K</SelectItem>
-                    <SelectItem value="15k">15K</SelectItem>
-                    <SelectItem value="10k">10K</SelectItem>
-                    <SelectItem value="5k">5K</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* View Mode Toggle */}
-                <div className="flex border rounded-lg">
-                  <Button
-                    variant={viewMode === "grid" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => onViewModeChange("grid")}
-                    className="h-12 px-4 rounded-r-none"
-                  >
-                    <Grid3X3 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "map" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => onViewModeChange("map")}
-                    className="h-12 px-4 rounded-l-none"
-                  >
-                    <MapIcon className="w-4 h-4" />
-                  </Button>
-                </div>
+                  <MapIcon className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           </div>
@@ -173,6 +234,16 @@ export const HeroSearchSection = ({
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-wrap gap-2">
               <span className="text-blue-100 text-sm font-medium">Filtros activos:</span>
+              
+              {filters.province && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  Provincia: {filters.province}
+                  <X 
+                    className="w-3 h-3 ml-1 cursor-pointer" 
+                    onClick={() => clearFilter('province')}
+                  />
+                </Badge>
+              )}
               
               {filters.month && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">

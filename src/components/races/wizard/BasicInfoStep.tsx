@@ -62,6 +62,19 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
           </div>
 
           <div>
+            <Label htmlFor="race-province">Provincia donde se realiza la carrera *</Label>
+            <Input
+              id="race-province"
+              value={formData.province || ""}
+              onChange={(e) => onUpdate({ province: e.target.value })}
+              placeholder="Ej: Madrid, Barcelona, Valencia..."
+            />
+            <p className="text-sm text-gray-600 mt-1">
+              Ciudad o provincia donde se celebra la carrera (para filtros de búsqueda)
+            </p>
+          </div>
+
+          <div>
             <Label htmlFor="race-description">¿Por qué crees que es atractiva esta carrera? *</Label>
             <Textarea
               id="race-description"

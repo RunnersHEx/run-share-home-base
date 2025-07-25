@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,19 +8,31 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RaceWizard } from "@/components/races/RaceWizard";
 import { useNavigate } from "react-router-dom";
+import { RaceService } from "@/services/raceService"; // Import RaceService
 
 interface Race {
   id: string;
   name: string;
   description: string;
   race_date: string;
-  start_location: string;
+  registration_deadline?: string;
+  province: string;
+  property_id: string;
+  modalities: any;
+  terrain_profile: any;
   distances: any;
+  has_wave_starts: boolean;
+  distance_from_property?: number;
+  official_website?: string;
+  registration_cost?: number;
   max_guests: number;
   points_cost: number;
   is_active: boolean;
   total_bookings: number;
   average_rating: number;
+  highlights?: string;
+  local_tips?: string;
+  weather_notes?: string;
 }
 
 const RacesSection = () => {
@@ -30,6 +41,7 @@ const RacesSection = () => {
   const [races, setRaces] = useState<Race[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
+  const [editingRace, setEditingRace] = useState<Race | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -41,8 +53,7 @@ const RacesSection = () => {
     if (!user) return;
     
     try {
-      console.log('Fetching races for user:', user.id);
-      
+      console.log('RacesSection: Starting fetchMyRaces');
       const { data, error } = await supabase
         .from('races')
         .select('*')
@@ -55,7 +66,7 @@ const RacesSection = () => {
         return;
       }
 
-      console.log('Races fetched:', data);
+      console.log('RacesSection: Fetched races:', data?.length, 'races');
       setRaces(data || []);
     } catch (error) {
       console.error('Exception fetching races:', error);
@@ -66,24 +77,30 @@ const RacesSection = () => {
   };
 
   const handleCreateRace = () => {
+    setEditingRace(null);
     setShowWizard(true);
   };
 
   const handleEditRace = (race: Race) => {
-    // For now, we'll just open the wizard - editing functionality can be added later
+    setEditingRace(race);
     setShowWizard(true);
   };
 
   const handleViewRaceDetails = (raceId: string) => {
-    console.log('Navigating to race details:', raceId);
-    // Navegar a la página de descubrimiento con el filtro de la carrera específica
     navigate(`/discover?raceId=${raceId}`);
   };
 
   const handleRaceSuccess = () => {
+    console.log('RacesSection: handleRaceSuccess called');
+    const wasEditing = editingRace !== null;
     setShowWizard(false);
-    fetchMyRaces(); // Refrescar la lista
-    toast.success('Carrera creada exitosamente');
+    setEditingRace(null);
+    
+    console.log('RacesSection: Refetching races after', wasEditing ? 'edit' : 'create');
+    // Add a small delay to ensure database update completes
+    setTimeout(() => {
+      fetchMyRaces();
+    }, 500);
   };
 
   const formatDistances = (distances: any) => {
@@ -171,7 +188,7 @@ const RacesSection = () => {
                 <div className="space-y-3">
                   <div className="flex items-center text-gray-600">
                     <MapPin className="h-4 w-4 mr-2" />
-                    <span className="text-sm">{race.start_location || 'Ubicación por definir'}</span>
+                    <span className="text-sm">{race.province || 'Ubicación por definir'}</span>
                   </div>
                   
                   <div className="flex items-center text-gray-600">
@@ -179,10 +196,10 @@ const RacesSection = () => {
                     <span className="text-sm">Distancias: {formatDistances(race.distances)}</span>
                   </div>
                   
-                  <div className="flex items-center text-gray-600">
-                    <Users className="h-4 w-4 mr-2" />
-                    <span className="text-sm">{race.max_guests} participantes máximo</span>
-                  </div>
+                    <div className="flex items-center text-gray-600">
+                      <Users className="h-4 w-4 mr-2" />
+                      <span className="text-sm">{race.max_guests} participantes máximo</span>
+                    </div>
 
                   {race.description && (
                     <p className="text-sm text-gray-600 line-clamp-2">
@@ -228,8 +245,13 @@ const RacesSection = () => {
 
       {showWizard && (
         <RaceWizard
-          onClose={() => setShowWizard(false)}
+          onClose={() => {
+            setShowWizard(false);
+            setEditingRace(null);
+          }}
           onSuccess={handleRaceSuccess}
+          editingRace={editingRace}
+          isEditMode={editingRace !== null}
         />
       )}
     </div>

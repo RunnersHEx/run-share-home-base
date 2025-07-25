@@ -8,6 +8,7 @@ interface DiscoverRace {
   id: string;
   name: string;
   location: string;
+  province: string;
   date: string;
   daysUntil: number;
   modalities: string[];
@@ -90,6 +91,7 @@ export const useDiscoverRaces = () => {
           id: race.id,
           name: race.name,
           location: race.start_location || race.property_info?.locality || "Ubicación no especificada",
+          province: race.province,
           date: race.race_date,
           daysUntil: daysUntil,
           modalities: race.modalities || [],

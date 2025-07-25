@@ -1,4 +1,3 @@
-
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useRaces } from "@/hooks/useRaces";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,8 +10,38 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 const Races = () => {
-  const { races, loading, error } = useRaces();
+  const { races, loading, error, refetchRaces } = useRaces();
   const [showWizard, setShowWizard] = useState(false);
+  const [editingRace, setEditingRace] = useState<any>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  const handleCreateRace = () => {
+    setEditingRace(null);
+    setIsEditMode(false);
+    setShowWizard(true);
+  };
+
+  const handleEditRace = (race: any) => {
+    setEditingRace(race);
+    setIsEditMode(true);
+    setShowWizard(true);
+  };
+
+  const handleWizardSuccess = () => {
+    setShowWizard(false);
+    setEditingRace(null);
+    setIsEditMode(false);
+    // Refresh races to show the new/updated race immediately
+    setTimeout(() => {
+      refetchRaces();
+    }, 500);
+  };
+
+  const handleCloseWizard = () => {
+    setShowWizard(false);
+    setEditingRace(null);
+    setIsEditMode(false);
+  };
 
   if (loading) {
     return (
@@ -39,7 +68,7 @@ const Races = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Mis Carreras</h1>
             <p className="text-gray-600">Gestiona las carreras que ofreces como host</p>
           </div>
-          <Button onClick={() => setShowWizard(true)} className="flex items-center space-x-2">
+          <Button onClick={handleCreateRace} className="flex items-center space-x-2">
             <Plus className="h-4 w-4" />
             <span>Agregar Carrera</span>
           </Button>
@@ -61,7 +90,7 @@ const Races = () => {
               <p className="text-gray-600 mb-6">
                 Comienza agregando tu primera carrera para conectar con runners que buscan experiencias auténticas
               </p>
-              <Button onClick={() => setShowWizard(true)} className="flex items-center space-x-2">
+              <Button onClick={handleCreateRace} className="flex items-center space-x-2">
                 <Plus className="h-4 w-4" />
                 <span>Agregar Mi Primera Carrera</span>
               </Button>
@@ -83,9 +112,15 @@ const Races = () => {
                 </div>
                 <CardHeader>
                   <CardTitle className="text-lg">{race.name}</CardTitle>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {format(new Date(race.race_date), "d 'de' MMMM, yyyy", { locale: es })}
+                  <div className="space-y-1">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      {format(new Date(race.race_date), "d 'de' MMMM, yyyy", { locale: es })}
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      {race.province || 'Ubicación por definir'}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -108,7 +143,7 @@ const Races = () => {
                     </p>
                   )}
                   
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-gray-500">
                       {race.total_bookings} reservas
                     </span>
@@ -117,9 +152,14 @@ const Races = () => {
                     </div>
                   </div>
                   
-                  <Button variant="outline" size="sm" className="w-full mt-4">
-                    Ver Detalles
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => handleEditRace(race)}>
+                      Editar
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1">
+                      Ver Detalles
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -128,8 +168,10 @@ const Races = () => {
 
         {showWizard && (
           <RaceWizard
-            onClose={() => setShowWizard(false)}
-            onSuccess={() => setShowWizard(false)}
+            onClose={handleCloseWizard}
+            onSuccess={handleWizardSuccess}
+            editingRace={editingRace}
+            isEditMode={isEditMode}
           />
         )}
       </div>

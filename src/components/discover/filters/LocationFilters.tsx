@@ -1,6 +1,6 @@
 
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CustomSelect } from "@/components/ui/custom";
 import { MapPin } from "lucide-react";
 
 interface LocationFiltersProps {
@@ -8,6 +8,8 @@ interface LocationFiltersProps {
   onProvinceChange: (province: string) => void;
   selectedMonth: string;
   onMonthChange: (month: string) => void;
+  selectedRadius: string;
+  onRadiusChange: (radius: string) => void;
 }
 
 const spanishProvinces = [
@@ -20,7 +22,22 @@ const spanishProvinces = [
   "Vizcaya", "Zamora", "Zaragoza"
 ];
 
-const months = [
+const provinceOptions = spanishProvinces.map(province => ({
+  value: province,
+  label: province
+}));
+
+const radiusOptions = [
+  { value: "any", label: "Cualquier distancia" },
+  { value: "25", label: "25 km" },
+  { value: "50", label: "50 km" },
+  { value: "100", label: "100 km" },
+  { value: "200", label: "200 km" },
+  { value: "500", label: "500 km" },
+  { value: "500+", label: "+500 km" }
+];
+
+const monthOptions = [
   { value: "1", label: "Enero" },
   { value: "2", label: "Febrero" },
   { value: "3", label: "Marzo" },
@@ -35,11 +52,15 @@ const months = [
   { value: "12", label: "Diciembre" }
 ];
 
+
+
 export const LocationFilters = ({
   selectedProvince,
   onProvinceChange,
   selectedMonth,
-  onMonthChange
+  onMonthChange,
+  selectedRadius,
+  onRadiusChange
 }: LocationFiltersProps) => {
   return (
     <div className="space-y-4">
@@ -51,58 +72,35 @@ export const LocationFilters = ({
       <div className="space-y-3">
         <div>
           <Label htmlFor="province">Provincia</Label>
-          <Select 
-            value={selectedProvince} 
+          <CustomSelect
+            value={selectedProvince}
             onValueChange={onProvinceChange}
-          >
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Seleccionar provincia..." />
-            </SelectTrigger>
-            <SelectContent>
-              {spanishProvinces.map((province) => (
-                <SelectItem key={province} value={province}>
-                  {province}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={provinceOptions}
+            placeholder="Seleccionar provincia..."
+            className="mt-1"
+          />
         </div>
         
         <div>
           <Label htmlFor="radius">Radio de búsqueda</Label>
-          <Select>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Cualquier distancia" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="any">Cualquier distancia</SelectItem>
-              <SelectItem value="25">25 km</SelectItem>
-              <SelectItem value="50">50 km</SelectItem>
-              <SelectItem value="100">100 km</SelectItem>
-              <SelectItem value="200">200 km</SelectItem>
-              <SelectItem value="500">500 km</SelectItem>
-              <SelectItem value="500+">+500 km</SelectItem>
-            </SelectContent>
-          </Select>
+          <CustomSelect
+            value={selectedRadius}
+            onValueChange={onRadiusChange}
+            options={radiusOptions}
+            placeholder="Cualquier distancia"
+            className="mt-1"
+          />
         </div>
         
         <div>
           <Label htmlFor="month">Mes</Label>
-          <Select 
-            value={selectedMonth} 
+          <CustomSelect
+            value={selectedMonth}
             onValueChange={onMonthChange}
-          >
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Seleccionar mes..." />
-            </SelectTrigger>
-            <SelectContent>
-              {months.map((month) => (
-                <SelectItem key={month.value} value={month.value}>
-                  {month.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={monthOptions}
+            placeholder="Seleccionar mes..."
+            className="mt-1"
+          />
         </div>
       </div>
     </div>

@@ -62,28 +62,7 @@ export const RaceCharacteristicsFilters = ({
           </div>
         </div>
 
-        {/* Perfil del recorrido */}
-        <div>
-          <Label className="text-sm font-medium">Perfil del recorrido</Label>
-          <div className="mt-2 space-y-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="hilly"
-                checked={selectedTerrainProfiles.includes('hilly')}
-                onCheckedChange={(checked) => onTerrainChange('hilly', checked as boolean)}
-              />
-              <Label htmlFor="hilly" className="text-sm">Con desnivel</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="flat"
-                checked={selectedTerrainProfiles.includes('flat')}
-                onCheckedChange={(checked) => onTerrainChange('flat', checked as boolean)}
-              />
-              <Label htmlFor="flat" className="text-sm">Llano</Label>
-            </div>
-          </div>
-        </div>
+
 
         {/* Distancias */}
         <div>
@@ -102,20 +81,7 @@ export const RaceCharacteristicsFilters = ({
           </div>
         </div>
 
-        {/* Cajones de salida */}
-        <div>
-          <Label className="text-sm font-medium">Cajones de salida según marcas</Label>
-          <div className="mt-2 space-y-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox id="wave-yes" />
-              <Label htmlFor="wave-yes" className="text-sm">Sí</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="wave-no" />
-              <Label htmlFor="wave-no" className="text-sm">No</Label>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
   );

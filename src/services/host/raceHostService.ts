@@ -5,8 +5,6 @@ import { Race, RaceFormData, RaceFilters, RaceStats, RaceModality, TerrainProfil
 export class RaceHostService {
   // Helper function to convert database race to typed Race
   private static convertDatabaseRaceToTyped(dbRace: any): Race {
-    console.log('Converting database race:', dbRace);
-    
     // Safely parse JSON fields
     const parseJsonField = (field: any): any[] => {
       if (Array.isArray(field)) return field;
@@ -116,11 +114,18 @@ export class RaceHostService {
         .from('races')
         .update(updates)
         .eq('id', raceId)
-        .select()
+        .select(`
+          *,
+          property_info:properties!races_property_id_properties_fkey(
+            title,
+            locality,
+            max_guests
+          )
+        `)
         .single();
 
       if (error) {
-        console.error('Error updating race:', error);
+        console.error('RaceHostService: Error updating race:', error);
         throw error;
       }
 

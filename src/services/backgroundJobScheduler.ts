@@ -138,17 +138,27 @@ export class BackgroundJobScheduler {
     console.log('BackgroundJobScheduler: Stopping job scheduler');
     this.isRunning = false;
     
+    // Clear all intervals safely
     this.intervals.forEach((interval, key) => {
-      clearInterval(interval);
+      try {
+        clearInterval(interval);
+      } catch (error) {
+        console.warn(`BackgroundJobScheduler: Error clearing interval ${key}:`, error);
+      }
     });
     this.intervals.clear();
   }
 
   private async checkAndRunJobs() {
+    // Don't run jobs if scheduler is shutting down or app is unloading
+    if (!this.isRunning || document.visibilityState === 'hidden') {
+      return;
+    }
+    
     const now = new Date();
     
     for (const [id, job] of this.jobs) {
-      if (!job.isActive || !job.nextRun) continue;
+      if (!job.isActive || !job.nextRun || !this.isRunning) continue;
       
       if (now >= job.nextRun) {
         console.log(`BackgroundJobScheduler: Running job "${job.name}"`);
@@ -309,18 +319,40 @@ export class BackgroundJobScheduler {
 // Initialize and start the scheduler when the module is loaded
 // In a production environment, this might be done in the main app initialization
 let scheduler: BackgroundJobScheduler | null = null;
+let cleanupRegistered = false;
 
 export const initializeBackgroundJobs = () => {
   if (typeof window !== 'undefined' && !scheduler) {
     scheduler = BackgroundJobScheduler.getInstance();
     scheduler.start();
     
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', () => {
-      if (scheduler) {
-        scheduler.stop();
-      }
-    });
+    // Register cleanup only once to avoid multiple listeners
+    if (!cleanupRegistered) {
+      cleanupRegistered = true;
+      
+      // Use a more gentle cleanup approach
+      const cleanup = () => {
+        if (scheduler) {
+          try {
+            scheduler.stop();
+            scheduler = null;
+          } catch (error) {
+            console.warn('Background job cleanup error (safe to ignore):', error);
+          }
+        }
+      };
+      
+      // Use multiple cleanup opportunities but make them safe
+      window.addEventListener('beforeunload', cleanup, { once: true });
+      window.addEventListener('pagehide', cleanup, { once: true });
+      
+      // Also cleanup on visibility change (when tab becomes hidden)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          cleanup();
+        }
+      }, { once: true });
+    }
   }
 };
 
