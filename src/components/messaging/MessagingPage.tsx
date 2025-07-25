@@ -53,10 +53,26 @@ export function MessagingPage() {
   useEffect(() => {
     mountedRef.current = true;
     
+    // Listen for real-time conversation updates
+    const handleConversationUpdates = () => {
+      if (mountedRef.current) {
+        refreshConversations();
+        refreshUnreadCount();
+      }
+    };
+
+    // Listen for custom events from the messaging service
+    window.addEventListener('conversations-updated', handleConversationUpdates);
+    window.addEventListener('message-sent', handleConversationUpdates);
+    window.addEventListener('conversation-read', handleConversationUpdates);
+    
     return () => {
       mountedRef.current = false;
+      window.removeEventListener('conversations-updated', handleConversationUpdates);
+      window.removeEventListener('message-sent', handleConversationUpdates);
+      window.removeEventListener('conversation-read', handleConversationUpdates);
     };
-  }, []);
+  }, [refreshConversations, refreshUnreadCount]);
 
   // Filter conversations based on active tab
   const getFilteredConversations = (filter: string) => {
@@ -102,14 +118,11 @@ export function MessagingPage() {
     // Mark conversation as read immediately when opened
     if (markConversationAsRead) {
       await markConversationAsRead(conversation.booking_id);
-    }
-    
-    // Refresh unread count after marking as read
-    setTimeout(() => {
+      
+      // Refresh counts immediately
       refreshUnreadCount();
-      // Also refresh conversations to update unread counts in the list
       refreshConversations();
-    }, 500);
+    }
   };
 
   const handleBackToList = () => {

@@ -3,7 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { CheckCircle, AlertCircle, Info, CheckCheck, WifiOff, Wifi } from "lucide-react";
+import { CheckCircle, AlertCircle, Info, CheckCheck } from "lucide-react";
 
 interface NotificationListProps {
   onClose: () => void;
@@ -63,31 +63,6 @@ const NotificationList = ({ onClose, notificationData }: NotificationListProps) 
             </Button>
           )}
         </div>
-        
-        {/* Connection Status - Only show when there are issues */}
-        {connectionStatus !== 'connected' && (
-          <div className="flex items-center gap-2 text-xs">
-            {connectionStatus === 'connecting' ? (
-              <>
-                <div className="h-3 w-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <span className="text-blue-600">Conectando...</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="h-3 w-3 text-red-500" />
-                <span className="text-red-600">Desconectado</span>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={refetch}
-                  className="text-xs text-blue-600 hover:text-blue-700 p-0 h-auto"
-                >
-                  Reintentar
-                </Button>
-              </>
-            )}
-          </div>
-        )}
       </div>
 
       <ScrollArea className="h-96">
