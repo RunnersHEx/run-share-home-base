@@ -126,9 +126,10 @@ export const PhotosStep = ({ formData, onUpdate, photos, setPhotos, removedExist
           <CardTitle className="flex items-center">
             <Star className="h-5 w-5 mr-2 text-yellow-500" />
             Foto Principal de la Carrera
+            <span className="text-red-500 ml-1">*</span>
           </CardTitle>
           <p className="text-sm text-gray-600">
-            Esta será la imagen que se mostrará en las tarjetas de carrera y como imagen principal
+            <span className="text-red-600 font-medium">Requerida:</span> Esta será la imagen que se mostrará en las tarjetas de carrera y como imagen principal
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -181,10 +182,10 @@ export const PhotosStep = ({ formData, onUpdate, photos, setPhotos, removedExist
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
               <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Selecciona la foto principal
+                Selecciona la foto principal *
               </h3>
               <p className="text-gray-600 mb-4">
-                Esta imagen representará tu carrera en todas las búsquedas y tarjetas
+                <span className="text-red-600 font-medium">Campo requerido:</span> Esta imagen representará tu carrera en todas las búsquedas y tarjetas
               </p>
               <Button
                 variant="outline"

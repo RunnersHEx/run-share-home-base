@@ -153,10 +153,12 @@ const AuthModalIntegrated = ({ isOpen, onClose, mode, onModeChange }: AuthModalI
     
     try {
       await signIn(loginData.email, loginData.password);
-      console.log('AuthModal: Login successful, modal should close automatically');
+      console.log('AuthModal: Login successful, closing modal');
       
-      // No cerramos el modal manualmente aquí
-      // Se cerrará automáticamente cuando detecte el usuario en Layout
+      // Close the modal immediately after successful login
+      toast.success('¡Bienvenido de vuelta!');
+      resetForm();
+      onClose();
       
     } catch (error: any) {
       console.error('AuthModal: Login error:', error);

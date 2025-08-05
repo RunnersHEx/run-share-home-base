@@ -174,6 +174,12 @@ export const RaceWizard = ({ onClose, onSuccess, editingRace, isEditMode = false
         return;
       }
 
+      // Validate main image is required
+      if (!photos.some(photo => photo.category === 'cover')) {
+        toast.error('Por favor selecciona la foto principal de la carrera');
+        return;
+      }
+
       console.log(isEditMode ? 'Updating race with validated data:' : 'Creating race with validated data:', formData);
       
       let result;
@@ -348,7 +354,8 @@ export const RaceWizard = ({ onClose, onSuccess, editingRace, isEditMode = false
       case 3:
         return formData.points_cost !== undefined && formData.max_guests && formData.max_guests > 0 && formData.max_guests <= 4;
       case 4:
-        return true; // Optional step (Photos)
+        // Require at least one main image (cover photo)
+        return photos.some(photo => photo.category === 'cover');
       default:
         return false;
     }

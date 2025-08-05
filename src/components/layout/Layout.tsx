@@ -34,6 +34,14 @@ const Layout = ({ children }: LayoutProps) => {
 
   const isHomePage = location.pathname === '/';
 
+  // Automatically close auth modal when user logs in successfully
+  useEffect(() => {
+    if (user && showAuthModal) {
+      console.log('Layout: User detected, closing auth modal');
+      setShowAuthModal(false);
+    }
+  }, [user, showAuthModal]);
+
 
 
   const handleAuthModal = (mode: "login" | "register") => {
