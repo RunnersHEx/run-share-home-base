@@ -25,7 +25,7 @@ interface LayoutProps {
 }
 
 const Layout = ({ children }: LayoutProps) => {
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, loading, profile } = useAuth();
   const { isAdmin } = useAdminAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,9 +34,23 @@ const Layout = ({ children }: LayoutProps) => {
 
   const isHomePage = location.pathname === '/';
 
+  // Automatically close auth modal when user logs in successfully
+  useEffect(() => {
+    if (user && showAuthModal) {
+      console.log('Layout: User detected, closing auth modal');
+      setShowAuthModal(false);
+    }
+  }, [user, showAuthModal]);
+
 
 
   const handleAuthModal = (mode: "login" | "register") => {
+    // Check if user is already logged in
+    if (user) {
+      toast.info("Ya tienes una sesión activa. Cierra sesión primero para registrarte o iniciar sesión con otra cuenta.");
+      return;
+    }
+    
     setAuthMode(mode);
     setShowAuthModal(true);
   };
@@ -76,22 +90,6 @@ const Layout = ({ children }: LayoutProps) => {
   const getInitials = (email: string) => {
     return email.split('@')[0].slice(0, 2).toUpperCase();
   };
-
-  // Cerrar modal automáticamente cuando el usuario se autentica
-  useEffect(() => {
-    console.log('Layout: useEffect triggered', {
-      hasUser: !!user,
-      showAuthModal,
-      loading
-    });
-    
-    if (user && showAuthModal && !loading) {
-      console.log('Layout: User authenticated, closing auth modal');
-      setTimeout(() => {
-        setShowAuthModal(false);
-      }, 100);
-    }
-  }, [user, showAuthModal, loading]);
 
   if (loading) {
     console.log('Layout: Rendering loading state');
@@ -160,11 +158,12 @@ const Layout = ({ children }: LayoutProps) => {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                          <Avatar className="h-8 w-8">
+                          <Avatar className="h-8 w-8" key={profile?.profile_image_url || 'default-nav-avatar'}>
                             <AvatarImage 
-                              src={user.user_metadata?.avatar_url} 
+                              src={profile?.profile_image_url || user.user_metadata?.avatar_url} 
                               alt="Avatar"
                               className="object-cover"
+                              key={profile?.profile_image_url || 'default-nav-image'}
                             />
                             <AvatarFallback className="bg-blue-600 text-white">
                               {getInitials(user.email || "")}
@@ -188,10 +187,12 @@ const Layout = ({ children }: LayoutProps) => {
                           <User className="mr-2 h-4 w-4" />
                           <span>Mi Perfil</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleNavigation("/discover")}>
-                          <Search className="mr-2 h-4 w-4" />
-                          <span>Descubrir Carreras</span>
-                        </DropdownMenuItem>
+                        {location.pathname !== '/profile' && (
+                          <DropdownMenuItem onClick={() => handleNavigation("/discover")}>
+                            <Search className="mr-2 h-4 w-4" />
+                            <span>Descubrir Carreras</span>
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => handleNavigation("/bookings")}>
                           <Calendar className="mr-2 h-4 w-4" />
                           <span>Mis Reservas</span>
@@ -270,13 +271,15 @@ const Layout = ({ children }: LayoutProps) => {
                   <Home className="h-4 w-4 inline mr-2" />
                   Inicio
                 </button>
-                <button 
-                  onClick={() => navigate('/discover')}
-                  className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
-                >
-                  <Search className="h-4 w-4 inline mr-2" />
-                  Descubrir Carreras
-                </button>
+                {location.pathname !== '/profile' && (
+                  <button 
+                    onClick={() => navigate('/discover')}
+                    className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
+                  >
+                    <Search className="h-4 w-4 inline mr-2" />
+                    Descubrir Carreras
+                  </button>
+                )}
                 {user && (
                   <>
                     <button 
@@ -313,11 +316,12 @@ const Layout = ({ children }: LayoutProps) => {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                          <Avatar className="h-8 w-8">
+                          <Avatar className="h-8 w-8" key={profile?.profile_image_url || 'default-nav-avatar-2'}>
                             <AvatarImage 
-                              src={user.user_metadata?.avatar_url} 
+                              src={profile?.profile_image_url || user.user_metadata?.avatar_url} 
                               alt="Avatar"
                               className="object-cover"
+                              key={profile?.profile_image_url || 'default-nav-image-2'}
                             />
                             <AvatarFallback className="bg-blue-600 text-white">
                               {getInitials(user.email || "")}

@@ -7,7 +7,6 @@ import { RaceCard } from "@/components/discover/RaceCard";
 import { RaceDetailModal } from "@/components/discover/RaceDetailModal";
 import { ResultsHeader } from "@/components/discover/search/ResultsHeader";
 import { EmptyState } from "@/components/discover/search/EmptyState";
-import { MapView } from "@/components/discover/search/MapView";
 import { RaceFilters as SearchFilters } from "@/types/race";
 import { useDiscoverRaces } from "@/hooks/useDiscoverRaces";
 import { toast } from "sonner";
@@ -15,7 +14,6 @@ import { toast } from "sonner";
 const DiscoverRaces = () => {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("relevance");
   const [filters, setFilters] = useState<SearchFilters>({});
@@ -62,7 +60,12 @@ const DiscoverRaces = () => {
     
     if (Object.keys(urlFilters).length > 0 && mountedRef.current) {
       setFilters(urlFilters);
-      fetchRaces(urlFilters);
+      // Only add a tiny delay when coming from QuickSearchSection to prevent race condition
+      setTimeout(() => {
+        if (mountedRef.current) {
+          fetchRaces(urlFilters);
+        }
+      }, 50); // Very small delay just to let component fully mount
     }
     
     // Cleanup function
@@ -98,14 +101,13 @@ const DiscoverRaces = () => {
         }
       }
       
-      // Province filter - check if current filter matches race
+      // Province filter - check exact province match
       if (filters.province) {
-        const filterProvince = filters.province.toLowerCase();
-        const raceProvince = (race.province || '').toLowerCase();
-        const raceLocation = (race.location || '').toLowerCase();
+        const filterProvince = filters.province.toLowerCase().trim();
+        const raceProvince = (race.province || '').toLowerCase().trim();
         
-        const provinceMatch = raceProvince.includes(filterProvince) || raceLocation.includes(filterProvince);
-        if (!provinceMatch) {
+        // Exact match on province field only
+        if (raceProvince !== filterProvince) {
           return false;
         }
       }
@@ -227,8 +229,6 @@ const DiscoverRaces = () => {
         onSearchChange={setSearchQuery}
         filters={filters}
         onFiltersChange={handleFiltersChange}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -254,28 +254,27 @@ const DiscoverRaces = () => {
               resultsCount={filteredRaces?.length || 0}
               showFilters={showFilters}
               onToggleFilters={() => setShowFilters(!showFilters)}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
               sortBy={sortBy}
               onSortChange={setSortBy}
             />
 
             {/* Results Grid */}
-            {viewMode === "grid" ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredRaces?.map((race) => (
-                  <RaceCard
-                    key={race.id}
-                    race={race}
-                    isSaved={savedRaces.includes(race.id)}
-                    onSave={() => handleSaveRace(race.id)}
-                    onViewDetails={() => handleViewDetails(race)}
-                  />
-                )) || []}
-              </div>
-            ) : (
-              <MapView />
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredRaces?.map((race) => (
+                <RaceCard
+                  key={race.id}
+                  race={race}
+                  isSaved={savedRaces.includes(race.id)}
+                  onSave={() => handleSaveRace(race.id)}
+                  onViewDetails={() => handleViewDetails(race)}
+                  onAuthModal={(mode) => {
+                    // For now, we'll just log this - in a real app you'd trigger the auth modal
+                    console.log('Auth modal requested:', mode);
+                    toast.error("Para continuar explorando esta experiencia, necesitas registrarte.");
+                  }}
+                />
+              )) || []}
+            </div>
 
             {/* Empty State */}
             {(!filteredRaces || filteredRaces.length === 0) && (

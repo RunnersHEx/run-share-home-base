@@ -31,7 +31,7 @@ const PhotosStep = ({ formData, updateFormData, photos, setPhotos }: PhotosStepP
     const newPhotos: PhotoPreview[] = [];
     
     Array.from(files).forEach((file, index) => {
-      if (file.type.startsWith('image/') && photos.length + newPhotos.length < 20) {
+      if (file.type.startsWith('image/') && photos.length + newPhotos.length < 5) {
         const preview: PhotoPreview = {
           id: `${Date.now()}-${index}`,
           file,
@@ -112,7 +112,7 @@ const PhotosStep = ({ formData, updateFormData, photos, setPhotos }: PhotosStepP
               Arrastra y suelta tus fotos aquí
             </h3>
             <p className="text-gray-600 mb-2">
-              O haz clic para seleccionar archivos (máximo 20 fotos)
+              O haz clic para seleccionar archivos (máximo 5 fotos)
             </p>
             <p className="text-sm text-runner-blue-600 font-medium mb-4">
               Opcional. Pero RECUERDA, sube fotos de tus espacios y atrae a más runners a tu casa
@@ -120,7 +120,7 @@ const PhotosStep = ({ formData, updateFormData, photos, setPhotos }: PhotosStepP
             <Button
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
-              disabled={photos.length >= 20}
+              disabled={photos.length >= 5}
             >
               <Upload className="h-4 w-4 mr-2" />
               Seleccionar Fotos
@@ -139,7 +139,7 @@ const PhotosStep = ({ formData, updateFormData, photos, setPhotos }: PhotosStepP
           {photos.length > 0 && (
             <div>
               <h3 className="text-lg font-medium mb-4">
-                Fotos Seleccionadas ({photos.length}/20)
+                Fotos Seleccionadas ({photos.length}/5)
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {photos.map((photo, index) => (

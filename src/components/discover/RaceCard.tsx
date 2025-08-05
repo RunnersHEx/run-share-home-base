@@ -3,6 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MapPin, Calendar, Star, Clock, Trophy, Heart, CheckCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ReviewsService } from "@/services/reviews/properReviewsService";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 // Move utility functions outside component to prevent re-creation on each render
 const formatDate = (dateString: string) => {
@@ -48,6 +52,7 @@ interface RaceCardProps {
     id: string;
     name: string;
     location: string;
+    province?: string; // Add province field
     date: string;
     daysUntil: number;
     modalities: string[];
@@ -68,9 +73,44 @@ interface RaceCardProps {
   isSaved: boolean;
   onSave: () => void;
   onViewDetails: () => void;
+  onAuthModal?: (mode: "login" | "register") => void;
 }
 
-export const RaceCard = ({ race, isSaved, onSave, onViewDetails }: RaceCardProps) => {
+export const RaceCard = ({ race, isSaved, onSave, onViewDetails, onAuthModal }: RaceCardProps) => {
+  const { user } = useAuth();
+  const [dynamicRating, setDynamicRating] = useState(race.host.rating);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [loadingRating, setLoadingRating] = useState(true);
+
+  useEffect(() => {
+    fetchHostRating();
+  }, [race.host.id]);
+
+  const fetchHostRating = async () => {
+    try {
+      const stats = await ReviewsService.getRatingStatsForHost(race.host.id);
+      setDynamicRating(stats.averageRating);
+      setReviewCount(stats.totalReviews);
+    } catch (error) {
+      console.error('Error fetching host rating for race card:', error);
+      // Keep the original rating as fallback
+      setDynamicRating(race.host.rating);
+      setReviewCount(0);
+    } finally {
+      setLoadingRating(false);
+    }
+  };
+
+  const handleViewDetailsClick = () => {
+    if (!user) {
+      toast.error("Para continuar explorando esta experiencia, necesitas registrarte.");
+      if (onAuthModal) {
+        onAuthModal("register");
+      }
+      return;
+    }
+    onViewDetails();
+  };
   return (
     <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden">
       <div className="relative">
@@ -109,10 +149,12 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails }: RaceCardProps
         <div className="space-y-2">
           <h3 className="font-semibold text-lg line-clamp-2">{race.name}</h3>
           
-          <div className="flex items-center text-sm text-gray-600">
-            <MapPin className="w-4 h-4 mr-1" />
-            {race.location}
-          </div>
+          {race.province && (
+            <div className="flex items-center text-sm text-gray-600">
+              <MapPin className="w-4 h-4 mr-1" />
+              <span className="tracking-wide">Provincia: <span className="font-medium tracking-normal">{race.province}</span></span>
+            </div>
+          )}
           
           <div className="flex items-center text-sm text-gray-600">
             <Calendar className="w-4 h-4 mr-1" />
@@ -169,7 +211,15 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails }: RaceCardProps
                 </div>
                 <div className="flex items-center">
                   <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                  <span className="text-xs ml-1 text-gray-500">{race.host.rating}</span>
+                  <span className="text-xs ml-1 text-gray-500">
+                    {loadingRating ? (
+                      <span className="animate-pulse">...</span>
+                    ) : reviewCount > 0 ? (
+                      `${dynamicRating.toFixed(1)} (${reviewCount})`
+                    ) : (
+                      'Sin reseñas'
+                    )}
+                  </span>
                 </div>
               </div>
             </div>
@@ -187,7 +237,7 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails }: RaceCardProps
             <Button 
               className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
               size="sm"
-              onClick={onViewDetails}
+              onClick={handleViewDetailsClick}
             >
               Ver Detalles
             </Button>

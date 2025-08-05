@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, MapPin, Users, Clock, Star, Shield, Phone, MessageSquare } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, Star, Shield, Phone, MessageSquare, User } from "lucide-react";
 import { Booking } from "@/types/booking";
 import { useAuth } from "@/contexts/AuthContext";
+import { GuestInfoModal } from "./GuestInfoModal";
+import { useState } from "react";
 
 interface BookingCardProps {
   booking: Booking;
@@ -17,6 +19,7 @@ interface BookingCardProps {
 
 const BookingCard = ({ booking, onRespond, onViewDetails, onMessage, onCancel }: BookingCardProps) => {
   const { user } = useAuth();
+  const [showGuestInfo, setShowGuestInfo] = useState(false);
   const isHost = user?.id === booking.host_id;
   const isGuest = user?.id === booking.guest_id;
   const otherUser = isHost ? booking.guest : booking.host;
@@ -71,6 +74,7 @@ const BookingCard = ({ booking, onRespond, onViewDetails, onMessage, onCancel }:
   };
 
   return (
+    <>
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex justify-between items-start">
@@ -165,22 +169,35 @@ const BookingCard = ({ booking, onRespond, onViewDetails, onMessage, onCancel }:
 
         {/* Acciones */}
         <div className="flex flex-wrap gap-2 pt-2">
-          {booking.status === 'pending' && isHost && onRespond && (
+          {booking.status === 'pending' && isHost && (
             <>
-              <Button
-                size="sm"
-                onClick={() => onRespond(booking.id, 'accepted')}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Aceptar
-              </Button>
+              {onRespond && (
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => onRespond(booking.id, 'accepted')}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Aceptar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onRespond(booking.id, 'rejected')}
+                    className="text-red-600 border-red-200 hover:bg-red-50"
+                  >
+                    Rechazar
+                  </Button>
+                </>
+              )}
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onRespond(booking.id, 'rejected')}
-                className="text-red-600 border-red-200 hover:bg-red-50"
+                onClick={() => setShowGuestInfo(true)}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
               >
-                Rechazar
+                <User className="w-4 h-4 mr-1" />
+                Info del Runner
               </Button>
             </>
           )}
@@ -211,6 +228,16 @@ const BookingCard = ({ booking, onRespond, onViewDetails, onMessage, onCancel }:
         </div>
       </CardContent>
     </Card>
+
+    {/* Guest Information Modal */}
+    {isHost && (
+      <GuestInfoModal
+        isOpen={showGuestInfo}
+        onClose={() => setShowGuestInfo(false)}
+        guestId={booking.guest_id}
+      />
+    )}
+  </>
   );
 };
 

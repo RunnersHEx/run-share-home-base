@@ -1,20 +1,38 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface HeroSectionProps {
   onAuthModal: (mode: "login" | "register") => void;
 }
 
 const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
+  const { user } = useAuth();
+  
   const handleJoinCommunity = () => {
     console.log('HeroSection: Join community button clicked');
+    
+    // Check if user is already logged in
+    if (user) {
+      toast.info("Ya tienes una sesión activa. Cierra sesión primero para registrarte o iniciar sesión con otra cuenta.");
+      return;
+    }
+    
     // Disparar evento personalizado que Layout capturará
     window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { mode: 'register' } }));
   };
 
   const handleInitiateLogin = () => {
     console.log('HeroSection: Login button clicked');
+    
+    // Check if user is already logged in
+    if (user) {
+      toast.info("Ya tienes una sesión activa. Cierra sesión primero para registrarte o iniciar sesión con otra cuenta.");
+      return;
+    }
+    
     // Disparar evento personalizado que Layout capturará
     window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { mode: 'login' } }));
   };
@@ -25,28 +43,25 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
       <div 
         className="absolute inset-0"
         style={{
-          backgroundImage: `url('/lovable-uploads/hero-banner.png')`,
+          backgroundImage: `url('/lovable-uploads/hero.png')`,
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
       />
       
+      {/* Dark Overlay for better text visibility */}
+      <div className="absolute inset-0 bg-black/40"></div>
+      
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center text-white">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-center mb-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-medium border border-white/20">
-              <span className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-runner-orange-400 rounded-full animate-pulse"></div>
-                Conecta • Viaja • Corre
-              </span>
-            </div>
-          </div>
-          
           <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
-            Corre el Mundo,{" "}
-            <span className="text-runner-orange-400">Vive como Local</span>
+            <span style={{ color: '#60A5FA' }}>Conecta</span>
+            <span className="text-white"> · </span>
+            <span style={{ color: '#fb923c' }}>Viaja</span>
+            <span className="text-white"> · </span>
+            <span style={{ color: '#60A5FA' }}>Corre</span>
           </h1>
           
           <p className="text-xl lg:text-2xl mb-8 text-white/90 max-w-3xl mx-auto leading-relaxed">
@@ -75,15 +90,15 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl font-bold text-runner-orange-400 mb-1">500+</div>
+              <div className="text-3xl font-bold mb-1" style={{ color: '#fb923c' }}>500+</div>
               <div className="text-sm text-white/80">Runners activos</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-runner-orange-400 mb-1">50+</div>
+              <div className="text-3xl font-bold mb-1" style={{ color: '#fb923c' }}>50+</div>
               <div className="text-sm text-white/80">Ciudades</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-runner-orange-400 mb-1">1000+</div>
+              <div className="text-3xl font-bold mb-1" style={{ color: '#fb923c' }}>1000+</div>
               <div className="text-sm text-white/80">Experiencias</div>
             </div>
           </div>

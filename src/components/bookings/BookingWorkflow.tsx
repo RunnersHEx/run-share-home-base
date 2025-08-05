@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,17 +18,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBookings } from "@/hooks/useBookings";
 import { MessagingModal } from "@/components/messaging";
 import MobileBookingCard from "./MobileBookingCard";
-import HostDashboard from "@/components/host/HostDashboard";
-import HostAnalytics from "@/components/host/HostAnalytics";
 import { Booking } from "@/types/booking";
 import { toast } from "sonner";
 
 interface BookingWorkflowProps {
-  defaultTab?: string;
   userRole?: 'guest' | 'host' | 'both';
 }
 
-const BookingWorkflow = ({ defaultTab = 'overview', userRole = 'both' }: BookingWorkflowProps) => {
+const BookingWorkflow = ({ userRole = 'both' }: BookingWorkflowProps) => {
   const { user } = useAuth();
   const { 
     bookings, 
@@ -47,7 +43,6 @@ const BookingWorkflow = ({ defaultTab = 'overview', userRole = 'both' }: Booking
   
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showMessaging, setShowMessaging] = useState(false);
-  const [activeTab, setActiveTab] = useState(defaultTab);
 
   // Get different booking categories
   const pendingHostRequests = getPendingHostRequests();
@@ -198,198 +193,117 @@ const BookingWorkflow = ({ defaultTab = 'overview', userRole = 'both' }: Booking
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm">
-            Resumen
-          </TabsTrigger>
-          <TabsTrigger value="host" className="text-xs sm:text-sm">
-            Host
-          </TabsTrigger>
-          <TabsTrigger value="guest" className="text-xs sm:text-sm">
-            Huésped
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="text-xs sm:text-sm">
-            Analytics
-          </TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
+        {/* Urgent Actions */}
+        {pendingHostRequests.length > 0 && (
+          <Card className="border-orange-200 bg-orange-50">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-orange-800">
+                <AlertTriangle className="h-5 w-5" />
+                <span>Solicitudes Urgentes ({pendingHostRequests.length})</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {pendingHostRequests.slice(0, 3).map((booking) => (
+                  <MobileBookingCard
+                    key={booking.id}
+                    booking={booking}
+                    onRespond={handleRespond}
+                    onMessage={handleMessage}
+                    compact
+                  />
+                ))}
+                {pendingHostRequests.length > 3 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                  >
+                    Ver todas las solicitudes ({pendingHostRequests.length})
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        <TabsContent value="overview" className="space-y-6">
-          {/* Urgent Actions */}
-          {pendingHostRequests.length > 0 && (
-            <Card className="border-orange-200 bg-orange-50">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-orange-800">
-                  <AlertTriangle className="h-5 w-5" />
-                  <span>Solicitudes Urgentes ({pendingHostRequests.length})</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {pendingHostRequests.slice(0, 3).map((booking) => (
-                    <MobileBookingCard
-                      key={booking.id}
-                      booking={booking}
-                      onRespond={handleRespond}
-                      onMessage={handleMessage}
-                      compact
-                    />
-                  ))}
-                  {pendingHostRequests.length > 3 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setActiveTab('host')}
-                      className="w-full"
-                    >
-                      Ver todas las solicitudes ({pendingHostRequests.length})
-                    </Button>
-                  )}
+        {/* Upcoming Bookings */}
+        {upcomingBookings.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Calendar className="h-5 w-5 text-blue-500" />
+                <span>Próximas Reservas</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {upcomingBookings.slice(0, 3).map((booking) => (
+                  <MobileBookingCard
+                    key={booking.id}
+                    booking={booking}
+                    onMessage={handleMessage}
+                    onConfirm={handleConfirm}
+                    onComplete={handleComplete}
+                    onCancel={handleCancel}
+                  />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Performance Overview */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Rendimiento como Host</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Tasa de Aceptación</span>
+                <span className="font-semibold">{stats.acceptanceRate}%</span>
+              </div>
+              <Progress value={stats.acceptanceRate} className="h-2" />
+              
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Tiempo de Respuesta</span>
+                <span className="font-semibold">{stats.averageResponseTime}h</span>
+              </div>
+              <Progress value={Math.max(0, 100 - (stats.averageResponseTime / 48) * 100)} className="h-2" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Actividad Reciente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm">
+                    {stats.totalPointsEarned} puntos ganados este mes
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Upcoming Bookings */}
-          {upcomingBookings.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Calendar className="h-5 w-5 text-blue-500" />
-                  <span>Próximas Reservas</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {upcomingBookings.slice(0, 3).map((booking) => (
-                    <MobileBookingCard
-                      key={booking.id}
-                      booking={booking}
-                      onMessage={handleMessage}
-                      onConfirm={handleConfirm}
-                      onComplete={handleComplete}
-                      onCancel={handleCancel}
-                    />
-                  ))}
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm">
+                    {stats.completedBookings} reservas completadas
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Performance Overview */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Rendimiento como Host</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Tasa de Aceptación</span>
-                  <span className="font-semibold">{stats.acceptanceRate}%</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span className="text-sm">
+                    {acceptedBookings.length} reservas activas
+                  </span>
                 </div>
-                <Progress value={stats.acceptanceRate} className="h-2" />
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Tiempo de Respuesta</span>
-                  <span className="font-semibold">{stats.averageResponseTime}h</span>
-                </div>
-                <Progress value={Math.max(0, 100 - (stats.averageResponseTime / 48) * 100)} className="h-2" />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Actividad Reciente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">
-                      {stats.totalPointsEarned} puntos ganados este mes
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm">
-                      {stats.completedBookings} reservas completadas
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    <span className="text-sm">
-                      {acceptedBookings.length} reservas activas
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="host" className="space-y-6">
-          <HostDashboard onViewBookingDetails={(booking) => handleMessage(booking)} />
-        </TabsContent>
-
-        <TabsContent value="guest" className="space-y-6">
-          {/* Guest Bookings */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Mis Solicitudes</h2>
-            
-            {pendingGuestRequests.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Clock className="h-5 w-5 text-orange-500" />
-                    <span>Esperando Respuesta ({pendingGuestRequests.length})</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {pendingGuestRequests.map((booking) => (
-                      <MobileBookingCard
-                        key={booking.id}
-                        booking={booking}
-                        onCancel={handleCancel}
-                        onMessage={handleMessage}
-                      />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {acceptedBookings.filter(b => b.guest_id === user?.id).length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span>Confirmadas</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {acceptedBookings
-                      .filter(b => b.guest_id === user?.id)
-                      .map((booking) => (
-                        <MobileBookingCard
-                          key={booking.id}
-                          booking={booking}
-                          onMessage={handleMessage}
-                          onCancel={handleCancel}
-                        />
-                      ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-6">
-          <HostAnalytics />
-        </TabsContent>
-      </Tabs>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Messaging Modal */}
       <MessagingModal

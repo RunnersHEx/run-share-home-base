@@ -262,51 +262,78 @@ export const useProfile = () => {
   };
 
   const uploadAvatar = async (file: File) => {
-    if (!user || !mountedRef.current) return null;
+    if (!user || !mountedRef.current) {
+      console.log('uploadAvatar: No user or component unmounted');
+      return null;
+    }
 
     try {
+      console.log('uploadAvatar: Starting upload process', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        userId: user.id
+      });
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/avatar.${fileExt}`;
+      console.log('uploadAvatar: Generated filename:', fileName);
 
-      // Subir a bucket de avatars
-      const { error: uploadError } = await supabase.storage
+      // First, try to remove any existing avatar
+      console.log('uploadAvatar: Removing existing avatar if any...');
+      await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true });
+        .remove([fileName]);
 
-      if (!mountedRef.current) return null;
+      // Upload new avatar
+      console.log('uploadAvatar: Uploading to Supabase storage...');
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { 
+          upsert: true,
+          contentType: file.type
+        });
 
-      if (uploadError) throw uploadError;
+      if (!mountedRef.current) {
+        console.log('uploadAvatar: Component unmounted during upload');
+        return null;
+      }
 
-      const { data } = supabase.storage
+      if (uploadError) {
+        console.error('uploadAvatar: Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('uploadAvatar: Upload successful:', uploadData);
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
 
-      console.log('New avatar URL:', data.publicUrl);
+      const publicUrl = urlData.publicUrl;
+      console.log('uploadAvatar: Generated public URL:', publicUrl);
 
-      // Actualizar el perfil con la nueva URL
-      const success = await updateProfile({ profile_image_url: data.publicUrl });
+      // Add cache busting parameter to force reload
+      const urlWithCacheBuster = `${publicUrl}?t=${Date.now()}`;
+      console.log('uploadAvatar: URL with cache buster:', urlWithCacheBuster);
+
+      // Update the profile with the new URL
+      console.log('uploadAvatar: Updating profile with new image URL...');
+      const success = await updateProfile({ profile_image_url: urlWithCacheBuster });
       
       if (success && mountedRef.current) {
-        console.log('Profile updated, forcing refresh...');
-        // Pequeño delay para asegurar que la DB esté actualizada
-        setTimeout(() => {
-          if (mountedRef.current) {
-            fetchProfile();
-            // ✅ SYNC FIX: Also refresh AuthContext after avatar upload
-            if (refreshAuthProfile) {
-              refreshAuthProfile().catch(error => {
-                console.warn('uploadAvatar: Failed to refresh AuthContext profile:', error);
-              });
-            }
-          }
-        }, 500);
+        console.log('uploadAvatar: Profile updated successfully');
+        return urlWithCacheBuster;
+      } else {
+        console.error('uploadAvatar: Failed to update profile with new image URL');
+        return null;
       }
       
-      return data.publicUrl;
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      console.error('uploadAvatar: Exception during upload:', error);
       if (mountedRef.current) {
-        toast.error('Error al subir la foto de perfil');
+        toast.error(`Error al subir la foto de perfil: ${error.message}`);
       }
       return null;
     }

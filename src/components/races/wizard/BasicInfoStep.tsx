@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CustomSelect } from "@/components/ui/custom";
 import { RaceFormData } from "@/types/race";
 import { useProperties } from "@/hooks/useProperties";
 import { CalendarDays, FileText } from "lucide-react";
+import { toast } from "sonner";
 
 interface BasicInfoStepProps {
   formData: Partial<RaceFormData>;
@@ -20,9 +22,38 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
   // Ensure properties is an array to prevent rendering issues
   const safeProperties = Array.isArray(properties) ? properties : [];
 
+  // Spanish provinces for dropdown (same as homepage search)
+  const spanishProvinces = [
+    "A Coruña", "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz",
+    "Baleares", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
+    "Córdoba", "Cuenca", "Girona", "Granada", "Guadalajara", "Gipuzkoa", "Huelva", "Huesca",
+    "Jaén", "León", "Lleida", "La Rioja", "Lugo", "Madrid", "Málaga", "Murcia", "Navarra",
+    "Ourense", "Palencia", "Las Palmas", "Pontevedra", "Salamanca", "Santa Cruz de Tenerife",
+    "Segovia", "Sevilla", "Soria", "Tarragona", "Teruel", "Toledo", "Valencia", "Valladolid",
+    "Vizcaya", "Zamora", "Zaragoza"
+  ];
+
+  const provinceOptions = spanishProvinces.map(province => ({
+    value: province,
+    label: province
+  }));
+
   // Handle race date changes to validate registration deadline
   const handleRaceDateChange = (newRaceDate: string) => {
     const updates: Partial<RaceFormData> = { race_date: newRaceDate };
+    
+    // Validate the date is in the future
+    if (newRaceDate) {
+      const raceDate = new Date(newRaceDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (raceDate <= today) {
+        // Don't update if date is not in the future
+        toast.error('La fecha de la carrera debe ser posterior a hoy');
+        return;
+      }
+    }
     
     // If there's a registration deadline and it's not before the new race date, clear it
     if (formData.registration_deadline && newRaceDate) {
@@ -35,6 +66,13 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
     }
     
     onUpdate(updates);
+  };
+
+  // Get tomorrow's date in YYYY-MM-DD format for min attribute
+  const getTomorrowDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
   };
 
   return (
@@ -63,11 +101,12 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
 
           <div>
             <Label htmlFor="race-province">Provincia donde se realiza la carrera *</Label>
-            <Input
-              id="race-province"
-              value={formData.province || ""}
-              onChange={(e) => onUpdate({ province: e.target.value })}
-              placeholder="Ej: Madrid, Barcelona, Valencia..."
+            <CustomSelect
+              value={formData.province || ''}
+              onValueChange={(value) => onUpdate({ province: value })}
+              options={provinceOptions}
+              placeholder="Selecciona la provincia"
+              className="w-full"
             />
             <p className="text-sm text-gray-600 mt-1">
               Ciudad o provincia donde se celebra la carrera (para filtros de búsqueda)
@@ -96,7 +135,7 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
         <CardHeader>
           <CardTitle className="flex items-center">
             <CalendarDays className="h-5 w-5 mr-2" />
-            Fechas y Ubicación
+            Fechas y Hogar Asociado
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -109,8 +148,11 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
                 value={formData.race_date || ""}
                 onChange={(e) => handleRaceDateChange(e.target.value)}
                 placeholder="dd/mm/yyyy"
-                min={new Date().toISOString().split('T')[0]}
+                min={getTomorrowDate()}
               />
+              <p className="text-sm text-gray-600 mt-1">
+                La fecha debe ser posterior a hoy
+              </p>
             </div>
 
             <div>
@@ -120,7 +162,7 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
                 type="date"
                 value={formData.registration_deadline || ""}
                 onChange={(e) => onUpdate({ registration_deadline: e.target.value })}
-                min={new Date().toISOString().split('T')[0]}
+                min={getTomorrowDate()}
                 max={formData.race_date ? formData.race_date : undefined}
                 placeholder="dd/mm/yyyy"
               />

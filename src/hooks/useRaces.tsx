@@ -140,18 +140,32 @@ export const useRaces = () => {
 
   const updateRace = async (id: string, updates: Partial<RaceFormData>) => {
     try {
+      console.log('🔄 useRaces: Starting race update for ID:', id);
+      console.log('🔄 useRaces: Updates to apply:', updates);
+      
       // Get the updated race data from server
       const updatedRace = await RaceService.updateRace(id, updates);
+      console.log('✅ useRaces: Race updated in database:', updatedRace);
+      console.log('🎯 useRaces: Updated race distances:', updatedRace.distances);
+      console.log('🎯 useRaces: Updated race max_guests:', updatedRace.max_guests);
+      console.log('🎯 useRaces: Updated race date:', updatedRace.race_date);
       
       // Immediately update local state with the server response
-      setRaces(prevRaces => 
-        prevRaces.map(race => 
-          race.id === id ? updatedRace : race
-        )
-      );
+      setRaces(prevRaces => {
+        const newRaces = prevRaces.map(race => {
+          if (race.id === id) {
+            console.log('🔄 useRaces: Replacing race in state. Old:', race);
+            console.log('🔄 useRaces: Replacing race in state. New:', updatedRace);
+            return updatedRace;
+          }
+          return race;
+        });
+        console.log('✅ useRaces: State updated with new races array');
+        return newRaces;
+      });
       
       toast.success('Carrera actualizada correctamente');
-      return true;
+      return updatedRace; // Return the updated race data instead of just true
     } catch (error) {
       console.error('useRaces: Error updating race:', error);
       toast.error('Error al actualizar la carrera');

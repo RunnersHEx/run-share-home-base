@@ -6,16 +6,25 @@ import FeaturedRacesSection from "@/components/home/FeaturedRacesSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 import CTASection from "@/components/home/CTASection";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const Index = () => {
   
   const { user } = useAuth();
 
-  // Esta función será pasada a los componentes pero la gestión real del modal
-  // está en Layout.tsx que detecta automáticamente cuando se debe abrir
+  // Handle auth modal with check for already logged in users
   const handleAuthModal = (mode: "login" | "register") => {
-    // El Layout maneja automáticamente la apertura del modal
-    // mediante los eventos de los botones
+    // Check if user is already logged in
+    if (user) {
+      toast.info("Ya tienes una sesión activa. Cierra sesión primero para registrarte o iniciar sesión con otra cuenta.");
+      return;
+    }
+    
+    // Dispatch custom event for Layout to handle
+    const event = new CustomEvent('openAuthModal', {
+      detail: { mode }
+    });
+    window.dispatchEvent(event);
   };
 
 

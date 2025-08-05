@@ -5,29 +5,59 @@ import { Race, RaceFormData, RaceFilters, RaceStats, RaceModality, TerrainProfil
 export class RaceHostService {
   // Helper function to convert database race to typed Race
   private static convertDatabaseRaceToTyped(dbRace: any): Race {
+    console.log('🔄 RaceHostService.convertDatabaseRaceToTyped: Starting conversion for race:', dbRace.id);
+    
     // Safely parse JSON fields
     const parseJsonField = (field: any): any[] => {
-      if (Array.isArray(field)) return field;
+      console.log('📋 RaceHostService.parseJsonField: Input field:', field, 'Type:', typeof field);
+      
+      if (Array.isArray(field)) {
+        console.log('✅ RaceHostService.parseJsonField: Already an array:', field);
+        return field;
+      }
+      
       if (typeof field === 'string') {
         try {
           const parsed = JSON.parse(field);
-          return Array.isArray(parsed) ? parsed : [];
+          const result = Array.isArray(parsed) ? parsed : [];
+          console.log('✅ RaceHostService.parseJsonField: Parsed string to:', result);
+          return result;
         } catch {
+          console.log('⚠️ RaceHostService.parseJsonField: Failed to parse string, returning empty array');
           return [];
         }
       }
+      
       if (field && typeof field === 'object') {
-        return Array.isArray(field) ? field : [];
+        const result = Array.isArray(field) ? field : [];
+        console.log('✅ RaceHostService.parseJsonField: Object converted to:', result);
+        return result;
       }
+      
+      console.log('⚠️ RaceHostService.parseJsonField: Unknown type, returning empty array');
       return [];
     };
 
-    return {
+    const modalities = parseJsonField(dbRace.modalities) as RaceModality[];
+    const terrain_profile = parseJsonField(dbRace.terrain_profile) as TerrainProfile[];
+    const distances = parseJsonField(dbRace.distances) as RaceDistance[];
+    
+    console.log('✅ RaceHostService.convertDatabaseRaceToTyped: Final parsed values:');
+    console.log('✅   - modalities:', modalities);
+    console.log('✅   - terrain_profile:', terrain_profile);
+    console.log('✅   - distances:', distances);
+    console.log('✅   - max_guests:', dbRace.max_guests);
+    console.log('✅   - race_date:', dbRace.race_date);
+
+    const result = {
       ...dbRace,
-      modalities: parseJsonField(dbRace.modalities) as RaceModality[],
-      terrain_profile: parseJsonField(dbRace.terrain_profile) as TerrainProfile[],
-      distances: parseJsonField(dbRace.distances) as RaceDistance[]
+      modalities,
+      terrain_profile,
+      distances
     };
+    
+    console.log('✅ RaceHostService.convertDatabaseRaceToTyped: Final converted race:', result);
+    return result;
   }
 
   static async fetchHostRaces(hostId: string, filters?: RaceFilters): Promise<Race[]> {
@@ -84,6 +114,15 @@ export class RaceHostService {
     try {
       console.log('RaceHostService: Creating race:', raceData);
       
+      // Validate race date is in the future
+      const raceDate = new Date(raceData.race_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (raceDate <= today) {
+        throw new Error('La fecha de la carrera debe ser posterior a hoy');
+      }
+      
       const { data, error } = await supabase
         .from('races')
         .insert({
@@ -110,6 +149,20 @@ export class RaceHostService {
 
   static async updateRace(raceId: string, updates: Partial<RaceFormData>): Promise<Race> {
     try {
+      console.log('🔄 RaceHostService.updateRace: Starting update for race ID:', raceId);
+      console.log('🔄 RaceHostService.updateRace: Updates to apply:', updates);
+      
+      // Validate race date is in the future if it's being updated
+      if (updates.race_date) {
+        const raceDate = new Date(updates.race_date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (raceDate <= today) {
+          throw new Error('La fecha de la carrera debe ser posterior a hoy');
+        }
+      }
+      
       const { data, error } = await supabase
         .from('races')
         .update(updates)
@@ -129,7 +182,18 @@ export class RaceHostService {
         throw error;
       }
 
-      return RaceHostService.convertDatabaseRaceToTyped(data);
+      console.log('✅ RaceHostService.updateRace: Raw data from database:', data);
+      console.log('📋 RaceHostService.updateRace: Raw distances field:', data.distances);
+      console.log('📋 RaceHostService.updateRace: Raw modalities field:', data.modalities);
+      console.log('📋 RaceHostService.updateRace: Raw max_guests field:', data.max_guests);
+      
+      const convertedRace = RaceHostService.convertDatabaseRaceToTyped(data);
+      console.log('✅ RaceHostService.updateRace: Converted race data:', convertedRace);
+      console.log('🎯 RaceHostService.updateRace: Converted distances:', convertedRace.distances);
+      console.log('🎯 RaceHostService.updateRace: Converted modalities:', convertedRace.modalities);
+      console.log('🎯 RaceHostService.updateRace: Converted max_guests:', convertedRace.max_guests);
+      
+      return convertedRace;
     } catch (error) {
       console.error('RaceHostService: Error in updateRace:', error);
       throw error;

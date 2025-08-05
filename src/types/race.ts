@@ -34,9 +34,26 @@ export interface Race {
     average_rating?: number;
   };
   property_info?: {
+    id: string;
     title: string;
+    description: string | null;
     locality: string;
-    max_guests?: number;
+    provinces: string[];
+    full_address: string;
+    bedrooms: number;
+    beds: number;
+    bathrooms: number;
+    max_guests: number;
+    amenities: string[];
+    house_rules: string | null;
+    runner_instructions?: string | null;
+    images?: {
+      id: string;
+      image_url: string;
+      caption: string | null;
+      is_main: boolean;
+      display_order: number;
+    }[];
   };
 }
 
@@ -53,7 +70,7 @@ export interface RaceImage {
 export type RaceModality = 'road' | 'trail';
 export type TerrainProfile = 'hilly' | 'flat';
 export type RaceDistance = 'ultra' | 'marathon' | 'half_marathon' | '20k' | '15k' | '10k' | '5k';
-export type RaceImageCategory = 'route' | 'elevation' | 'landscape' | 'finish' | 'atmosphere';
+export type RaceImageCategory = 'cover' | 'route' | 'elevation' | 'landscape' | 'finish' | 'atmosphere';
 
 export interface RaceFormData {
   name: string;

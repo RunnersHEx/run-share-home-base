@@ -97,11 +97,47 @@ const BasicInfoStep = ({ formData, updateFormData }: BasicInfoStepProps) => {
                   id="max_guests"
                   type="number"
                   min="1"
-                  max="16"
+                  max="4"
                   value={formData.max_guests}
-                  onChange={(e) => updateFormData({ max_guests: parseInt(e.target.value) || 1 })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    
+                    // Allow empty value for clearing
+                    if (value === '') {
+                      updateFormData({ max_guests: undefined });
+                      return;
+                    }
+                    
+                    const numValue = parseInt(value);
+                    
+                    // Don't update if not a valid number
+                    if (isNaN(numValue)) {
+                      return;
+                    }
+                    
+                    // Only clamp if user tries to go outside 1-4 range
+                    if (numValue > 4) {
+                      updateFormData({ max_guests: 4 });
+                    } else if (numValue < 1) {
+                      updateFormData({ max_guests: 1 });
+                    } else {
+                      // Keep exact value if it's 1, 2, 3, or 4
+                      updateFormData({ max_guests: numValue });
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Ensure we have a valid value when user leaves the field
+                    const value = e.target.value;
+                    if (value === '' || parseInt(value) < 1) {
+                      updateFormData({ max_guests: 1 });
+                    }
+                  }}
                   className="mt-2"
+                  placeholder="Entre 1 y 4"
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  Máximo 4 huéspedes permitidos
+                </p>
               </div>
             </div>
           </div>

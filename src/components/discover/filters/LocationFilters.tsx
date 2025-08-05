@@ -8,8 +8,8 @@ interface LocationFiltersProps {
   onProvinceChange: (province: string) => void;
   selectedMonth: string;
   onMonthChange: (month: string) => void;
-  selectedRadius: string;
-  onRadiusChange: (radius: string) => void;
+  selectedDistance: string;
+  onDistanceChange: (distance: string) => void;
 }
 
 const spanishProvinces = [
@@ -27,14 +27,14 @@ const provinceOptions = spanishProvinces.map(province => ({
   label: province
 }));
 
-const radiusOptions = [
-  { value: "any", label: "Cualquier distancia" },
-  { value: "25", label: "25 km" },
-  { value: "50", label: "50 km" },
-  { value: "100", label: "100 km" },
-  { value: "200", label: "200 km" },
-  { value: "500", label: "500 km" },
-  { value: "500+", label: "+500 km" }
+const distanceOptions = [
+  { value: "ultra", label: "Ultra" },
+  { value: "marathon", label: "Maratón" },
+  { value: "half_marathon", label: "Media Maratón" },
+  { value: "20k", label: "20K" },
+  { value: "15k", label: "15K" },
+  { value: "10k", label: "10K" },
+  { value: "5k", label: "5K" }
 ];
 
 const monthOptions = [
@@ -59,8 +59,8 @@ export const LocationFilters = ({
   onProvinceChange,
   selectedMonth,
   onMonthChange,
-  selectedRadius,
-  onRadiusChange
+  selectedDistance,
+  onDistanceChange
 }: LocationFiltersProps) => {
   return (
     <div className="space-y-4">
@@ -82,12 +82,12 @@ export const LocationFilters = ({
         </div>
         
         <div>
-          <Label htmlFor="radius">Radio de búsqueda</Label>
+          <Label htmlFor="distance">Distancia de carrera</Label>
           <CustomSelect
-            value={selectedRadius}
-            onValueChange={onRadiusChange}
-            options={radiusOptions}
-            placeholder="Cualquier distancia"
+            value={selectedDistance}
+            onValueChange={onDistanceChange}
+            options={distanceOptions}
+            placeholder="Seleccionar distancia..."
             className="mt-1"
           />
         </div>
