@@ -3,8 +3,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect } from "react";
 import { 
   User, 
   Heart, 
@@ -30,6 +32,9 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
   const { profile, progress } = useProfile();
   const { profile: authProfile, user } = useAuth();
   
+  // ✅ Force re-render when profile image changes
+  const [imageKey, setImageKey] = useState(0);
+  
   // ✅ SMART FALLBACK: Use AuthContext data when useProfile has no meaningful data
   const hasValidProfileData = profile && profile.id && (profile.first_name || profile.last_name || profile.email);
   const displayProfile = hasValidProfileData ? profile : authProfile;
@@ -38,13 +43,63 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
     : user?.email?.split('@')[0] || 'Usuario';
   const displayEmail = displayProfile?.email || user?.email || '';
   
+  // ✅ PRIORITY: Use the most recent profile image from either source OR localStorage
+  const profileImageUrl = localStorage.getItem('temp_profile_image_url') || 
+    authProfile?.profile_image_url || 
+    profile?.profile_image_url || '';
+  
+  // ✅ Force re-render when localStorage changes (immediate updates)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      console.log('ProfileLayout: LocalStorage changed, updating image');
+      setImageKey(prev => prev + 1);
+    };
+    
+    // Custom event listener for localStorage changes
+    const handleStorageEvent = () => {
+      handleStorageChange();
+    };
+    
+    window.addEventListener('storage', handleStorageEvent);
+    
+    // Also listen for our custom storage updates (same-tab changes)
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = function(key, value) {
+      originalSetItem.apply(this, arguments);
+      if (key === 'temp_profile_image_url') {
+        handleStorageChange();
+      }
+    };
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageEvent);
+      localStorage.setItem = originalSetItem;
+    };
+  }, []);
+  
+  // ✅ Force re-render when profile image URL changes (simplified)
+  useEffect(() => {
+    console.log('ProfileLayout: Profile image URLs changed', {
+      useProfileImageUrl: profile?.profile_image_url,
+      authProfileImageUrl: authProfile?.profile_image_url,
+      localStorageImageUrl: localStorage.getItem('temp_profile_image_url'),
+      finalImageUrl: profileImageUrl
+    });
+    setImageKey(prev => prev + 1);
+  }, [profile?.profile_image_url, authProfile?.profile_image_url]);
+  
   console.log('ProfileLayout: Smart fallback logic', {
     useProfileExists: !!profile,
     useProfileHasValidData: hasValidProfileData,
     authProfileExists: !!authProfile,
     usingAuthFallback: !hasValidProfileData && !!authProfile,
     displayName,
-    verificationStatus: displayProfile?.verification_status
+    verificationStatus: displayProfile?.verification_status,
+    useProfileImageUrl: profile?.profile_image_url,
+    authProfileImageUrl: authProfile?.profile_image_url,
+    localStorageImageUrl: localStorage.getItem('temp_profile_image_url'),
+    finalImageUrl: profileImageUrl,
+    imageKey
   });
 
   const sections = [
@@ -94,9 +149,17 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
             <Card className="p-6 sticky top-8">
               {/* Profile Header */}
               <div className="text-center mb-6">
-                <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-3">
-                  {displayProfile?.first_name?.charAt(0) || displayName.charAt(0) || 'U'}{displayProfile?.last_name?.charAt(0) || displayName.charAt(1) || ''}
-                </div>
+                <Avatar className="w-20 h-20 mx-auto mb-3" key={`sidebar-avatar-${imageKey}`}>
+                  <AvatarImage 
+                    src={profileImageUrl} 
+                    alt="Foto de perfil"
+                    className="object-cover"
+                    key={`sidebar-image-${imageKey}`}
+                  />
+                  <AvatarFallback className="bg-blue-600 text-white text-2xl font-bold">
+                    {displayProfile?.first_name?.charAt(0) || displayName.charAt(0) || 'U'}{displayProfile?.last_name?.charAt(0) || displayName.charAt(1) || ''}
+                  </AvatarFallback>
+                </Avatar>
                 <h3 className="font-semibold text-lg">
                   {displayName}
                 </h3>

@@ -6,21 +6,26 @@ import { Badge } from "@/components/ui/badge";
 import { useProperties } from "@/hooks/useProperties";
 import PropertyWizard from "@/components/properties/PropertyWizard";
 import PropertyEditButton from "@/components/properties/PropertyEditButton";
-import { Plus, Home, MapPin, Users, Bed, Bath, Eye, Star } from "lucide-react";
+import { PhotoGalleryModal } from "@/components/common/PhotoGalleryModal";
+import { Plus, Home, MapPin, Users, Bed, Bath, Eye, Star, Camera } from "lucide-react";
 
 const PropertiesSection = () => {
   const { properties, loading, refetchProperties } = useProperties();
   const [showWizard, setShowWizard] = useState(false);
-  const [editingProperty, setEditingProperty] = useState<any>(null);
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
+  const [selectedPropertyPhotos, setSelectedPropertyPhotos] = useState<any[]>([]);
+  const [selectedPropertyTitle, setSelectedPropertyTitle] = useState("");
 
-  const handleEditProperty = (property: any) => {
-    setEditingProperty(property);
-    setShowWizard(true);
+  const handleViewPhotos = (property: any) => {
+    if (property.images && property.images.length > 0) {
+      setSelectedPropertyPhotos(property.images);
+      setSelectedPropertyTitle(property.title);
+      setShowPhotoGallery(true);
+    }
   };
 
   const handleCloseWizard = () => {
     setShowWizard(false);
-    setEditingProperty(null);
     // Refrescar la lista de propiedades después de cerrar el wizard
     refetchProperties();
   };
@@ -29,8 +34,6 @@ const PropertiesSection = () => {
     return (
       <PropertyWizard 
         onClose={handleCloseWizard}
-        propertyId={editingProperty?.id}
-        initialData={editingProperty}
       />
     );
   }
@@ -80,8 +83,11 @@ const PropertiesSection = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {properties.map((property) => {
               console.log('Property images:', property.images); // Debug log
+              // Find main image first, fallback to first image if no main is set
               const mainImage = property.images?.find(img => img.is_main)?.image_url || 
                               property.images?.[0]?.image_url;
+              
+              console.log('Main image for property', property.id, ':', mainImage); // Debug log
               
               return (
                 <Card key={property.id} className="border border-gray-200 hover:shadow-lg transition-shadow">
@@ -116,9 +122,20 @@ const PropertiesSection = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
+                        {property.images && property.images.length > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewPhotos(property)}
+                            className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                          >
+                            <Camera className="w-4 h-4 mr-1" />
+                            Ver Fotos ({property.images.length})
+                          </Button>
+                        )}
                         <PropertyEditButton 
                           property={property}
-                          onPropertyUpdated={() => handleEditProperty(property)}
+                          onPropertyUpdated={() => refetchProperties()}
                         />
                       </div>
                     </div>
@@ -175,6 +192,14 @@ const PropertiesSection = () => {
           </div>
         )}
       </CardContent>
+
+      {/* Photo Gallery Modal */}
+      <PhotoGalleryModal
+        isOpen={showPhotoGallery}
+        onClose={() => setShowPhotoGallery(false)}
+        photos={selectedPropertyPhotos}
+        title={`Fotos de ${selectedPropertyTitle}`}
+      />
     </Card>
   );
 };

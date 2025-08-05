@@ -5,7 +5,7 @@ import BookingWorkflow from "@/components/bookings/BookingWorkflow";
 const Bookings = () => {
   return (
     <ProtectedRoute>
-      <BookingWorkflow defaultTab="overview" userRole="both" />
+      <BookingWorkflow userRole="both" />
     </ProtectedRoute>
   );
 };

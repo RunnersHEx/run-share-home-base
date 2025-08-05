@@ -2,14 +2,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Search, MapPin, Calendar, Trophy } from "lucide-react";
 import { RaceFilters } from "@/types/race";
 import { CustomSelect } from "@/components/ui/custom";
 
 const QuickSearchSection = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedModality, setSelectedModality] = useState("");
@@ -93,14 +91,9 @@ const QuickSearchSection = () => {
     }
 
     console.log('QuickSearch: Navigating with filters:', filters);
-    console.log('QuickSearch: Search query:', searchQuery);
 
     // Navigate to discover page with filters as URL parameters
     const searchParams = new URLSearchParams();
-    
-    if (searchQuery) {
-      searchParams.set('q', searchQuery);
-    }
     
     if (finalProvince) {
       searchParams.set('province', finalProvince);
@@ -206,24 +199,6 @@ const QuickSearchSection = () => {
             <Search className="w-4 h-4 mr-2" />
             Buscar Carreras
           </Button>
-        </div>
-      </div>
-
-      {/* Search Bar Alternative */}
-      <div className="border-t pt-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <Input
-            placeholder="O busca por nombre de carrera, ciudad..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-12 text-lg border-gray-300 focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent"
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch();
-              }
-            }}
-          />
         </div>
       </div>
     </div>

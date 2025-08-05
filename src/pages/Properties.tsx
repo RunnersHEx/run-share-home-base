@@ -112,6 +112,14 @@ const Properties = () => {
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                     {property.description}
                   </p>
+                  {property.runner_instructions && (
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-800 mb-1">Zonas para correr cerca:</h4>
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {property.runner_instructions}
+                      </p>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">
                       {property.total_bookings} reservas

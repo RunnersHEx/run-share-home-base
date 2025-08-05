@@ -19,12 +19,14 @@ import {
   XCircle,
   AlertCircle,
   TrendingUp,
-  RefreshCw
+  RefreshCw,
+  User
 } from "lucide-react";
 import { Booking } from "@/types/booking";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBookings } from "@/hooks/useBookings";
 import { toast } from "sonner";
+import { GuestInfoModal } from "@/components/bookings/GuestInfoModal";
 
 interface HostDashboardProps {
   onViewBookingDetails?: (booking: Booking) => void;
@@ -38,6 +40,8 @@ const HostDashboard = ({ onViewBookingDetails }: HostDashboardProps) => {
   const [responseType, setResponseType] = useState<'accepted' | 'rejected'>('accepted');
   const [responseMessage, setResponseMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showGuestInfoModal, setShowGuestInfoModal] = useState(false);
+  const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
 
   // Debug logging for bookings
   useEffect(() => {
@@ -104,6 +108,11 @@ const HostDashboard = ({ onViewBookingDetails }: HostDashboardProps) => {
       setSelectedBooking(booking);
       setShowResponseModal(true);
     }
+  };
+
+  const handleViewGuestInfo = (guestId: string) => {
+    setSelectedGuestId(guestId);
+    setShowGuestInfoModal(true);
   };
 
   const submitResponse = async () => {
@@ -264,6 +273,15 @@ const HostDashboard = ({ onViewBookingDetails }: HostDashboardProps) => {
                                   <span className="text-sm">{booking.guest.average_rating}</span>
                                 </div>
                               )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleViewGuestInfo(booking.guest_id)}
+                                className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700"
+                              >
+                                <User className="w-3 h-3 mr-1" />
+                                Info Runner
+                              </Button>
                             </div>
                             
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-gray-600">
@@ -347,32 +365,43 @@ const HostDashboard = ({ onViewBookingDetails }: HostDashboardProps) => {
           {selectedBooking && (
             <div className="space-y-6">
               {/* Guest Info */}
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-                <Avatar className="w-12 h-12">
-                  <AvatarImage src={selectedBooking.guest?.profile_image_url} />
-                  <AvatarFallback>
-                    {selectedBooking.guest?.first_name?.[0]}{selectedBooking.guest?.last_name?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-semibold">
-                    {selectedBooking.guest?.first_name} {selectedBooking.guest?.last_name}
-                  </h3>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    {selectedBooking.guest?.verification_status === 'approved' && (
-                      <>
-                        <Shield className="w-4 h-4 text-green-500" />
-                        <span>Verificado</span>
-                      </>
-                    )}
-                    {selectedBooking.guest?.average_rating && (
-                      <>
-                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                        <span>{selectedBooking.guest.average_rating}</span>
-                      </>
-                    )}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="w-12 h-12">
+                    <AvatarImage src={selectedBooking.guest?.profile_image_url} />
+                    <AvatarFallback>
+                      {selectedBooking.guest?.first_name?.[0]}{selectedBooking.guest?.last_name?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-semibold">
+                      {selectedBooking.guest?.first_name} {selectedBooking.guest?.last_name}
+                    </h3>
+                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      {selectedBooking.guest?.verification_status === 'approved' && (
+                        <>
+                          <Shield className="w-4 h-4 text-green-500" />
+                          <span>Verificado</span>
+                        </>
+                      )}
+                      {selectedBooking.guest?.average_rating && (
+                        <>
+                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                          <span>{selectedBooking.guest.average_rating}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleViewGuestInfo(selectedBooking.guest_id)}
+                  className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                >
+                  <User className="w-4 h-4 mr-1" />
+                  Ver Perfil Runner
+                </Button>
               </div>
 
               {/* Booking Details */}
@@ -470,6 +499,16 @@ const HostDashboard = ({ onViewBookingDetails }: HostDashboardProps) => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Guest Info Modal */}
+      <GuestInfoModal
+        isOpen={showGuestInfoModal}
+        onClose={() => {
+          setShowGuestInfoModal(false);
+          setSelectedGuestId(null);
+        }}
+        guestId={selectedGuestId || ''}
+      />
     </div>
   );
 };

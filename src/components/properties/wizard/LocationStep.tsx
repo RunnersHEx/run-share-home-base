@@ -43,8 +43,7 @@ const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps)
 
   const canProceed = () => {
     return formData.provinces.length > 0 && 
-           formData.locality.trim() !== "" && 
-           formData.full_address.trim() !== "";
+           formData.locality.trim() !== "";
   };
 
   return (
@@ -133,28 +132,13 @@ const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps)
             />
           </div>
 
-          {/* Full Address */}
-          <div>
-            <Label htmlFor="full_address">Dirección (solo la calle o avenida sin número) *</Label>
-            <Input
-              id="full_address"
-              value={formData.full_address}
-              onChange={(e) => onUpdate({ full_address: e.target.value })}
-              placeholder="Calle, avenida..."
-              className="mt-1"
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              La dirección completa se la proporcionará el Host al Guest una vez hecho el Match por el canal de mensajería privado
-            </p>
-          </div>
-
           {/* Running Areas Description */}
           <div>
             <Label htmlFor="running_description">Describe si existen zonas cercanas a tu casa para correr (Opcional)</Label>
             <textarea
               id="running_description"
-              value={formData.description || ''}
-              onChange={(e) => onUpdate({ description: e.target.value })}
+              value={formData.runner_instructions || ''}
+              onChange={(e) => onUpdate({ runner_instructions: e.target.value })}
               placeholder="Ej: Parque del Retiro a 5 minutos andando, circuito de running de 3km..."
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               rows={3}

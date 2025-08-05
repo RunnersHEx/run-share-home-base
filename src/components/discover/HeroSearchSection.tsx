@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, Calendar, Grid3X3, Map as MapIcon, X } from "lucide-react";
+import { Search, MapPin, Calendar, X } from "lucide-react";
 import { RaceFilters } from "@/types/race";
 import { CustomSelect } from "@/components/ui/custom";
 
@@ -12,17 +12,13 @@ interface HeroSearchSectionProps {
   onSearchChange: (query: string) => void;
   filters: RaceFilters;
   onFiltersChange: (filters: RaceFilters) => void;
-  viewMode: "grid" | "map";
-  onViewModeChange: (mode: "grid" | "map") => void;
 }
 
 export const HeroSearchSection = ({
   searchQuery,
   onSearchChange,
   filters,
-  onFiltersChange,
-  viewMode,
-  onViewModeChange
+  onFiltersChange
 }: HeroSearchSectionProps) => {
   const spanishProvinces = [
     "A Coruña", "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz",
@@ -196,34 +192,6 @@ export const HeroSearchSection = ({
                   placeholder="Distancia"
                   className="w-full sm:w-40"
                 />
-              </div>
-
-              {/* View Mode Toggle */}
-              <div className="flex border rounded-lg bg-gray-50">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => onViewModeChange("grid")}
-                  className={`h-12 px-4 rounded-r-none ${
-                    viewMode === "grid" 
-                      ? "bg-blue-600 text-white hover:bg-blue-700" 
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "map" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => onViewModeChange("map")}
-                  className={`h-12 px-4 rounded-l-none ${
-                    viewMode === "map" 
-                      ? "bg-blue-600 text-white hover:bg-blue-700" 
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <MapIcon className="w-4 h-4" />
-                </Button>
               </div>
             </div>
           </div>

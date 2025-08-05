@@ -23,7 +23,6 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
   const [maxGuests, setMaxGuests] = useState<number>(filters.maxGuests || 1);
   const [selectedProvince, setSelectedProvince] = useState<string>(filters.province || "");
   const [selectedMonth, setSelectedMonth] = useState<string>(filters.month || "");
-  const [selectedRadius, setSelectedRadius] = useState<string>("");
   const [selectedRating, setSelectedRating] = useState<string>("");
 
   // Sync local state with filters prop when it changes
@@ -117,12 +116,6 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
     });
   };
 
-  const handleRadiusChange = (radius: string) => {
-    setSelectedRadius(radius);
-    console.log('Radius updated:', radius);
-    // Note: radius is not part of RaceFilters interface yet, so we skip auto-apply for now
-  };
-
   const handleRatingChange = (rating: string) => {
     setSelectedRating(rating);
     console.log('Rating updated:', rating);
@@ -138,7 +131,6 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
     setMaxGuests(1);
     setSelectedProvince("");
     setSelectedMonth("");
-    setSelectedRadius("");
     setSelectedRating("");
   };
 
@@ -178,8 +170,20 @@ export const AdvancedFilters = ({ filters, onFiltersChange, onClose, onSearch }:
           onProvinceChange={handleProvinceChange}
           selectedMonth={selectedMonth}
           onMonthChange={handleMonthChange}
-          selectedRadius={selectedRadius}
-          onRadiusChange={handleRadiusChange}
+          selectedDistance={selectedDistances.length > 0 ? selectedDistances[0] : ""}
+          onDistanceChange={(distance) => {
+            if (distance) {
+              setSelectedDistances([distance as RaceDistance]);
+              applyFilters({
+                distances: [distance as RaceDistance]
+              });
+            } else {
+              setSelectedDistances([]);
+              applyFilters({
+                distances: undefined
+              });
+            }
+          }}
         />
 
         <Separator />

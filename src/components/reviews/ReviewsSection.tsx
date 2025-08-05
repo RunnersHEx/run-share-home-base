@@ -81,8 +81,8 @@ const ReviewsSection = () => {
         .from('bookings')
         .select(`
           *,
-          host:profiles!bookings_host_id_fkey(id, first_name, last_name, profile_image_url),
-          guest:profiles!bookings_guest_id_fkey(id, first_name, last_name, profile_image_url),
+          host:profiles!bookings_host_id_profiles_fkey(id, first_name, last_name, profile_image_url),
+          guest:profiles!bookings_guest_id_profiles_fkey(id, first_name, last_name, profile_image_url),
           race:races(name, race_date)
         `)
         .eq('status', 'completed')

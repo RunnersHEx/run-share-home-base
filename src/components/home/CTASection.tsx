@@ -1,19 +1,37 @@
 
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface CTASectionProps {
   onAuthModal: (mode: "login" | "register") => void;
 }
 
 const CTASection = ({ onAuthModal }: CTASectionProps) => {
+  const { user } = useAuth();
+  
   const handleJoinCommunity = () => {
     console.log('CTASection: Join community button clicked');
+    
+    // Check if user is already logged in
+    if (user) {
+      toast.info("Ya tienes una sesión activa. Cierra sesión primero para registrarte o iniciar sesión con otra cuenta.");
+      return;
+    }
+    
     // Disparar evento personalizado que Layout capturará
     window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { mode: 'register' } }));
   };
 
   const handleExploreRaces = () => {
     console.log('CTASection: Explore races button clicked');
+    
+    // Check if user is already logged in
+    if (user) {
+      toast.info("Ya tienes una sesión activa. Cierra sesión primero para registrarte o iniciar sesión con otra cuenta.");
+      return;
+    }
+    
     // Disparar evento personalizado que Layout capturará
     window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { mode: 'login' } }));
   };

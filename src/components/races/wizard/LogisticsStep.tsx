@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { MapPin, Euro, Trophy, Users, Globe } from "lucide-react";
+import { Trophy, Users, Globe } from "lucide-react";
 import { RaceFormData } from "@/types/race";
 
 interface LogisticsStepProps {
@@ -28,34 +28,7 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
         <p className="text-gray-600 mt-2">Define los aspectos prácticos y económicos</p>
       </div>
 
-      {/* Distancia y Ubicación */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <MapPin className="w-5 h-5" />
-            <span>Ubicación y Distancia</span>
-          </CardTitle>
-          <CardDescription>Información sobre la proximidad a tu propiedad</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="distance_from_property">Distancia desde tu propiedad (km)</Label>
-            <input
-              id="distance_from_property"
-              type="number"
-              step="0.1"
-              min="0"
-              value={formData.distance_from_property || ''}
-              onChange={(e) => onUpdate({ distance_from_property: parseFloat(e.target.value) || 0 })}
-              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Ej: 2.5"
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              ¿A qué distancia está la salida de la carrera desde tu alojamiento?
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Información Oficial */}
       <Card>
@@ -79,25 +52,7 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
             />
           </div>
 
-          <div>
-            <Label htmlFor="registration_cost">Costo de inscripción (€)</Label>
-            <div className="relative">
-              <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                id="registration_cost"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.registration_cost || ''}
-                onChange={(e) => onUpdate({ registration_cost: parseFloat(e.target.value) || 0 })}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="25.00"
-              />
-            </div>
-            <p className="text-sm text-gray-500 mt-1">
-              Precio oficial de inscripción a la carrera
-            </p>
-          </div>
+
         </CardContent>
       </Card>
 
@@ -144,33 +99,42 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
             <input
               id="max_guests"
               type="number"
-              min="1"
-              max="4"
               value={formData.max_guests || ''}
               onChange={(e) => {
                 const value = e.target.value;
+                
+                // Allow empty value for clearing
                 if (value === '') {
                   onUpdate({ max_guests: undefined });
                   return;
                 }
                 
                 const numValue = parseInt(value);
+                
+                // Don't update if not a valid number
                 if (isNaN(numValue)) {
-                  return; // Don't update if not a valid number
+                  return;
                 }
                 
-                // Allow 1-4, restrict anything above 4 to 4, anything below 1 to 1
+                // Only clamp if user tries to go outside 1-4 range
                 if (numValue > 4) {
                   onUpdate({ max_guests: 4 });
                 } else if (numValue < 1) {
                   onUpdate({ max_guests: 1 });
                 } else {
-                  // Keep the exact value if it's between 1-4
+                  // Keep exact value if it's 1, 2, 3, or 4
                   onUpdate({ max_guests: numValue });
                 }
               }}
+              onBlur={(e) => {
+                // Ensure we have a valid value when user leaves the field
+                const value = e.target.value;
+                if (value === '' || parseInt(value) < 1) {
+                  onUpdate({ max_guests: 1 });
+                }
+              }}
               className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="4"
+              placeholder="Entre 1 y 4"
             />
             <p className="text-sm text-gray-500 mt-1">
               Considera la capacidad de tu propiedad y tu disponibilidad como anfitrión (máximo 4 guests)

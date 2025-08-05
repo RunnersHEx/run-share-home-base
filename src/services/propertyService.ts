@@ -18,8 +18,13 @@ export class PropertyService {
 
     return data?.map(property => ({
       ...property,
-      approval_status: (property as any).approval_status ?? 'pending', // Handle optional field with type assertion
-      images: property.property_images || []
+      approval_status: (property as any).approval_status ?? 'pending',
+      // Sort images so main photo comes first, then by created_at
+      images: (property.property_images || []).sort((a: any, b: any) => {
+        if (a.is_main && !b.is_main) return -1;
+        if (!a.is_main && b.is_main) return 1;
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      })
     })) || [];
   }
 
@@ -83,6 +88,14 @@ export class PropertyService {
       .from('property-images')
       .getPublicUrl(fileName);
 
+    // If this image is marked as main, clear the main flag from all other images for this property
+    if (isMain) {
+      await supabase
+        .from('property_images')
+        .update({ is_main: false })
+        .eq('property_id', propertyId);
+    }
+
     const { data: imageData, error: insertError } = await supabase
       .from('property_images')
       .insert({
@@ -103,6 +116,23 @@ export class PropertyService {
       .from('property_images')
       .delete()
       .eq('id', imageId);
+
+    if (error) throw error;
+  }
+
+  static async setMainPropertyImage(propertyId: string, imageId: string): Promise<void> {
+    // First, clear all main flags for this property
+    await supabase
+      .from('property_images')
+      .update({ is_main: false })
+      .eq('property_id', propertyId);
+
+    // Then set the specified image as main
+    const { error } = await supabase
+      .from('property_images')
+      .update({ is_main: true })
+      .eq('id', imageId)
+      .eq('property_id', propertyId);
 
     if (error) throw error;
   }

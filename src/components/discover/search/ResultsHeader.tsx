@@ -1,13 +1,11 @@
 
 import { Button } from "@/components/ui/button";
-import { Filter, Grid3X3, Map as MapIcon } from "lucide-react";
+import { Filter } from "lucide-react";
 
 interface ResultsHeaderProps {
   resultsCount: number;
   showFilters: boolean;
   onToggleFilters: () => void;
-  viewMode: "grid" | "map";
-  onViewModeChange: (mode: "grid" | "map") => void;
   sortBy: string;
   onSortChange: (sort: string) => void;
 }
@@ -16,8 +14,6 @@ export const ResultsHeader = ({
   resultsCount,
   showFilters,
   onToggleFilters,
-  viewMode,
-  onViewModeChange,
   sortBy,
   onSortChange
 }: ResultsHeaderProps) => {
@@ -42,26 +38,6 @@ export const ResultsHeader = ({
       </div>
 
       <div className="flex items-center gap-2">
-        {/* View Mode Toggle */}
-        <div className="flex border rounded-lg p-1">
-          <Button
-            variant={viewMode === "grid" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => onViewModeChange("grid")}
-            className="px-3"
-          >
-            <Grid3X3 className="w-4 h-4" />
-          </Button>
-          <Button
-            variant={viewMode === "map" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => onViewModeChange("map")}
-            className="px-3"
-          >
-            <MapIcon className="w-4 h-4" />
-          </Button>
-        </div>
-
         {/* Sort Dropdown */}
         <select 
           value={sortBy}

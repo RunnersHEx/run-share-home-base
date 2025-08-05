@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { RaceDetailContent } from "./RaceDetailContent";
 import { RaceHostCard } from "./RaceHostCard";
 import { RaceBookingCard } from "./RaceBookingCard";
+import { PropertyInfoCard } from "./PropertyInfoCard";
 import { useRaceBooking } from "@/hooks/useRaceBooking";
 import BookingRequestModal from "@/components/bookings/BookingRequestModal";
 
@@ -11,6 +12,7 @@ interface RaceDetailModalProps {
     id: string;
     name: string;
     location: string;
+    province?: string; // Add province field
     date: string;
     daysUntil: number;
     modalities: string[];
@@ -27,7 +29,30 @@ interface RaceDetailModalProps {
     pointsCost: number;
     available: boolean;
     highlights: string;
+    official_website?: string;
     maxGuests?: number;
+    property_info?: {
+      id: string;
+      title: string;
+      description: string | null;
+      locality: string;
+      provinces: string[];
+      full_address: string;
+      bedrooms: number;
+      beds: number;
+      bathrooms: number;
+      max_guests: number;
+      amenities: string[];
+      house_rules: string | null;
+      runner_instructions?: string | null;
+      images?: {
+        id: string;
+        image_url: string;
+        caption: string | null;
+        is_main: boolean;
+        display_order: number;
+      }[];
+    };
   };
   isOpen: boolean;
   onClose: () => void;
@@ -62,7 +87,14 @@ export const RaceDetailModal = ({ race, isOpen, onClose }: RaceDetailModalProps)
 
             {/* Sidebar - Host y reserva */}
             <div className="space-y-6">
-              <RaceHostCard host={race.host} />
+              <RaceHostCard 
+                host={race.host} 
+                raceId={race.id}
+                propertyId={race.property_info?.id}
+              />
+              {race.property_info && (
+                <PropertyInfoCard property={race.property_info} />
+              )}
               <RaceBookingCard 
                 pointsCost={race.pointsCost}
                 maxGuests={race.maxGuests}

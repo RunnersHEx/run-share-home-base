@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Trophy, Plus, Edit, Eye } from "lucide-react";
+import { Calendar, MapPin, Users, Trophy, Plus, Edit, Camera } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RaceWizard } from "@/components/races/RaceWizard";
-import { useNavigate } from "react-router-dom";
-import { RaceService } from "@/services/raceService"; // Import RaceService
+import { PhotoGalleryModal } from "@/components/common/PhotoGalleryModal";
+import type { RaceModality, RaceDistance } from "@/types/race";
 
 interface Race {
   id: string;
@@ -18,9 +18,9 @@ interface Race {
   registration_deadline?: string;
   province: string;
   property_id: string;
-  modalities: any;
+  modalities: RaceModality[];
   terrain_profile: any;
-  distances: any;
+  distances: RaceDistance[];
   has_wave_starts: boolean;
   distance_from_property?: number;
   official_website?: string;
@@ -33,15 +33,65 @@ interface Race {
   highlights?: string;
   local_tips?: string;
   weather_notes?: string;
+  images?: {
+    id: string;
+    image_url: string;
+    caption?: string;
+    category: string;
+    display_order: number;
+  }[];
 }
 
 const RacesSection = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [races, setRaces] = useState<Race[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
   const [editingRace, setEditingRace] = useState<Race | null>(null);
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
+  const [selectedRacePhotos, setSelectedRacePhotos] = useState<any[]>([]);
+  const [selectedRaceTitle, setSelectedRaceTitle] = useState("");
+
+  // Helper function to safely parse JSON fields
+  const parseJsonField = (field: any): any[] => {
+    if (Array.isArray(field)) return field;
+    if (typeof field === 'string') {
+      try {
+        const parsed = JSON.parse(field);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    if (field && typeof field === 'object') {
+      return Array.isArray(field) ? field : [];
+    }
+    return [];
+  };
+
+  // Convert database race to typed Race
+  const convertDatabaseRace = (dbRace: any): Race => {
+    return {
+      ...dbRace,
+      modalities: parseJsonField(dbRace.modalities) as RaceModality[],
+      distances: parseJsonField(dbRace.distances) as RaceDistance[]
+    };
+  };
+
+  // Debug races state changes
+  useEffect(() => {
+    console.log('🏁 RacesSection: Races state changed. Count:', races?.length || 0);
+    if (races && races.length > 0) {
+      console.log('🏁 RacesSection: Sample race data:', {
+        id: races[0].id,
+        name: races[0].name,
+        race_date: races[0].race_date,
+        max_guests: races[0].max_guests,
+        distances: races[0].distances,
+        modalities: races[0].modalities
+      });
+    }
+  }, [races]);
 
   useEffect(() => {
     if (user) {
@@ -56,7 +106,16 @@ const RacesSection = () => {
       console.log('RacesSection: Starting fetchMyRaces');
       const { data, error } = await supabase
         .from('races')
-        .select('*')
+        .select(`
+          *,
+          images:race_images(
+            id,
+            image_url,
+            caption,
+            category,
+            display_order
+          )
+        `)
         .eq('host_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -66,8 +125,18 @@ const RacesSection = () => {
         return;
       }
 
-      console.log('RacesSection: Fetched races:', data?.length, 'races');
-      setRaces(data || []);
+      console.log('RacesSection: Raw database data:', data?.length, 'races');
+      
+      // Convert all races using the proper conversion function
+      const convertedRaces = (data || []).map(race => {
+        console.log('🔄 RacesSection: Converting race:', race.name, 'Raw distances:', race.distances, 'Raw modalities:', race.modalities);
+        const converted = convertDatabaseRace(race);
+        console.log('✅ RacesSection: Converted race:', race.name, 'Parsed distances:', converted.distances, 'Parsed modalities:', converted.modalities);
+        return converted;
+      });
+      
+      console.log('RacesSection: Fetched races:', convertedRaces.length, 'races');
+      setRaces(convertedRaces);
     } catch (error) {
       console.error('Exception fetching races:', error);
       toast.error('Error al cargar tus carreras');
@@ -86,29 +155,107 @@ const RacesSection = () => {
     setShowWizard(true);
   };
 
-  const handleViewRaceDetails = (raceId: string) => {
-    navigate(`/discover?raceId=${raceId}`);
+  const handleViewPhotos = (race: Race) => {
+    console.log('📷 Opening photo gallery for race:', race.name, 'with', race.images?.length || 0, 'images');
+    if (race.images && race.images.length > 0) {
+      setSelectedRacePhotos(race.images);
+      setSelectedRaceTitle(race.name);
+      setShowPhotoGallery(true);
+    } else {
+      toast.info('Esta carrera no tiene fotos aún');
+    }
   };
 
-  const handleRaceSuccess = () => {
-    console.log('RacesSection: handleRaceSuccess called');
+
+
+  const handleRaceSuccess = (updatedRaceData?: any) => {
+    console.log('✅ RacesSection: handleRaceSuccess called with data:', updatedRaceData);
     const wasEditing = editingRace !== null;
+    
+    if (wasEditing && editingRace && updatedRaceData) {
+      console.log('🔄 RacesSection: Race was edited, updating state immediately with provided data');
+      console.log('🎯 RacesSection: Updated race distances:', updatedRaceData.distances);
+      console.log('🎯 RacesSection: Updated race modalities:', updatedRaceData.modalities);
+      console.log('🎯 RacesSection: Updated race max_guests:', updatedRaceData.max_guests);
+      console.log('🎯 RacesSection: Updated race race_date:', updatedRaceData.race_date);
+      console.log('🎯 RacesSection: Updated race name:', updatedRaceData.name);
+      
+      // Update the local state immediately with the provided updated race data
+      setRaces(prevRaces => {
+        const newRaces = prevRaces.map(race => {
+          if (race.id === editingRace.id) {
+            console.log('🔄 RacesSection: Replacing race in state. Old race:');
+            console.log('  - Old max_guests:', race.max_guests);
+            console.log('  - Old race_date:', race.race_date);
+            console.log('  - Old distances:', race.distances);
+            
+            console.log('🔄 RacesSection: Replacing race in state. New race:');
+            console.log('  - New max_guests:', updatedRaceData.max_guests);
+            console.log('  - New race_date:', updatedRaceData.race_date);
+            console.log('  - New distances:', updatedRaceData.distances);
+            
+            const mergedRace = { 
+              ...updatedRaceData,
+              // Use images from updatedRaceData if available, otherwise preserve existing
+              images: updatedRaceData.images || race.images,
+              id: race.id // Ensure ID is preserved
+            };
+            
+            console.log('✅ RacesSection: Final merged race:', mergedRace);
+            console.log('  - Final max_guests:', mergedRace.max_guests);
+            console.log('  - Final race_date:', mergedRace.race_date);
+            console.log('  - Final distances:', mergedRace.distances);
+            
+            return mergedRace;
+          }
+          return race;
+        });
+        console.log('✅ RacesSection: State updated with new races array');
+        return newRaces;
+      });
+      
+      // Immediate refetch to get the absolute latest data
+      fetchMyRaces();
+    } else {
+      console.log('🆕 RacesSection: New race created or no updated data provided, refetching');
+      // For new races or when no updated data is provided, refetch
+      setTimeout(() => {
+        fetchMyRaces();
+      }, 500);
+    }
+    
     setShowWizard(false);
     setEditingRace(null);
-    
-    console.log('RacesSection: Refetching races after', wasEditing ? 'edit' : 'create');
-    // Add a small delay to ensure database update completes
-    setTimeout(() => {
-      fetchMyRaces();
-    }, 500);
   };
 
-  const formatDistances = (distances: any) => {
-    if (!distances) return 'No especificada';
-    if (Array.isArray(distances)) {
-      return distances.join(', ') + ' km';
+  const formatDistances = (distances: RaceDistance[]) => {
+    if (!distances || !Array.isArray(distances) || distances.length === 0) {
+      return 'No especificada';
     }
-    return 'Distancia variada';
+    
+    const labels = {
+      'ultra': 'ULTRA',
+      'marathon': 'MARATÓN',
+      'half_marathon': 'MEDIA MARATÓN',
+      '20k': '20K',
+      '15k': '15K',
+      '10k': '10K',
+      '5k': '5K'
+    };
+    
+    return distances.map(distance => 
+      labels[distance as keyof typeof labels] || distance.toUpperCase()
+    ).join(', ');
+  };
+  
+  const formatModalities = (modalities: RaceModality[]) => {
+    if (!modalities || !Array.isArray(modalities) || modalities.length === 0) {
+      return 'No especificada';
+    }
+    
+    return modalities.map(modality => 
+      modality === 'road' ? 'Ruta/Asfalto' : 'Trail/Montaña'
+    ).join(', ');
   };
 
   const getStatusBadge = (race: Race) => {
@@ -167,8 +314,15 @@ const RacesSection = () => {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {races.map((race) => (
-            <Card key={race.id} className="hover:shadow-lg transition-shadow">
+          {races.map((race) => {
+            // Debug race data before rendering
+            console.log('🃏 RacesSection: Rendering race card for:', race.name);
+            console.log('  - Rendering max_guests:', race.max_guests);
+            console.log('  - Rendering race_date:', race.race_date);
+            console.log('  - Rendering distances:', race.distances);
+            
+            return (
+            <Card key={`${race.id}-${race.max_guests}-${race.race_date}-${JSON.stringify(race.distances)}-${race.images?.length || 0}`} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -176,30 +330,93 @@ const RacesSection = () => {
                     <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
                       <span className="flex items-center">
                         <Calendar className="h-4 w-4 mr-1" />
-                        {new Date(race.race_date).toLocaleDateString('es-ES')}
+                        {(() => {
+                          const dateValue = new Date(race.race_date).toLocaleDateString('es-ES');
+                          console.log('📅 RacesSection: Rendering date for', race.name, '- Raw race_date:', race.race_date, '- Formatted:', dateValue);
+                          return dateValue;
+                        })()}
                       </span>
                     </div>
                   </div>
-                  {getStatusBadge(race)}
+                  <div className="flex flex-col items-end space-y-2">
+                    {getStatusBadge(race)}
+                    {race.images && race.images.length > 0 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleViewPhotos(race)}
+                        className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200 flex items-center gap-1"
+                        title="Ver fotos de la carrera"
+                      >
+                        <Camera className="h-4 w-4" />
+                        <span className="text-xs">Ver Fotos</span>
+                        <span className="text-xs bg-green-200 text-green-800 px-1 rounded">
+                          {race.images.length}
+                        </span>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               
               <CardContent>
                 <div className="space-y-3">
+                  {/* Race Characteristics - Modalities and Distances as Badges */}
+                  <div className="space-y-2">
+                    {/* Modalities */}
+                    {race.modalities && race.modalities.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {race.modalities.map((modality, index) => (
+                          <Badge key={index} className={`${modality === 'road' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                            {modality === 'road' ? 'Ruta/Asfalto' : 'Trail/Montaña'}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Distances */}
+                    {race.distances && race.distances.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {race.distances.slice(0, 4).map((distance, index) => {
+                          const labels = {
+                            'ultra': 'ULTRA',
+                            'marathon': 'MARATÓN', 
+                            'half_marathon': 'MEDIA MARATÓN',
+                            '20k': '20K',
+                            '15k': '15K',
+                            '10k': '10K',
+                            '5k': '5K'
+                          };
+                          return (
+                            <Badge key={index} className="bg-purple-100 text-purple-800">
+                              {labels[distance as keyof typeof labels] || distance.toUpperCase()}
+                            </Badge>
+                          );
+                        })}
+                        {race.distances.length > 4 && (
+                          <Badge className="bg-gray-100 text-gray-800">
+                            +{race.distances.length - 4} más
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
                   <div className="flex items-center text-gray-600">
                     <MapPin className="h-4 w-4 mr-2" />
                     <span className="text-sm">{race.province || 'Ubicación por definir'}</span>
                   </div>
                   
                   <div className="flex items-center text-gray-600">
-                    <Trophy className="h-4 w-4 mr-2" />
-                    <span className="text-sm">Distancias: {formatDistances(race.distances)}</span>
+                    <Users className="h-4 w-4 mr-2" />
+                    <span className="text-sm">
+                      {(() => {
+                        const guestValue = `${race.max_guests} participantes máximo`;
+                        console.log('👥 RacesSection: Rendering max_guests for', race.name, '- Raw max_guests:', race.max_guests, '- Formatted:', guestValue);
+                        return guestValue;
+                      })()}
+                    </span>
                   </div>
-                  
-                    <div className="flex items-center text-gray-600">
-                      <Users className="h-4 w-4 mr-2" />
-                      <span className="text-sm">{race.max_guests} participantes máximo</span>
-                    </div>
 
                   {race.description && (
                     <p className="text-sm text-gray-600 line-clamp-2">
@@ -221,14 +438,6 @@ const RacesSection = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleViewRaceDetails(race.id)}
-                        title="Ver detalles"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
                         onClick={() => handleEditRace(race)}
                         title="Editar carrera"
                       >
@@ -239,7 +448,8 @@ const RacesSection = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -254,6 +464,15 @@ const RacesSection = () => {
           isEditMode={editingRace !== null}
         />
       )}
+
+      {/* Photo Gallery Modal */}
+      <PhotoGalleryModal
+        key={`${selectedRaceTitle}-${selectedRacePhotos.length}`}
+        isOpen={showPhotoGallery}
+        onClose={() => setShowPhotoGallery(false)}
+        photos={selectedRacePhotos}
+        title={`Fotos de ${selectedRaceTitle}`}
+      />
     </div>
   );
 };

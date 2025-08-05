@@ -3,19 +3,19 @@ import { useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Camera } from "lucide-react";
-import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
 
 interface ProfileAvatarSectionProps {
   profile: any;
+  isEditing: boolean;
+  previewImageUrl: string | null;
+  onImageSelect: (file: File, previewUrl: string) => void;
 }
 
-export const ProfileAvatarSection = ({ profile }: ProfileAvatarSectionProps) => {
-  const { uploadAvatar } = useProfile();
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+export const ProfileAvatarSection = ({ profile, isEditing, previewImageUrl, onImageSelect }: ProfileAvatarSectionProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -24,23 +24,22 @@ export const ProfileAvatarSection = ({ profile }: ProfileAvatarSectionProps) => 
       return;
     }
 
-    setIsUploadingAvatar(true);
-    try {
-      console.log('Uploading new avatar from PersonalInfoSection...');
-      const avatarUrl = await uploadAvatar(file);
-      if (avatarUrl) {
-        console.log('Avatar uploaded successfully:', avatarUrl);
-        toast.success('Foto de perfil actualizada correctamente');
-      }
-    } catch (error) {
-      console.error('Error uploading avatar:', error);
-      toast.error('Error al subir la foto de perfil');
-    } finally {
-      setIsUploadingAvatar(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    onImageSelect(file, previewUrl);
+
+    // Clear the input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
+  };
+
+  const handleCameraClick = () => {
+    if (!isEditing) {
+      toast.error('Debes activar el modo edición para cambiar la foto de perfil');
+      return;
+    }
+    fileInputRef.current?.click();
   };
 
   const getInitials = () => {
@@ -49,15 +48,19 @@ export const ProfileAvatarSection = ({ profile }: ProfileAvatarSectionProps) => 
     return `${first}${last}`.toUpperCase();
   };
 
+  // Determine which image to show: preview > profile image > fallback
+  const displayImageUrl = previewImageUrl || profile?.profile_image_url || '';
+  const hasPreview = !!previewImageUrl;
+
   return (
     <div className="flex items-center space-x-4">
       <div className="relative">
         <Avatar 
-          className="h-20 w-20"
-          key={profile?.profile_image_url || 'no-image'}
+          className={`h-20 w-20 ${hasPreview ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
+          key={displayImageUrl || 'no-image'}
         >
           <AvatarImage 
-            src={profile?.profile_image_url || ''} 
+            src={displayImageUrl} 
             alt="Foto de perfil corriendo"
             className="object-cover"
           />
@@ -67,9 +70,11 @@ export const ProfileAvatarSection = ({ profile }: ProfileAvatarSectionProps) => 
         </Avatar>
         <Button
           size="sm"
-          className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 p-0"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploadingAvatar}
+          className={`absolute -bottom-2 -right-2 rounded-full h-8 w-8 p-0 ${
+            !isEditing ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          onClick={handleCameraClick}
+          disabled={!isEditing}
         >
           <Camera className="h-4 w-4" />
         </Button>
@@ -77,7 +82,7 @@ export const ProfileAvatarSection = ({ profile }: ProfileAvatarSectionProps) => 
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          onChange={handleAvatarUpload}
+          onChange={handleImageSelect}
           className="hidden"
         />
       </div>
@@ -89,8 +94,15 @@ export const ProfileAvatarSection = ({ profile }: ProfileAvatarSectionProps) => 
         <p className="text-xs text-blue-700 mt-1">
           Esta foto también se usa como "Foto en Carrera" en tu verificación de identidad.
         </p>
-        {isUploadingAvatar && (
-          <p className="text-sm text-blue-600 mt-2">Subiendo foto...</p>
+        {!isEditing && (
+          <p className="text-sm text-amber-600 mt-2">
+            💡 Activa el modo edición para cambiar la foto
+          </p>
+        )}
+        {hasPreview && (
+          <p className="text-sm text-green-600 mt-2">
+            ✅ Nueva foto seleccionada - guarda los cambios para aplicar
+          </p>
         )}
       </div>
     </div>

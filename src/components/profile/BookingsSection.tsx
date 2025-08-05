@@ -4,15 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, Users, MapPin, MessageSquare, Check, X } from "lucide-react";
+import { Calendar, Clock, Users, MapPin, MessageSquare, Check, X, User } from "lucide-react";
 import { useBookings } from "@/hooks/useBookings";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { GuestInfoModal } from "@/components/bookings/GuestInfoModal";
 
 const BookingsSection = () => {
   const { user } = useAuth();
   const { bookings, loading, respondToBooking } = useBookings();
   const [activeTab, setActiveTab] = useState("received");
+  const [showGuestInfoModal, setShowGuestInfoModal] = useState(false);
+  const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
 
   // Filter bookings based on user role
   const receivedBookings = bookings.filter(booking => booking.host_id === user?.id);
@@ -23,6 +26,11 @@ const BookingsSection = () => {
     if (success) {
       toast.success(`Solicitud ${response === 'accepted' ? 'aceptada' : 'rechazada'} correctamente`);
     }
+  };
+
+  const handleViewGuestInfo = (guestId: string) => {
+    setSelectedGuestId(guestId);
+    setShowGuestInfoModal(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -94,9 +102,20 @@ const BookingsSection = () => {
                       <CardTitle className="text-lg">
                         {booking.race?.name}
                       </CardTitle>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Solicitud de: {booking.guest?.first_name} {booking.guest?.last_name}
-                      </p>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <p className="text-sm text-gray-600">
+                          Solicitud de: {booking.guest?.first_name} {booking.guest?.last_name}
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => handleViewGuestInfo(booking.guest_id)}
+                          className="h-8 px-4 text-sm font-medium bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border-0 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                        >
+                          <User className="w-4 h-4" />
+                          Info Runner
+                        </Button>
+                      </div>
                     </div>
                     {getStatusBadge(booking.status)}
                   </div>
@@ -229,6 +248,16 @@ const BookingsSection = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Guest Info Modal */}
+      <GuestInfoModal
+        isOpen={showGuestInfoModal}
+        onClose={() => {
+          setShowGuestInfoModal(false);
+          setSelectedGuestId(null);
+        }}
+        guestId={selectedGuestId || ''}
+      />
     </div>
   );
 };

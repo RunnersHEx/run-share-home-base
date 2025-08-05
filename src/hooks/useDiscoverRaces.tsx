@@ -15,6 +15,13 @@ interface DiscoverRace {
   distances: string[];
   terrainProfile: string[];
   imageUrl: string;
+  images?: {
+    id: string;
+    image_url: string;
+    caption?: string;
+    category: string;
+    display_order: number;
+  }[];
   host: {
     id: string;
     name: string;
@@ -25,7 +32,30 @@ interface DiscoverRace {
   pointsCost: number;
   available: boolean;
   highlights: string;
+  official_website?: string;
   maxGuests?: number;
+  property_info?: {
+    id: string;
+    title: string;
+    description: string | null;
+    locality: string;
+    provinces: string[];
+    full_address: string;
+    bedrooms: number;
+    beds: number;
+    bathrooms: number;
+    max_guests: number;
+    amenities: string[];
+    house_rules: string | null;
+    runner_instructions?: string | null;
+    images?: {
+      id: string;
+      image_url: string;
+      caption: string | null;
+      is_main: boolean;
+      display_order: number;
+    }[];
+  };
 }
 
 export const useDiscoverRaces = () => {
@@ -68,11 +98,17 @@ export const useDiscoverRaces = () => {
       const raceImagesPromises = data.map(async (race) => {
         try {
           const images = await RaceService.getRaceImages(race.id);
-          const imageUrl = images.length > 0 ? images[0].image_url : "/placeholder.svg";
-          return { ...race, imageUrl };
+          
+          // Find main image: first by 'cover' category, then by lowest display_order
+          const coverImage = images.find(img => img.category === 'cover');
+          const mainImage = coverImage || images.sort((a, b) => a.display_order - b.display_order)[0];
+          
+          const imageUrl = mainImage?.image_url || "/placeholder.svg";
+          
+          return { ...race, imageUrl, images };
         } catch (error) {
           console.error('Error fetching race images for race:', race.id, error);
-          return { ...race, imageUrl: "/placeholder.svg" };
+          return { ...race, imageUrl: "/placeholder.svg", images: [] };
         }
       });
 
@@ -98,6 +134,7 @@ export const useDiscoverRaces = () => {
           distances: race.distances || [],
           terrainProfile: race.terrain_profile || [],
           imageUrl: race.imageUrl,
+          images: race.images || [],
           host: {
             id: race.host_id,
             name: race.host_info ? `${race.host_info.first_name || ''} ${race.host_info.last_name || ''}`.trim() : "Host Runner",
@@ -108,7 +145,9 @@ export const useDiscoverRaces = () => {
           pointsCost: race.points_cost || 0,
           available: race.is_active,
           highlights: race.highlights || race.description || "Experiencia única de running",
-          maxGuests: race.property_info?.max_guests || race.max_guests || 1
+          official_website: race.official_website,
+          maxGuests: race.property_info?.max_guests || race.max_guests || 1,
+          property_info: race.property_info
         };
       });
       

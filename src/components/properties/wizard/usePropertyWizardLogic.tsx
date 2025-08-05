@@ -61,31 +61,59 @@ export const usePropertyWizardLogic = (propertyId?: string, initialData?: Proper
     setIsSubmitting(true);
     try {
       let propertyResult;
+      let success = false;
       
       if (propertyId && initialData) {
         // Update existing property
-        const success = await updateProperty(propertyId, formData);
+        success = await updateProperty(propertyId, formData);
         if (success) {
           propertyResult = { id: propertyId };
         }
       } else {
         // Create new property
         propertyResult = await createProperty({ ...formData, is_active: true });
+        success = propertyResult !== null;
       }
 
-      if (propertyResult) {
+      if (success && propertyResult) {
         // Upload new photos (those with actual File objects)
         const newPhotos = photos.filter(photo => photo.file.size > 0);
+        
         if (newPhotos.length > 0) {
+          // Ensure only one main photo exists
+          let hasMainPhoto = false;
+          
+          // Upload photos in sequence to avoid race conditions
           for (const photo of newPhotos) {
-            await uploadPropertyImage(propertyResult.id, photo.file, photo.caption, photo.isMain);
+            let isMainPhoto = photo.isMain;
+            
+            // If this is the main photo but we already uploaded one, make it false
+            if (isMainPhoto && hasMainPhoto) {
+              isMainPhoto = false;
+            }
+            
+            // If this is the main photo, mark it
+            if (isMainPhoto) {
+              hasMainPhoto = true;
+            }
+            
+            // If no photo is marked as main yet and this is the first photo, make it main
+            if (!hasMainPhoto && newPhotos.indexOf(photo) === 0) {
+              isMainPhoto = true;
+              hasMainPhoto = true;
+            }
+            
+            await uploadPropertyImage(propertyResult.id, photo.file, photo.caption, isMainPhoto);
           }
         }
         
-        toast.success(propertyId ? "¡Propiedad actualizada exitosamente!" : "¡Propiedad creada exitosamente!");
+        // Always close when successful
         onClose?.();
+      } else {
+        toast.error(propertyId ? "Error al actualizar la propiedad" : "Error al crear la propiedad");
       }
     } catch (error) {
+      console.error('Property submission error:', error);
       toast.error(propertyId ? "Error al actualizar la propiedad" : "Error al crear la propiedad");
     } finally {
       setIsSubmitting(false);

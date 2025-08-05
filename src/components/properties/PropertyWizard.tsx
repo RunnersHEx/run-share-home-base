@@ -49,14 +49,36 @@ const PropertyWizard = ({ onClose, propertyId, initialData }: PropertyWizardProp
   // Load existing images when editing
   useEffect(() => {
     if (initialData?.images) {
-      const existingPhotos: PhotoPreview[] = initialData.images.map((img, index) => ({
-        id: img.id,
-        file: new File([], `existing-${img.id}`), // Placeholder file for existing images
-        url: img.image_url,
-        caption: img.caption || "",
-        isMain: img.is_main
-      }));
-      setPhotos(existingPhotos);
+      const existingPhotos: PhotoPreview[] = initialData.images.map((img, index) => {
+        // Ensure only one photo is marked as main, prefer the one marked in DB
+        const isMainPhoto = img.is_main || (index === 0 && !initialData.images!.some(i => i.is_main));
+        
+        return {
+          id: img.id,
+          file: new File([], `existing-${img.id}`), // Placeholder file for existing images
+          url: img.image_url,
+          caption: img.caption || "",
+          isMain: isMainPhoto
+        };
+      });
+      
+      // Ensure only one photo is marked as main
+      let mainPhotoSet = false;
+      const correctedPhotos = existingPhotos.map(photo => {
+        if (photo.isMain && !mainPhotoSet) {
+          mainPhotoSet = true;
+          return photo;
+        } else {
+          return { ...photo, isMain: false };
+        }
+      });
+      
+      // If no main photo was set, make the first one main
+      if (!mainPhotoSet && correctedPhotos.length > 0) {
+        correctedPhotos[0].isMain = true;
+      }
+      
+      setPhotos(correctedPhotos);
     }
   }, [initialData]);
 

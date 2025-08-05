@@ -7,6 +7,7 @@ import { RaceImageService } from "./media/raceImageService";
 export class RaceService {
   // Discovery methods
   static fetchAllRaces = RaceDiscoveryService.fetchAllRaces;
+  static fetchFeaturedRaces = RaceDiscoveryService.fetchFeaturedRaces;
 
   // Host methods
   static fetchHostRaces = RaceHostService.fetchHostRaces;
@@ -18,4 +19,5 @@ export class RaceService {
   // Image methods
   static uploadRaceImage = RaceImageService.uploadRaceImage;
   static getRaceImages = RaceImageService.getRaceImages;
+  static deleteRaceImage = RaceImageService.deleteRaceImage;
 }
