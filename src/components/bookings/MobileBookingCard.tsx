@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Booking } from "@/types/booking";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface MobileBookingCardProps {
@@ -45,10 +46,16 @@ const MobileBookingCard = ({
   compact = false 
 }: MobileBookingCardProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [showActions, setShowActions] = useState(false);
   const isHost = user?.id === booking.host_id;
   const isGuest = user?.id === booking.guest_id;
   const otherUser = isHost ? booking.guest : booking.host;
+
+  const handleNavigateToBookingDetails = () => {
+    // Navigate to profile with bookings section active
+    navigate('/profile', { state: { activeSection: 'bookings' } });
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -114,9 +121,17 @@ const MobileBookingCard = ({
   const availableActions = [];
   
   // Determine available actions based on status and user role
-  if (booking.status === 'pending' && isHost && onRespond) {
+  if (booking.status === 'pending' && isHost && onRespond && onConfirm) {
     availableActions.push(
-      { label: 'Aceptar', action: () => onRespond(booking.id, 'accepted'), variant: 'default' as const },
+      { label: 'Aceptar y Confirmar', action: async () => {
+          try {
+            await onRespond(booking.id, 'accepted');
+            // Auto-confirm after acceptance
+            await onConfirm(booking.id);
+          } catch (error) {
+            console.error('Error in accept and confirm:', error);
+          }
+        }, variant: 'default' as const },
       { label: 'Rechazar', action: () => onRespond(booking.id, 'rejected'), variant: 'destructive' as const }
     );
   }
@@ -127,19 +142,13 @@ const MobileBookingCard = ({
     );
   }
   
-  if (booking.status === 'accepted' && isHost && onConfirm) {
-    availableActions.push(
-      { label: 'Confirmar', action: () => onConfirm(booking.id), variant: 'default' as const }
-    );
-  }
-  
   if (booking.status === 'confirmed' && isHost && onComplete) {
     availableActions.push(
-      { label: 'Completar', action: () => onComplete(booking.id), variant: 'default' as const }
+      { label: 'Experience completed', action: () => onComplete(booking.id), variant: 'default' as const }
     );
   }
   
-  if (['pending', 'accepted'].includes(booking.status) && onCancel) {
+  if (['pending', 'accepted', 'confirmed'].includes(booking.status) && onCancel) {
     const cancelledBy = isHost ? 'host' : 'guest';
     availableActions.push(
       { label: 'Cancelar', action: () => onCancel(booking.id, cancelledBy), variant: 'destructive' as const }
@@ -173,7 +182,14 @@ const MobileBookingCard = ({
               <Badge className={cn("text-xs", statusConfig.color)}>
                 {statusConfig.text}
               </Badge>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleNavigateToBookingDetails}
+                className="p-1 h-6 w-6 hover:bg-gray-100"
+              >
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -284,6 +300,16 @@ const MobileBookingCard = ({
           <div className="flex items-center space-x-2 text-xs text-gray-600 mb-3">
             <Phone className="w-3 h-3" />
             <span>{booking.guest_phone}</span>
+          </div>
+        )}
+
+        {/* Completion reminder for confirmed bookings */}
+        {booking.status === 'confirmed' && isHost && (
+          <div className="p-2 bg-red-50 border border-red-200 rounded text-xs mb-3">
+            <p className="text-red-700 font-medium">
+              Una vez que la estancia de tu Huésped Aceptado haya terminado, recuerda volver aquí y hacer clic en "Experience completed" para validar tu experiencia como Host y ganar los puntos correspondientes.
+              No olvides ir a tu sección de reseñas para calificar a tu huésped.
+            </p>
           </div>
         )}
 

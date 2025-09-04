@@ -19,21 +19,27 @@ export class NotificationService {
     BOOKING_COMPLETED: 'booking_completed',
     BOOKING_CANCELLED: 'booking_cancelled',
     REVIEW_PROMPT: 'review_prompt',
-    CANCELLATION_PENALTY: 'cancellation_penalty'
+    CANCELLATION_PENALTY: 'cancellation_penalty',
+    ACCOUNT_ACTIVATED: 'account_activated',
+    ACCOUNT_DEACTIVATED: 'account_deactivated',
+    NEW_USER_REGISTERED: 'new_user_registered',
+    VERIFICATION_DOCUMENTS_SUBMITTED: 'verification_documents_submitted'
   };
 
   /**
-   * Creates a notification for a user using database function
+   * Creates a notification for a user using direct table insert
    */
   static async createNotification(notificationData: NotificationData): Promise<void> {
     try {
-      const { data, error } = await supabase.rpc('create_user_notification', {
-        p_user_id: notificationData.user_id,
-        p_type: notificationData.type,
-        p_title: notificationData.title,
-        p_message: notificationData.message,
-        p_data: notificationData.data || {}
-      });
+      const { data, error } = await supabase
+        .from('user_notifications')
+        .insert({
+          user_id: notificationData.user_id,
+          type: notificationData.type,
+          title: notificationData.title,
+          message: notificationData.message,
+          data: notificationData.data || {}
+        });
 
       if (error) {
         console.error('Error creating notification:', error);
@@ -45,6 +51,39 @@ export class NotificationService {
       console.error('Failed to create notification:', error);
       throw error;
     }
+  }
+
+  /**
+   * Sends notification when user account is activated
+   */
+  static async notifyAccountActivated(userId: string, adminName?: string): Promise<void> {
+    await this.createNotification({
+      user_id: userId,
+      type: this.TYPES.ACCOUNT_ACTIVATED,
+      title: 'Cuenta activada',
+      message: `Tu cuenta ha sido reactivada por ${adminName || 'el administrador'}. Ya puedes acceder a todas las funcionalidades de la plataforma.`,
+      data: {
+        admin_name: adminName,
+        activation_date: new Date().toISOString()
+      }
+    });
+  }
+
+  /**
+   * Sends notification when user account is deactivated
+   */
+  static async notifyAccountDeactivated(userId: string, reason?: string, adminName?: string): Promise<void> {
+    await this.createNotification({
+      user_id: userId,
+      type: this.TYPES.ACCOUNT_DEACTIVATED,
+      title: 'Cuenta desactivada',
+      message: `Tu cuenta ha sido desactivada por ${adminName || 'el administrador'}. ${reason ? `Motivo: ${reason}` : ''} Revisa los mensajes del administrador para más información.`,
+      data: {
+        admin_name: adminName,
+        reason: reason,
+        deactivation_date: new Date().toISOString()
+      }
+    });
   }
 
   /**
@@ -354,6 +393,120 @@ export class NotificationService {
       }
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
+    }
+  }
+
+  /**
+   * Gets all admin users based on their email addresses
+   */
+  static async getAdminUsers(): Promise<any[]> {
+    try {
+      const adminEmails = [
+        'runnershomeexchange@gmail.com',
+        'admin@mail.com'
+      ];
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name')
+        .in('email', adminEmails);
+
+      if (error) {
+        console.error('Error fetching admin users:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Failed to fetch admin users:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Sends notification to all admin users when a new user registers
+   */
+  static async notifyNewUserRegistered(newUser: any): Promise<void> {
+    try {
+      const adminUsers = await this.getAdminUsers();
+      
+      if (adminUsers.length === 0) {
+        console.warn('No admin users found to notify about new user registration');
+        return;
+      }
+
+      const userName = `${newUser.first_name || ''} ${newUser.last_name || ''}`.trim() || 'Usuario sin nombre';
+      const userEmail = newUser.email || 'Email no especificado';
+      
+      // Send notification to each admin
+      const notifications = adminUsers.map(admin => ({
+        user_id: admin.id,
+        type: this.TYPES.NEW_USER_REGISTERED,
+        title: 'Nuevo usuario registrado',
+        message: `${userName} (${userEmail}) ha sido registrado`,
+        data: {
+          new_user_id: newUser.id,
+          new_user_email: userEmail,
+          new_user_name: userName,
+          registration_date: new Date().toISOString(),
+          verification_status: newUser.verification_status || 'unverified'
+        }
+      }));
+
+      // Create all notifications
+      for (const notification of notifications) {
+        await this.createNotification(notification);
+      }
+
+      console.log(`Notified ${adminUsers.length} admin(s) about new user registration: ${userName}`);
+    } catch (error) {
+      console.error('Failed to notify admins about new user registration:', error);
+      // Don't throw error - user registration should not fail because of notification issues
+    }
+  }
+
+  /**
+   * Sends notification to all admin users when a user submits verification documents
+   */
+  static async notifyVerificationDocumentsSubmitted(user: any): Promise<void> {
+    try {
+      const adminUsers = await this.getAdminUsers();
+      
+      if (adminUsers.length === 0) {
+        console.warn('No admin users found to notify about verification documents submission');
+        return;
+      }
+
+      const userName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Usuario sin nombre';
+      const userEmail = user.email || 'Email no especificado';
+      const documentCount = user.verification_documents?.length || 0;
+      
+      // Send notification to each admin
+      const notifications = adminUsers.map(admin => ({
+        user_id: admin.id,
+        type: this.TYPES.VERIFICATION_DOCUMENTS_SUBMITTED,
+        title: 'Documentos de verificación pendientes',
+        message: `${userName} (${userEmail}) ha subido ${documentCount} documento(s) de verificación y está pendiente de revisión`,
+        data: {
+          user_id: user.id,
+          user_email: userEmail,
+          user_name: userName,
+          document_count: documentCount,
+          submission_date: new Date().toISOString(),
+          verification_status: user.verification_status || 'pending',
+          verification_documents: user.verification_documents || []
+        }
+      }));
+
+      // Create all notifications
+      for (const notification of notifications) {
+        await this.createNotification(notification);
+      }
+
+      console.log(`Notified ${adminUsers.length} admin(s) about verification documents submission: ${userName}`);
+    } catch (error) {
+      console.error('Failed to notify admins about verification documents submission:', error);
+      // Don't throw error - document upload should not fail because of notification issues
     }
   }
 }

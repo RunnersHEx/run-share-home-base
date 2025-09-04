@@ -123,6 +123,8 @@ export const useDiscoverRaces = () => {
         const today = new Date();
         const daysUntil = Math.ceil((raceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         
+        const isAvailable = race.is_active && (race.is_available_for_booking !== false);
+        
         return {
           id: race.id,
           name: race.name,
@@ -143,7 +145,7 @@ export const useDiscoverRaces = () => {
             imageUrl: race.host_info?.profile_image_url || "/placeholder.svg"
           },
           pointsCost: race.points_cost || 0,
-          available: race.is_active,
+          available: isAvailable,
           highlights: race.highlights || race.description || "Experiencia única de running",
           official_website: race.official_website,
           maxGuests: race.property_info?.max_guests || race.max_guests || 1,

@@ -19,7 +19,7 @@ const MODALITIES = [
 
 const TERRAIN_PROFILES = [
   { id: 'flat' as TerrainProfile, label: 'Llano', description: 'Terreno mayormente plano con poco desnivel' },
-  { id: 'hilly' as TerrainProfile, label: 'Montañoso', description: 'Terreno con subidas y bajadas significativas' }
+  { id: 'hilly' as TerrainProfile, label: 'Con cuestas', description: 'Terreno con subidas y bajadas significativas' }
 ];
 
 const DISTANCES = [
@@ -143,6 +143,9 @@ const TechnicalStep = ({ formData, onUpdate }: TechnicalStepProps) => {
             <span>Distancias Disponibles</span>
           </CardTitle>
           <CardDescription>Selecciona las distancias que incluye tu carrera</CardDescription>
+          <p className="text-sm text-red-600 font-medium mt-2">
+            Si la distancia de tu carrera no aparece entre las opciones disponibles, por favor selecciona la más cercana.
+          </p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

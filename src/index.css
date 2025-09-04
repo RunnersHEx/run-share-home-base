@@ -101,6 +101,89 @@
     @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl;
   }
 
+  /* reCAPTCHA specific styles to fix popup z-index issues */
+  .recaptcha-container {
+    position: relative;
+    z-index: 10;
+  }
+  
+  /* Ensure reCAPTCHA popup appears above everything */
+  .g-recaptcha {
+    z-index: 2147483647 !important;
+  }
+  
+  /* Override any conflicting modal z-indexes for reCAPTCHA */
+  iframe[src*="recaptcha"] {
+    z-index: 2147483647 !important;
+  }
+  
+  /* reCAPTCHA challenge popup styling */
+  div[style*="z-index: 2147483647"] {
+    pointer-events: auto !important;
+  }
+  
+  /* Ensure reCAPTCHA challenge window is clickable */
+  .recaptcha-challenge-popup {
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+  }
+  
+  /* Google reCAPTCHA specific fixes */
+  .rc-anchor-container {
+    z-index: 2147483647 !important;
+  }
+  
+  /* reCAPTCHA challenge overlay and popup */
+  .rc-imageselect-challenge,
+  .rc-defaultchallenge,
+  .rc-challenge-container {
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+    position: fixed !important;
+  }
+  
+  /* Ensure all reCAPTCHA iframes have proper z-index */
+  iframe[name^="a-"][src*="recaptcha"],
+  iframe[name^="c-"][src*="recaptcha"] {
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+  }
+  
+  /* reCAPTCHA popup background overlay */
+  div[style*="position: fixed"][style*="background-color: rgba(255, 255, 255, 0.05)"] {
+    z-index: 2147483646 !important;
+    pointer-events: auto !important;
+  }
+  
+  /* Prevent modal overlay from interfering with reCAPTCHA */
+  .recaptcha-active {
+    pointer-events: none;
+  }
+  
+  .recaptcha-active .recaptcha-container {
+    pointer-events: auto;
+  }
+  
+  /* Specific styling for reCAPTCHA in modals */
+  .recaptcha-modal-widget {
+    position: relative;
+    z-index: 2147483647 !important;
+  }
+  
+  .recaptcha-modal-widget iframe {
+    z-index: 2147483647 !important;
+  }
+  
+  /* Override Radix UI portal z-indexes when reCAPTCHA is active */
+  [data-radix-popper-content-wrapper] {
+    z-index: 999 !important;
+  }
+  
+  /* Ensure reCAPTCHA works properly in dialogs */
+  [data-state="open"] .recaptcha-container {
+    z-index: 2147483647 !important;
+  }
+
   .runner-button-primary {
     @apply bg-runner-gradient text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105;
   }

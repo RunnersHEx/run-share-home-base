@@ -1,0 +1,86 @@
+-- =============================================
+-- DEBUG: ISOLATE THE EXACT FAILING OPERATION
+-- Test each database operation one by one
+-- =============================================
+
+CREATE OR REPLACE FUNCTION admin_toggle_user_status(
+  target_user_id uuid,
+  admin_user_id uuid,
+  deactivation_reason text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_status boolean;
+  new_status boolean;
+  user_profile RECORD;
+  admin_profile RECORD;
+  debug_step text := '';
+BEGIN
+  BEGIN
+    debug_step := 'Step 1: Check admin exists';
+    SELECT * INTO admin_profile FROM profiles WHERE id = admin_user_id;
+    IF NOT FOUND THEN
+      RETURN jsonb_build_object('success', false, 'error', 'Admin not found');
+    END IF;
+
+    debug_step := 'Step 2: Get user profile';
+    SELECT is_active, first_name, last_name, email 
+    INTO current_status, user_profile.first_name, user_profile.last_name, user_profile.email
+    FROM profiles 
+    WHERE id = target_user_id;
+    
+    IF NOT FOUND THEN
+      RETURN jsonb_build_object('success', false, 'error', 'User not found');
+    END IF;
+
+    debug_step := 'Step 3: Calculate new status';
+    new_status := NOT current_status;
+    
+    debug_step := 'Step 4: Update user status';
+    UPDATE profiles 
+    SET is_active = new_status 
+    WHERE id = target_user_id;
+
+    debug_step := 'Step 5: Insert admin message';
+    -- This is likely where it's failing - test the foreign key constraint
+    INSERT INTO admin_messages (
+      admin_id,
+      user_id, 
+      message_type,
+      title,
+      message,
+      reason
+    ) VALUES (
+      admin_user_id,  -- This might be the issue - FK constraint to auth.users(id)
+      target_user_id,
+      CASE WHEN new_status THEN 'activation' ELSE 'deactivation' END,
+      CASE 
+        WHEN new_status THEN 'Cuenta activada' 
+        ELSE 'Cuenta desactivada' 
+      END,
+      'Test message',
+      deactivation_reason
+    );
+
+    debug_step := 'Step 6: Return success';
+    RETURN jsonb_build_object(
+      'success', true, 
+      'new_status', new_status,
+      'user_name', COALESCE(user_profile.first_name || ' ' || user_profile.last_name, user_profile.email),
+      'debug_completed_step', debug_step
+    );
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      RETURN jsonb_build_object(
+        'success', false, 
+        'error', 'Failed at: ' || debug_step,
+        'sql_error', SQLERRM,
+        'sql_state', SQLSTATE
+      );
+  END;
+END;
+$$;

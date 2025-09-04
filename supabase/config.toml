@@ -72,3 +72,6 @@ verify_jwt = true
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.delete-user]
+verify_jwt = true

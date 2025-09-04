@@ -1,0 +1,82 @@
+-- =============================================
+-- RESTORE FULL ADMIN TOGGLE USER STATUS FUNCTION  
+-- Now that we know the function can be called
+-- =============================================
+
+CREATE OR REPLACE FUNCTION admin_toggle_user_status(
+  target_user_id uuid,
+  admin_user_id uuid,
+  deactivation_reason text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_status boolean;
+  new_status boolean;
+  user_profile RECORD;
+  admin_profile RECORD;
+BEGIN
+  -- Check if admin exists
+  SELECT * INTO admin_profile FROM profiles WHERE id = admin_user_id;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Admin not found');
+  END IF;
+
+  -- Get current user status
+  SELECT is_active, first_name, last_name, email 
+  INTO current_status, user_profile.first_name, user_profile.last_name, user_profile.email
+  FROM profiles 
+  WHERE id = target_user_id;
+  
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'User not found');
+  END IF;
+
+  -- Toggle status
+  new_status := NOT current_status;
+  
+  -- Update user status
+  UPDATE profiles 
+  SET is_active = new_status 
+  WHERE id = target_user_id;
+
+  -- Create admin message
+  INSERT INTO admin_messages (
+    admin_id,
+    user_id, 
+    message_type,
+    title,
+    message,
+    reason
+  ) VALUES (
+    admin_user_id,
+    target_user_id,
+    CASE WHEN new_status THEN 'activation' ELSE 'deactivation' END,
+    CASE 
+      WHEN new_status THEN 'Cuenta activada' 
+      ELSE 'Cuenta desactivada' 
+    END,
+    CASE 
+      WHEN new_status THEN 
+        'Tu cuenta ha sido reactivada por el administrador. Ya puedes acceder a todas las funcionalidades de la plataforma.'
+      ELSE 
+        COALESCE(
+          'Tu cuenta ha sido desactivada por el administrador. ' || 
+          CASE WHEN deactivation_reason IS NOT NULL THEN 'Motivo: ' || deactivation_reason ELSE '' END ||
+          ' Contacta con soporte si tienes preguntas.',
+          'Tu cuenta ha sido desactivada por el administrador. Contacta con soporte si tienes preguntas.'
+        )
+    END,
+    deactivation_reason
+  );
+
+  -- Return success
+  RETURN jsonb_build_object(
+    'success', true, 
+    'new_status', new_status,
+    'user_name', COALESCE(user_profile.first_name || ' ' || user_profile.last_name, user_profile.email)
+  );
+END;
+$$;

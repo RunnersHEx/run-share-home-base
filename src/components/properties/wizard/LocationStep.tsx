@@ -1,21 +1,20 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, Search } from "lucide-react";
+import { CustomMultiSelect } from "@/components/ui/custom";
+import { MapPin } from "lucide-react";
 import { PropertyFormData } from "@/types/property";
 
-// Spanish provinces
+// Spanish provinces (matching the database provincial_point_costs table)
 const SPANISH_PROVINCES = [
-  "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz", "Barcelona", 
-  "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real", "Córdoba", 
-  "Cuenca", "Girona", "Granada", "Guadalajara", "Guipúzcoa", "Huelva", "Huesca", 
-  "Jaén", "La Coruña", "La Rioja", "Las Palmas", "León", "Lleida", "Lugo", "Madrid", 
-  "Málaga", "Murcia", "Navarra", "Ourense", "Palencia", "Pontevedra", "Salamanca", 
-  "Santa Cruz de Tenerife", "Segovia", "Sevilla", "Soria", "Tarragona", "Teruel", 
-  "Toledo", "Valencia", "Valladolid", "Vizcaya", "Zamora", "Zaragoza"
+  "A Coruña", "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz",
+  "Illes Balears", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
+  "Córdoba", "Cuenca", "Girona", "Granada", "Guadalajara", "Guipúzcoa", "Huelva", "Huesca",
+  "Jaén", "León", "Lleida", "La Rioja", "Lugo", "Madrid", "Málaga", "Murcia", "Navarra",
+  "Ourense", "Palencia", "Las Palmas", "Pontevedra", "Salamanca", "Santa Cruz de Tenerife",
+  "Segovia", "Sevilla", "Soria", "Tarragona", "Teruel", "Toledo", "Valencia", "Valladolid",
+  "Vizcaya", "Zamora", "Zaragoza"
 ];
 
 interface LocationStepProps {
@@ -26,20 +25,11 @@ interface LocationStepProps {
 }
 
 const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showProvinces, setShowProvinces] = useState(false);
-
-  const filteredProvinces = SPANISH_PROVINCES.filter(province =>
-    province.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleProvinceSelect = (province: string) => {
-    const newProvinces = formData.provinces.includes(province)
-      ? formData.provinces.filter(p => p !== province)
-      : [...formData.provinces, province];
-    
-    onUpdate({ provinces: newProvinces });
-  };
+  // Convert provinces array to options for CustomMultiSelect
+  const provinceOptions = SPANISH_PROVINCES.map(province => ({
+    value: province,
+    label: province
+  }));
 
   const canProceed = () => {
     return formData.provinces.length > 0 && 
@@ -59,65 +49,16 @@ const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps)
           {/* Province Selection */}
           <div>
             <Label htmlFor="provinces">Provincia(s) *</Label>
-            <div className="relative">
-              <div className="flex items-center border rounded-lg px-3 py-2 cursor-pointer" 
-                   onClick={() => setShowProvinces(!showProvinces)}>
-                <Search className="h-4 w-4 mr-2 text-gray-400" />
-                <span className="text-gray-600">
-                  {formData.provinces.length > 0 
-                    ? `${formData.provinces.length} provincia(s) seleccionada(s)`
-                    : "Selecciona provincia(s)"}
-                </span>
-              </div>
-              
-              {showProvinces && (
-                <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  <div className="p-2">
-                    <Input
-                      placeholder="Buscar provincia..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full"
-                    />
-                  </div>
-                  <div className="max-h-40 overflow-y-auto">
-                    {filteredProvinces.map(province => (
-                      <div
-                        key={province}
-                        className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-                          formData.provinces.includes(province) ? 'bg-blue-50 text-blue-600' : ''
-                        }`}
-                        onClick={() => handleProvinceSelect(province)}
-                      >
-                        {province}
-                        {formData.provinces.includes(province) && (
-                          <span className="ml-2 text-blue-600">✓</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {formData.provinces.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {formData.provinces.map(province => (
-                  <span
-                    key={province}
-                    className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-                  >
-                    {province}
-                    <button
-                      onClick={() => handleProvinceSelect(province)}
-                      className="ml-1 hover:text-blue-600"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
+            <CustomMultiSelect
+              value={formData.provinces || []}
+              onValueChange={(value) => onUpdate({ provinces: value })}
+              options={provinceOptions}
+              placeholder="Selecciona provincia(s)"
+              className="w-full"
+            />
+            <p className="text-sm text-gray-600 mt-1">
+              Selecciona las provincias donde está ubicada tu propiedad
+            </p>
           </div>
 
           {/* City/Locality */}

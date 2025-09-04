@@ -265,8 +265,8 @@ const FeaturedRacesSection = ({ onAuthModal }: FeaturedRacesSectionProps) => {
       setLoading(true);
       console.log('FeaturedRacesSection: Fetching latest 3 races for featured section');
       
-      // Use the optimized method to get only 3 latest races with images included
-      const data = await RaceService.fetchFeaturedRaces(3);
+      // Fetch more races initially to ensure we have enough available ones to show 3
+      const data = await RaceService.fetchFeaturedRaces(10); // Fetch 10 races to filter down to 3 available
       console.log('FeaturedRacesSection: Raw featured race data received:', data.length, 'races');
       
       if (data.length === 0) {
@@ -311,7 +311,7 @@ const FeaturedRacesSection = ({ onAuthModal }: FeaturedRacesSectionProps) => {
             imageUrl: race.host_info?.profile_image_url || "/placeholder.svg"
           },
           pointsCost: race.points_cost || 0,
-          available: race.is_active,
+          available: race.is_active && (race.is_available_for_booking !== false), // Available if active and not explicitly marked as unavailable for booking
           highlights: race.highlights || race.description || "Experiencia única de running",
           official_website: race.official_website,
           maxGuests: race.property_info?.max_guests || race.max_guests || 1,
@@ -319,8 +319,13 @@ const FeaturedRacesSection = ({ onAuthModal }: FeaturedRacesSectionProps) => {
         };
       });
       
-      console.log('FeaturedRacesSection: Transformed featured races:', transformedRaces.length, 'races');
-      setFeaturedRaces(transformedRaces);
+      // Filter to show only available races on the home page and take the first 3
+      const availableRaces = transformedRaces
+        .filter(race => race.available)
+        .slice(0, 3); // Take only the first 3 available races
+      
+      console.log('FeaturedRacesSection: Transformed featured races:', transformedRaces.length, 'total,', transformedRaces.filter(race => race.available).length, 'available,', availableRaces.length, 'showing');
+      setFeaturedRaces(availableRaces);
       
     } catch (error) {
       console.error('FeaturedRacesSection: Error fetching featured races:', error);

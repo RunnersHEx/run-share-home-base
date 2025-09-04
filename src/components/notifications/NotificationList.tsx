@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { CheckCircle, AlertCircle, Info, CheckCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface NotificationListProps {
   onClose: () => void;
@@ -20,6 +21,35 @@ interface NotificationListProps {
 
 const NotificationList = ({ onClose, notificationData }: NotificationListProps) => {
   const { notifications, loading, unreadCount, markAsRead, markAllAsRead, connectionStatus, refetch } = notificationData;
+  const navigate = useNavigate();
+
+  const isBookingRelated = (type: string) => {
+    const bookingTypes = [
+      'booking_request_received',
+      'booking_deadline_reminder', 
+      'booking_accepted',
+      'booking_rejected',
+      'booking_confirmed',
+      'booking_completed',
+      'booking_cancelled'
+    ];
+    return bookingTypes.includes(type);
+  };
+
+  const handleNotificationClick = async (notification: any) => {
+    // Use the same robust read detection logic
+    const isRead = notification.read === true || notification.read === 'true' || notification.read === 1;
+    
+    if (!isRead) {
+      await markAsRead(notification.id);
+    }
+
+    // Navigate to bookings section for booking-related notifications
+    if (isBookingRelated(notification.type)) {
+      onClose();
+      navigate('/profile', { state: { activeSection: 'bookings' } });
+    }
+  };
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -27,6 +57,21 @@ const NotificationList = ({ onClose, notificationData }: NotificationListProps) 
         return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'verification_submitted':
         return <Info className="h-4 w-4 text-blue-600" />;
+      case 'new_user_registered':
+        return <Info className="h-4 w-4 text-blue-600" />;
+      case 'verification_documents_submitted':
+        return <AlertCircle className="h-4 w-4 text-orange-600" />;
+      case 'booking_request_received':
+      case 'booking_deadline_reminder':
+        return <AlertCircle className="h-4 w-4 text-orange-600" />;
+      case 'booking_accepted':
+      case 'booking_confirmed':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'booking_rejected':
+      case 'booking_cancelled':
+        return <AlertCircle className="h-4 w-4 text-red-600" />;
+      case 'booking_completed':
+        return <CheckCircle className="h-4 w-4 text-purple-600" />;
       default:
         return <AlertCircle className="h-4 w-4 text-gray-600" />;
     }
@@ -83,14 +128,7 @@ const NotificationList = ({ onClose, notificationData }: NotificationListProps) 
                       className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
                         !isRead ? 'bg-blue-50 border-l-2 border-l-blue-500' : ''
                       }`}
-                  onClick={async () => {
-                    // Use the same robust read detection logic
-                    const isRead = notification.read === true || notification.read === 'true' || notification.read === 1;
-                    
-                    if (!isRead) {
-                      await markAsRead(notification.id);
-                    }
-                  }}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                       <div className="flex items-start space-x-3">
                         {getIcon(notification.type)}

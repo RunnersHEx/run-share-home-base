@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Trophy, Users } from "lucide-react";
+import UserAccessGuard from "@/components/guards/UserAccessGuard";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface RaceBookingCardProps {
   pointsCost: number;
@@ -17,6 +19,9 @@ export const RaceBookingCard = ({
   available, 
   onBookingRequest 
 }: RaceBookingCardProps) => {
+  const { profile } = useAuth();
+  const isUserActive = profile?.is_active !== false;
+  
   return (
     <Card>
       <CardHeader>
@@ -45,13 +50,25 @@ export const RaceBookingCard = ({
 
         <Separator />
 
-        <Button 
-          onClick={onBookingRequest}
-          className="w-full bg-[#1E40AF] hover:bg-[#1E40AF]/90"
-          disabled={!available}
-        >
-          {available ? 'Solicitar Reserva' : 'No Disponible'}
-        </Button>
+        {!isUserActive ? (
+          <UserAccessGuard showCreateRestriction={true}>
+            <Button 
+              onClick={onBookingRequest}
+              className="w-full bg-[#1E40AF] hover:bg-[#1E40AF]/90"
+              disabled={true}
+            >
+              Cuenta Desactivada
+            </Button>
+          </UserAccessGuard>
+        ) : (
+          <Button 
+            onClick={onBookingRequest}
+            className="w-full bg-[#1E40AF] hover:bg-[#1E40AF]/90"
+            disabled={!available}
+          >
+            {available ? 'Solicitar Reserva' : 'No Disponible'}
+          </Button>
+        )}
 
         <p className="text-xs text-gray-500 text-center">
           No se cobrará hasta que el host acepte tu solicitud

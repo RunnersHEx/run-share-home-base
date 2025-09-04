@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, MessageCircle, AlertCircle } from 'lucide-react';
+import { MessageCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -130,22 +130,12 @@ export function MessagingModal({
           }
         >
           <DialogHeader className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-blue-600" />
-                <span>
-                  {otherParticipantName ? `Chat with ${otherParticipantName}` : 'Conversation'}
-                </span>
-              </DialogTitle>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleClose}
-                className="rounded-full hover:bg-gray-100"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-blue-600" />
+              <span>
+                {otherParticipantName ? `Chat with ${otherParticipantName}` : 'Conversation'}
+              </span>
+            </DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 overflow-hidden">

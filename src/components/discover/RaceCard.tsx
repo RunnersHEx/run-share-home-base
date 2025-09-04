@@ -225,7 +225,7 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails, onAuthModal }: 
             </div>
           </div>
 
-          {/* Points Cost and Action */}
+          {/* Points Cost and Availability Status */}
           <div className="flex items-center justify-between pt-3 border-t">
             <div className="flex items-center">
               <Trophy className="w-4 h-4 text-[#EA580C] mr-1" />
@@ -234,13 +234,23 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails, onAuthModal }: 
               </span>
             </div>
             
-            <Button 
-              className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
-              size="sm"
-              onClick={handleViewDetailsClick}
-            >
-              Ver Detalles
-            </Button>
+            <div className="flex flex-col items-end space-y-1">
+              <div className={`text-sm font-medium px-2 py-1 rounded ${
+                race.available 
+                  ? 'text-green-700 bg-green-100' 
+                  : 'text-red-700 bg-red-100'
+              }`}>
+                {race.available ? 'Disponible' : 'No Disponible'}
+              </div>
+              
+              <Button 
+                className="bg-[#1E40AF] hover:bg-[#1E40AF]/90"
+                size="sm"
+                onClick={handleViewDetailsClick}
+              >
+                Ver Detalles
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>

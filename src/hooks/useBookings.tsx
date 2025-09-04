@@ -90,25 +90,25 @@ export const useBookings = (filters?: BookingFilters) => {
 
   const cancelBooking = async (bookingId: string, cancelledBy: 'guest' | 'host' = 'guest', reason?: string) => {
     try {
-      // Determine if refund should be given based on timing
+      // Find the booking
       const booking = bookings?.find(b => b.id === bookingId);
       if (!booking) {
         toast.error('Reserva no encontrada');
         return false;
       }
 
+      // Show appropriate warning based on cancellation policy
       const now = new Date();
       const checkInDate = new Date(booking.check_in_date);
       const daysUntilCheckIn = Math.ceil((checkInDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       
-      let refundPoints = true;
       let warningMessage = '';
       
       if (cancelledBy === 'guest' && daysUntilCheckIn < 7) {
-        refundPoints = false;
         warningMessage = 'Cancelación tardía: no se reembolsarán los puntos.';
-      } else if (cancelledBy === 'host' && daysUntilCheckIn < 60) {
-        warningMessage = 'Cancelación de host: se aplicará una penalización de 30 puntos.';
+      } else if (cancelledBy === 'host') {
+        const penaltyPoints = booking.points_cost || 100;
+        warningMessage = `Cancelación de host: se aplicará una penalización de ${penaltyPoints} puntos.`;
       }
       
       // Show warning if applicable
@@ -117,15 +117,13 @@ export const useBookings = (filters?: BookingFilters) => {
         if (!confirmed) return false;
       }
       
-      await BookingService.cancelBooking(bookingId, cancelledBy, refundPoints);
+      // Call the service to cancel (database triggers will handle points automatically)
+      await BookingService.cancelBooking(bookingId, cancelledBy, reason);
+      
       await fetchBookings();
       await fetchStats();
       
       toast.success('Reserva cancelada correctamente');
-      if (!refundPoints && cancelledBy === 'guest') {
-        toast.warning('Los puntos no fueron reembolsados debido a la cancelación tardía');
-      }
-      
       return true;
     } catch (error) {
       console.error('Error cancelling booking:', error);
@@ -159,6 +157,13 @@ export const useBookings = (filters?: BookingFilters) => {
 
   const completeBooking = async (bookingId: string) => {
     try {
+      // Find the booking to get guest information
+      const booking = bookings?.find(b => b.id === bookingId);
+      if (!booking) {
+        toast.error('Reserva no encontrada');
+        return false;
+      }
+
       const { error } = await supabase
         .from('bookings')
         .update({ 
@@ -168,6 +173,27 @@ export const useBookings = (filters?: BookingFilters) => {
         .eq('id', bookingId);
 
       if (error) throw error;
+      
+      // Send notification to guest about experience completion
+      try {
+        const { NotificationService } = await import('@/services/notificationService');
+        await NotificationService.createNotification({
+          user_id: booking.guest_id,
+          type: 'booking_completed',
+          title: 'Experiencia completada',
+          message: 'Experiencia completada. Visita la sección de reseñas para calificar a tu anfitrión',
+          data: {
+            booking_id: bookingId,
+            host_name: `${booking.host?.first_name || ''} ${booking.host?.last_name || ''}`.trim(),
+            property_title: booking.property?.title,
+            race_name: booking.race?.name,
+            completion_date: new Date().toISOString()
+          }
+        });
+      } catch (notificationError) {
+        console.error('Error sending completion notification to guest:', notificationError);
+        // Don't fail the booking completion if notification fails
+      }
       
       await fetchBookings();
       await fetchStats();

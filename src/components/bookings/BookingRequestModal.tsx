@@ -175,7 +175,7 @@ const BookingRequestModal = ({ isOpen, onClose, onSubmit, race, property }: Book
     }
 
     // Validate required fields
-    if (!formData.check_in_date || !formData.check_out_date || !formData.request_message || !formData.guest_phone) {
+    if (!formData.check_in_date || !formData.check_out_date || !formData.request_message || !formData.guest_phone || !formData.estimated_arrival_time) {
       toast.error('Por favor completa todos los campos obligatorios');
       return;
     }
@@ -221,6 +221,7 @@ const BookingRequestModal = ({ isOpen, onClose, onSubmit, race, property }: Book
            formData.guests_count && 
            formData.request_message && 
            formData.guest_phone && 
+           formData.estimated_arrival_time &&
            agreedToTerms;
   };
 

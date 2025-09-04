@@ -123,10 +123,13 @@ export class RaceHostService {
         throw new Error('La fecha de la carrera debe ser posterior a hoy');
       }
       
+      // Remove points_cost from the data being sent - let the database trigger calculate it
+      const { points_cost, ...raceDataWithoutPointsCost } = raceData;
+      
       const { data, error } = await supabase
         .from('races')
         .insert({
-          ...raceData,
+          ...raceDataWithoutPointsCost,
           host_id: hostId,
           is_active: true,
           total_bookings: 0
@@ -139,7 +142,7 @@ export class RaceHostService {
         throw error;
       }
 
-      console.log('RaceHostService: Created race:', data);
+      console.log('RaceHostService: Created race with auto-calculated points_cost:', data);
       return RaceHostService.convertDatabaseRaceToTyped(data);
     } catch (error) {
       console.error('RaceHostService: Error in createRace:', error);
@@ -163,9 +166,12 @@ export class RaceHostService {
         }
       }
       
+      // Remove points_cost from updates - let the database trigger calculate it
+      const { points_cost, ...updatesWithoutPointsCost } = updates;
+      
       const { data, error } = await supabase
         .from('races')
-        .update(updates)
+        .update(updatesWithoutPointsCost)
         .eq('id', raceId)
         .select(`
           *,
@@ -183,6 +189,7 @@ export class RaceHostService {
       }
 
       console.log('✅ RaceHostService.updateRace: Raw data from database:', data);
+      console.log('📋 RaceHostService.updateRace: Raw points_cost (auto-calculated):', data.points_cost);
       console.log('📋 RaceHostService.updateRace: Raw distances field:', data.distances);
       console.log('📋 RaceHostService.updateRace: Raw modalities field:', data.modalities);
       console.log('📋 RaceHostService.updateRace: Raw max_guests field:', data.max_guests);
@@ -192,6 +199,7 @@ export class RaceHostService {
       console.log('🎯 RaceHostService.updateRace: Converted distances:', convertedRace.distances);
       console.log('🎯 RaceHostService.updateRace: Converted modalities:', convertedRace.modalities);
       console.log('🎯 RaceHostService.updateRace: Converted max_guests:', convertedRace.max_guests);
+      console.log('🎯 RaceHostService.updateRace: Auto-calculated points_cost:', convertedRace.points_cost);
       
       return convertedRace;
     } catch (error) {

@@ -15,8 +15,11 @@ import BookingsSection from "@/components/profile/BookingsSection";
 import SubscriptionSection from "@/components/profile/SubscriptionSection";
 import PointsSystemSection from "@/components/profile/PointsSystemSection";
 import ReviewsSection from "@/components/reviews/ReviewsSection";
+import AdminMessages from "@/components/admin/AdminMessages";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Profile = () => {
+  const { user } = useAuth();
   const location = useLocation();
   const [activeSection, setActiveSection] = useState("personal");
 
@@ -55,6 +58,8 @@ const Profile = () => {
         return <VerificationSection />;
       case "stats":
         return <StatsSection />;
+      case "admin-messages":
+        return <AdminMessages userId={user?.id || ''} />;
       case "delete-account":
         return <DeleteAccountSection />;
       default:

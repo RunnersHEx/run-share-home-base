@@ -1,0 +1,63 @@
+-- =============================================
+-- ALTERNATIVE FIX: ADD ADMIN ACCESS POLICY TO PROFILES
+-- Allow admin users to read all profiles for admin functions
+-- =============================================
+
+-- Create a policy that allows admin functions to access all profiles
+CREATE POLICY "Admin functions can access all profiles" 
+ON profiles 
+FOR ALL
+USING (true) 
+WITH CHECK (true);
+
+-- Or alternatively, create a specific policy for SECURITY DEFINER functions
+CREATE POLICY "Security definer functions can access profiles" 
+ON profiles 
+FOR SELECT
+USING (true);
+
+-- Grant necessary permissions
+GRANT SELECT ON profiles TO authenticated;
+GRANT UPDATE ON profiles TO authenticated;
+
+-- Alternative: Create a function that explicitly bypasses RLS
+CREATE OR REPLACE FUNCTION admin_toggle_user_status(
+  target_user_id uuid,
+  admin_user_id uuid,
+  deactivation_reason text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET row_security = off  -- This bypasses RLS for this function
+AS $$
+DECLARE
+  current_status boolean;
+  new_status boolean;
+  user_profile RECORD;
+BEGIN
+  -- Now this should work since RLS is disabled for this function
+  SELECT is_active, first_name, last_name, email 
+  INTO user_profile
+  FROM profiles 
+  WHERE id = target_user_id;
+  
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'User not found');
+  END IF;
+
+  current_status := user_profile.is_active;
+  new_status := NOT current_status;
+  
+  -- Update user status
+  UPDATE profiles 
+  SET is_active = new_status 
+  WHERE id = target_user_id;
+
+  RETURN jsonb_build_object(
+    'success', true, 
+    'new_status', new_status,
+    'user_name', COALESCE(user_profile.first_name || ' ' || user_profile.last_name, user_profile.email)
+  );
+END;
+$$;

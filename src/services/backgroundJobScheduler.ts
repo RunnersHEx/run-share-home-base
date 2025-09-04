@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBackgroundJobs, NotificationService } from "./notificationService";
+import { PointsCalculationService } from "./pointsCalculationService";
 
 export interface ScheduledJob {
   id: string;
@@ -226,7 +227,6 @@ export class BackgroundJobScheduler {
 
   private async recalculateRacePoints(): Promise<void> {
     try {
-      const { PointsCalculationService } = await import('./pointsCalculationService');
       await PointsCalculationService.recalculateAllRacePoints();
       console.log('Race points recalculation completed');
     } catch (error) {

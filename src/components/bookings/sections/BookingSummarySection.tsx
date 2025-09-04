@@ -136,7 +136,7 @@ export const BookingSummarySection = ({
             onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
           />
           <Label htmlFor="terms" className="text-sm">
-            Acepto los términos y condiciones y la política de cancelación
+            Acepto los términos y condiciones y la política de cancelación <span className="text-red-500">*</span>
           </Label>
         </div>
 

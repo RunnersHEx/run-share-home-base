@@ -1,0 +1,40 @@
+-- =============================================
+-- FIX USER_NOTIFICATIONS RLS POLICIES
+-- Allow proper access to user_notifications table
+-- =============================================
+
+-- Check if RLS is enabled (it probably is)
+-- ALTER TABLE user_notifications DISABLE ROW LEVEL SECURITY;  -- Option 1: Disable RLS entirely
+
+-- OR Option 2: Add proper RLS policies
+-- Enable RLS (if not already enabled)
+ALTER TABLE user_notifications ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can read their own notifications" ON user_notifications;
+DROP POLICY IF EXISTS "Users can update their own notifications" ON user_notifications;
+DROP POLICY IF EXISTS "System can create notifications" ON user_notifications;
+
+-- Allow users to read their own notifications
+CREATE POLICY "Users can read their own notifications" 
+ON user_notifications 
+FOR SELECT 
+USING (user_id = auth.uid());
+
+-- Allow system/service to insert notifications for any user
+CREATE POLICY "System can create notifications" 
+ON user_notifications 
+FOR INSERT 
+WITH CHECK (true);
+
+-- Allow users to update their own notifications (mark as read)
+CREATE POLICY "Users can update their own notifications" 
+ON user_notifications 
+FOR UPDATE 
+USING (user_id = auth.uid()) 
+WITH CHECK (user_id = auth.uid());
+
+-- Grant proper table permissions
+GRANT SELECT ON user_notifications TO authenticated;
+GRANT INSERT ON user_notifications TO authenticated;
+GRANT UPDATE ON user_notifications TO authenticated;

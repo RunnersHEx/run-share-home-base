@@ -1,0 +1,62 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+const FixSubscriptionDates = () => {
+  const [loading, setLoading] = useState(false);
+
+  const handleFixDates = async () => {
+    setLoading(true);
+    
+    try {
+      console.log("Starting subscription dates fix...");
+      
+      const { data, error } = await supabase.functions.invoke('fix-subscription-dates');
+      
+      if (error) {
+        console.error('Error fixing dates:', error);
+        toast.error(`Error: ${error.message}`);
+        return;
+      }
+      
+      console.log('Fix result:', data);
+      
+      if (data.success) {
+        toast.success(`✅ ${data.message}`);
+        console.log(`Fixed ${data.updated} subscriptions`);
+        
+        // Refresh the page after 2 seconds to show updated data
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        toast.error(`Error: ${data.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Exception:', error);
+      toast.error("Error al ejecutar la corrección");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-4 border border-yellow-200 rounded-lg bg-yellow-50 mb-4">
+      <h3 className="font-semibold text-yellow-800 mb-2">🔧 Corrección de Fechas</h3>
+      <p className="text-yellow-700 text-sm mb-3">
+        Si las fechas de tu suscripción aparecen como "No disponible", haz clic aquí para corregirlas:
+      </p>
+      <Button 
+        onClick={handleFixDates}
+        disabled={loading}
+        variant="outline"
+        className="border-yellow-300 text-yellow-800 hover:bg-yellow-100"
+      >
+        {loading ? "Corrigiendo..." : "Corregir Fechas de Suscripción"}
+      </Button>
+    </div>
+  );
+};
+
+export default FixSubscriptionDates;

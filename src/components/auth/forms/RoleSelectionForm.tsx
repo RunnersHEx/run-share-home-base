@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -67,8 +66,12 @@ const RoleSelectionForm = ({ onSubmit, onBack, initialData, isLoading }: RoleSel
           <ArrowLeft className="h-4 w-4 mr-2" />
           Atrás
         </Button>
-        <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
-          {isLoading ? "Creando cuenta..." : "Crear Cuenta"}
+        <Button 
+          type="submit" 
+          className="flex-1 bg-blue-600 hover:bg-blue-700" 
+          disabled={isLoading}
+        >
+          {isLoading ? "Continuando..." : "Continuar"}
         </Button>
       </div>
     </form>
