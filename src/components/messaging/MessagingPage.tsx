@@ -383,27 +383,27 @@ export function MessagingPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <MessageCircle className="h-5 w-5" />
-              <span>Messaging Guidelines</span>
+              <span>Directrices de mensajería</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 className="font-semibold mb-2">For Guests:</h4>
+                <h4 className="font-semibold mb-2">Para huéspedes:</h4>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Be respectful and communicate clearly</li>
-                  <li>• Provide accurate arrival times</li>
-                  <li>• Ask questions about the property or local area</li>
-                  <li>• Confirm check-in details with your host</li>
+                  <li>• Sé respetuoso y comunica con claridad</li>
+                  <li>• Indica con precisión tu hora de llegada</li>
+                  <li>• Haz preguntas sobre la propiedad o la zona</li>
+                  <li>• Confirma los detalles del check-in con tu anfitrión</li>
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold mb-2">For Hosts:</h4>
+                <h4 className="font-semibold mb-2">Para anfitriones:</h4>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Respond promptly to guest messages</li>
-                  <li>• Provide helpful local running information</li>
-                  <li>• Share check-in instructions clearly</li>
-                  <li>• Be welcoming and professional</li>
+                  <li>• Responde con prontitud a los mensajes de los huéspedes</li>
+                  <li>• Facilita información útil sobre actividades locales</li>
+                  <li>• Comparte las instrucciones de check-in de forma clara</li>
+                  <li>• Sé acogedor y profesional</li>
                 </ul>
               </div>
             </div>

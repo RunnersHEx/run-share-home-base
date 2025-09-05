@@ -416,7 +416,7 @@ export class BookingService {
       };
       
       // Add optional fields
-      conversationData.last_message = 'Booking has been accepted! You can now start messaging.';
+      conversationData.last_message = '¡Reserva aceptada! Ahora pueden empezar a comunicarse.';
       conversationData.unread_count_p1 = 0;
       conversationData.unread_count_p2 = 0;
 
@@ -438,7 +438,21 @@ export class BookingService {
       }
 
       // Send initial system message to both participants
-      const welcomeMessage = `Great news! Your booking has been accepted. You can now communicate directly with each other to coordinate check-in details and any questions about the stay.`;
+      const welcomeMessage = `¡Buenas noticias! Tu reserva ha sido aceptada. Ahora pueden comunicarse directamente entre ustedes para coordinar los detalles del check-in y resolver cualquier duda sobre la estancia.
+
+**Directrices de mensajería**
+
+**Para huéspedes:**
+• Sé respetuoso y comunica con claridad
+• Indica con precisión tu hora de llegada
+• Haz preguntas sobre la propiedad o la zona
+• Confirma los detalles del check-in con tu anfitrión
+
+**Para anfitriones:**
+• Responde con prontitud a los mensajes de los huéspedes
+• Facilita información útil sobre actividades locales
+• Comparte las instrucciones de check-in de forma clara
+• Sé acogedor y profesional`;
       
       // Prepare message data
       const messageData: any = {
