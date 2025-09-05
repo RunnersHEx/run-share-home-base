@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Fix User Activation System - Migration Script
+# This script applies the database migrations to fix the user activation issue
+
+echo "🔧 Fixing User Activation System..."
+
+# Change to project directory
+cd "$(dirname "$0")"
+
+echo "📁 Current directory: $(pwd)"
+
+# Apply migration 1: Fix the admin_toggle_user_status function
+echo "⚡ Applying migration: 20250812000005-fix-user-activation-function.sql"
+npx supabase db push --include-all
+
+# Apply migration 2: Create notification system 
+echo "⚡ Applying migration: 20250812000006-create-notification-system.sql"
+npx supabase db push --include-all
+
+echo "✅ Migrations applied successfully!"
+echo ""
+echo "🔧 Testing the fix..."
+echo "1. Go to Admin Panel > User Management"
+echo "2. Try to activate/deactivate a user"
+echo "3. The 500 error should now be resolved"
+echo ""
+echo "📋 What was fixed:"
+echo "- Removed reference to non-existent 'user_notifications' table in admin_toggle_user_status function"
+echo "- Created proper notification system with user_notifications table and functions"
+echo "- Updated frontend to handle notifications properly after activation/deactivation"
+echo ""
+echo "🎉 User activation system should now work correctly!"

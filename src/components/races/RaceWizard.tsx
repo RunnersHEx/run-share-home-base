@@ -47,7 +47,7 @@ export const RaceWizard = ({ onClose, onSuccess, editingRace, isEditMode = false
     terrain_profile: [],
     distances: [],
     has_wave_starts: false,
-    points_cost: 100, // Default points cost
+    points_cost: 30, // Will be calculated dynamically based on province
     max_guests: 1
   });
   const [photos, setPhotos] = useState<PhotoPreview[]>([]);
@@ -84,7 +84,7 @@ export const RaceWizard = ({ onClose, onSuccess, editingRace, isEditMode = false
         distance_from_property: editingRace.distance_from_property || 0,
         official_website: editingRace.official_website || '',
         registration_cost: editingRace.registration_cost || 0,
-        points_cost: editingRace.points_cost || 100,
+        points_cost: editingRace.points_cost || 30,
         max_guests: editingRace.max_guests || 1,
         highlights: editingRace.highlights || '',
         local_tips: editingRace.local_tips || '',
@@ -352,7 +352,7 @@ export const RaceWizard = ({ onClose, onSuccess, editingRace, isEditMode = false
       case 2:
         return formData.modalities?.length && formData.distances?.length;
       case 3:
-        return formData.points_cost !== undefined && formData.max_guests && formData.max_guests > 0 && formData.max_guests <= 4;
+        return formData.max_guests && formData.max_guests > 0 && formData.max_guests <= 4;
       case 4:
         // Require at least one main image (cover photo)
         return photos.some(photo => photo.category === 'cover');

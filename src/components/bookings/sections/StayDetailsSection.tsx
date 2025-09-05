@@ -26,7 +26,7 @@ export const StayDetailsSection = ({ formData, setFormData, property, race }: St
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="check_in_date">Fecha de Check-in</Label>
+            <Label htmlFor="check_in_date">Fecha de Check-in <span className="text-red-500">*</span></Label>
             <input
               id="check_in_date"
               type="date"
@@ -38,7 +38,7 @@ export const StayDetailsSection = ({ formData, setFormData, property, race }: St
             />
           </div>
           <div>
-            <Label htmlFor="check_out_date">Fecha de Check-out</Label>
+            <Label htmlFor="check_out_date">Fecha de Check-out <span className="text-red-500">*</span></Label>
             <input
               id="check_out_date"
               type="date"
@@ -53,7 +53,7 @@ export const StayDetailsSection = ({ formData, setFormData, property, race }: St
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="guests_count">Número de Guests</Label>
+            <Label htmlFor="guests_count">Número de Guests <span className="text-red-500">*</span></Label>
             <select
               id="guests_count"
               value={formData.guests_count || 1}
@@ -75,7 +75,7 @@ export const StayDetailsSection = ({ formData, setFormData, property, race }: St
             </p>
           </div>
           <div>
-            <Label htmlFor="estimated_arrival_time">Hora Estimada de Llegada</Label>
+            <Label htmlFor="estimated_arrival_time">Hora Estimada de Llegada <span className="text-red-500">*</span></Label>
             <input
               id="estimated_arrival_time"
               type="time"
@@ -87,7 +87,7 @@ export const StayDetailsSection = ({ formData, setFormData, property, race }: St
         </div>
 
         <div>
-          <Label htmlFor="guest_phone">Teléfono de Contacto Directo</Label>
+          <Label htmlFor="guest_phone">Teléfono de Contacto Directo <span className="text-red-500">*</span></Label>
           <div className="relative">
             <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input

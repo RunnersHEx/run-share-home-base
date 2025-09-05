@@ -1,0 +1,57 @@
+-- =============================================
+-- DEBUG: STEP-BY-STEP ADMIN TOGGLE FUNCTION
+-- This will help us find exactly which line is causing the 500 error
+-- =============================================
+
+CREATE OR REPLACE FUNCTION admin_toggle_user_status(
+  target_user_id uuid,
+  admin_user_id uuid,
+  deactivation_reason text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_status boolean;
+  new_status boolean;
+  user_profile RECORD;
+  admin_profile RECORD;
+  result jsonb;
+BEGIN
+  -- Step 1: Check if admin exists (might be failing here)
+  SELECT * INTO admin_profile FROM profiles WHERE id = admin_user_id;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Admin not found');
+  END IF;
+
+  -- Step 2: Get current user status (might be failing here)
+  SELECT is_active, first_name, last_name, email 
+  INTO current_status, user_profile.first_name, user_profile.last_name, user_profile.email
+  FROM profiles 
+  WHERE id = target_user_id;
+  
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'User not found');
+  END IF;
+
+  -- Step 3: Toggle status
+  new_status := NOT current_status;
+  
+  -- Step 4: Update user status (might be failing due to RLS)
+  UPDATE profiles 
+  SET is_active = new_status 
+  WHERE id = target_user_id;
+
+  -- Step 5: SKIP admin_messages insert for now (this is likely the culprit)
+  -- INSERT INTO admin_messages (...) -- COMMENTED OUT FOR DEBUGGING
+
+  -- Return success
+  RETURN jsonb_build_object(
+    'success', true, 
+    'new_status', new_status,
+    'user_name', COALESCE(user_profile.first_name || ' ' || user_profile.last_name, user_profile.email),
+    'debug_info', 'admin_messages insert skipped for debugging'
+  );
+END;
+$$;

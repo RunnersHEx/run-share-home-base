@@ -1,6 +1,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useVerification } from "@/hooks/useVerification";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,12 +13,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Settings, LogOut, Shield, Home, Trophy, Calendar, Search, MessageCircle } from "lucide-react";
+import { User, Settings, LogOut, Shield, Home, Trophy, Calendar, Search, MessageCircle, Bell, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, useLocation } from "react-router-dom";
 import NotificationBell from "../notifications/NotificationBell";
 import AuthModalIntegrated from "../auth/AuthModalIntegrated";
+import VerificationRequiredModal from "../auth/VerificationRequiredModal";
+import VerificationRouteGuard from "../verification/VerificationRouteGuard";
+import VerificationGuard from "../verification/VerificationGuard";
 import { UnreadBadge } from "@/components/messaging";
+import CookieBanner from "@/components/legal/CookieBanner";
+import Footer from "./Footer";
 
 
 interface LayoutProps {
@@ -27,12 +33,16 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const { user, signOut, loading, profile } = useAuth();
   const { isAdmin } = useAdminAuth();
+  const { showVerificationModal, isLoading: verificationLoading } = useVerification();
   const navigate = useNavigate();
   const location = useLocation();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [showVerificationModalState, setShowVerificationModalState] = useState(false);
+  const [recentlyUploadedDocs, setRecentlyUploadedDocs] = useState(false);
 
   const isHomePage = location.pathname === '/';
+  const isProfilePage = location.pathname === '/profile';
 
   // Automatically close auth modal when user logs in successfully
   useEffect(() => {
@@ -42,7 +52,45 @@ const Layout = ({ children }: LayoutProps) => {
     }
   }, [user, showAuthModal]);
 
+  // Show verification modal for authenticated users who need verification
+  useEffect(() => {
+    // Only show modal if:
+    // 1. User is authenticated
+    // 2. Verification data is loaded (not loading)
+    // 3. Verification is actually required
+    // 4. Not on the profile page
+    // 5. Profile data exists (prevents flash during profile loading)
+    // 6. User hasn't recently uploaded documents (prevents modal after upload)
+    if (user && !verificationLoading && showVerificationModal && !isProfilePage && profile && !recentlyUploadedDocs) {
+      // Add a small delay to ensure all data is fully loaded and prevent flash
+      const timer = setTimeout(() => {
+        setShowVerificationModalState(true);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setShowVerificationModalState(false);
+    }
+  }, [user, verificationLoading, showVerificationModal, isProfilePage, profile, recentlyUploadedDocs]);
 
+  // Listen for document upload events to prevent modal from showing immediately after upload
+  useEffect(() => {
+    const handleVerificationUpload = (event: CustomEvent) => {
+      if (event.detail?.documentsUploaded) {
+        setRecentlyUploadedDocs(true);
+        // Reset after 3 seconds to allow the verification status to update properly
+        setTimeout(() => {
+          setRecentlyUploadedDocs(false);
+        }, 3000);
+      }
+    };
+
+    window.addEventListener('verificationStatusChanged', handleVerificationUpload as EventListener);
+    
+    return () => {
+      window.removeEventListener('verificationStatusChanged', handleVerificationUpload as EventListener);
+    };
+  }, []);
 
   const handleAuthModal = (mode: "login" | "register") => {
     // Check if user is already logged in
@@ -127,15 +175,39 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
           </header>
         )}
-        {children}
-      </div>
+      <VerificationRouteGuard>
+        <div className="mb-16">
+          {children}
+        </div>
+      </VerificationRouteGuard>
+      
+      <Footer />
+
+      {showAuthModal && (
+        <AuthModalIntegrated
+          mode={authMode}
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onModeChange={setAuthMode}
+        />
+      )}
+      
+      {showVerificationModalState && (
+        <VerificationRequiredModal
+          isOpen={showVerificationModalState}
+          onClose={() => setShowVerificationModalState(false)}
+        />
+      )}
+      
+      <CookieBanner />
+    </div>
     );
   }
 
   console.log('Layout: Rendering main layout');
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       {/* Header condicional según la página */}
       {isHomePage ? (
         // Header transparente para homepage
@@ -188,24 +260,63 @@ const Layout = ({ children }: LayoutProps) => {
                           <span>Mi Perfil</span>
                         </DropdownMenuItem>
                         {location.pathname !== '/profile' && (
-                          <DropdownMenuItem onClick={() => handleNavigation("/discover")}>
-                            <Search className="mr-2 h-4 w-4" />
-                            <span>Descubrir Carreras</span>
-                          </DropdownMenuItem>
+                          <VerificationGuard showToast={false} fallback={
+                            <DropdownMenuItem disabled className="opacity-50">
+                              <Search className="mr-2 h-4 w-4" />
+                              <span>Descubrir Carreras (Verificación requerida)</span>
+                            </DropdownMenuItem>
+                          }>
+                            <DropdownMenuItem onClick={() => handleNavigation("/discover")}>
+                              <Search className="mr-2 h-4 w-4" />
+                              <span>Descubrir Carreras</span>
+                            </DropdownMenuItem>
+                          </VerificationGuard>
                         )}
-                        <DropdownMenuItem onClick={() => handleNavigation("/bookings")}>
-                          <Calendar className="mr-2 h-4 w-4" />
-                          <span>Mis Reservas</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleNavigation("/messages")} className="relative">
-                          <MessageCircle className="mr-2 h-4 w-4" />
-                          <span>Mensajes</span>
-                          <UnreadBadge className="absolute -top-1 -right-1" size="sm" />
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleNavigation("/races")}>
-                          <Trophy className="mr-2 h-4 w-4" />
-                          <span>Mis Carreras</span>
-                        </DropdownMenuItem>
+                        <VerificationGuard showToast={false} fallback={
+                          <DropdownMenuItem disabled className="opacity-50">
+                            <Calendar className="mr-2 h-4 w-4" />
+                            <span>Mis Reservas (Verificación requerida)</span>
+                          </DropdownMenuItem>
+                        }>
+                          <DropdownMenuItem onClick={() => handleNavigation("/bookings")}>
+                            <Calendar className="mr-2 h-4 w-4" />
+                            <span>Mis Reservas</span>
+                          </DropdownMenuItem>
+                        </VerificationGuard>
+                        <VerificationGuard showToast={false} fallback={
+                          <DropdownMenuItem disabled className="opacity-50">
+                            <FileText className="mr-2 h-4 w-4" />
+                            <span>Solicitudes (Verificación requerida)</span>
+                          </DropdownMenuItem>
+                        }>
+                          <DropdownMenuItem onClick={() => handleNavigation("/profile", "bookings")}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            <span>Solicitudes</span>
+                          </DropdownMenuItem>
+                        </VerificationGuard>
+                        <VerificationGuard showToast={false} fallback={
+                          <DropdownMenuItem disabled className="opacity-50">
+                            <MessageCircle className="mr-2 h-4 w-4" />
+                            <span>Mensajes (Verificación requerida)</span>
+                          </DropdownMenuItem>
+                        }>
+                          <DropdownMenuItem onClick={() => handleNavigation("/messages")} className="relative">
+                            <MessageCircle className="mr-2 h-4 w-4" />
+                            <span>Mensajes</span>
+                            <UnreadBadge className="absolute -top-1 -right-1" size="sm" />
+                          </DropdownMenuItem>
+                        </VerificationGuard>
+                        <VerificationGuard showToast={false} fallback={
+                          <DropdownMenuItem disabled className="opacity-50">
+                            <Trophy className="mr-2 h-4 w-4" />
+                            <span>Mis Carreras (Verificación requerida)</span>
+                          </DropdownMenuItem>
+                        }>
+                          <DropdownMenuItem onClick={() => handleNavigation("/races")}>
+                            <Trophy className="mr-2 h-4 w-4" />
+                            <span>Mis Carreras</span>
+                          </DropdownMenuItem>
+                        </VerificationGuard>
                         <DropdownMenuSeparator />
                         {isAdmin && (
                           <>
@@ -272,38 +383,70 @@ const Layout = ({ children }: LayoutProps) => {
                   Inicio
                 </button>
                 {location.pathname !== '/profile' && (
-                  <button 
-                    onClick={() => navigate('/discover')}
-                    className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
+                  <VerificationGuard
+                    toastMessage="Completa la verificación de identidad para descubrir carreras"
+                    redirectToProfile={true}
                   >
-                    <Search className="h-4 w-4 inline mr-2" />
-                    Descubrir Carreras
-                  </button>
+                    <button 
+                      onClick={() => navigate('/discover')}
+                      className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
+                    >
+                      <Search className="h-4 w-4 inline mr-2" />
+                      Descubrir Carreras
+                    </button>
+                  </VerificationGuard>
                 )}
                 {user && (
                   <>
-                    <button 
-                      onClick={() => navigate('/bookings')}
-                      className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
+                    <VerificationGuard
+                      toastMessage="Completa la verificación de identidad para ver tus reservas"
+                      redirectToProfile={true}
                     >
-                      <Calendar className="h-4 w-4 inline mr-2" />
-                      Mis Reservas
-                    </button>
-                    <button 
-                      onClick={() => navigate('/messages')}
-                      className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors relative"
+                      <button 
+                        onClick={() => navigate('/bookings')}
+                        className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
+                      >
+                        <Calendar className="h-4 w-4 inline mr-2" />
+                        Mis Reservas
+                      </button>
+                    </VerificationGuard>
+                    <VerificationGuard
+                      toastMessage="Completa la verificación de identidad para gestionar solicitudes"
+                      redirectToProfile={true}
                     >
-                      <MessageCircle className="h-4 w-4 inline mr-2" />
-                      Mensajes
-                      <UnreadBadge className="absolute -top-2 -right-2" size="sm" />
-                    </button>
-                    <button 
-                      onClick={() => navigate('/races')}
-                      className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
+                      <button 
+                        onClick={() => handleNavigation('/profile', 'bookings')}
+                        className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
+                      >
+                        <FileText className="h-4 w-4 inline mr-2" />
+                        Solicitudes
+                      </button>
+                    </VerificationGuard>
+                    <VerificationGuard
+                      toastMessage="Completa la verificación de identidad para acceder a mensajes"
+                      redirectToProfile={true}
                     >
-                      <Trophy className="h-4 w-4 inline mr-2" />
-                      Mis Carreras
-                    </button>
+                      <button 
+                        onClick={() => navigate('/messages')}
+                        className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors relative"
+                      >
+                        <MessageCircle className="h-4 w-4 inline mr-2" />
+                        Mensajes
+                        <UnreadBadge className="absolute -top-2 -right-2" size="sm" />
+                      </button>
+                    </VerificationGuard>
+                    <VerificationGuard
+                      toastMessage="Completa la verificación de identidad para gestionar tus carreras"
+                      redirectToProfile={true}
+                    >
+                      <button 
+                        onClick={() => navigate('/races')}
+                        className="text-gray-700 hover:text-runner-blue-600 font-medium transition-colors"
+                      >
+                        <Trophy className="h-4 w-4 inline mr-2" />
+                        Mis Carreras
+                      </button>
+                    </VerificationGuard>
                   </>
                 )}
               </nav>
@@ -345,19 +488,40 @@ const Layout = ({ children }: LayoutProps) => {
                           <User className="mr-2 h-4 w-4" />
                           <span>Mi Perfil</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleNavigation("/profile", "properties")}>
-                          <Home className="mr-2 h-4 w-4" />
-                          <span>Mis Propiedades</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleNavigation("/messages")} className="relative">
-                          <MessageCircle className="mr-2 h-4 w-4" />
-                          <span>Mensajes</span>
-                          <UnreadBadge className="absolute -top-1 -right-1" size="sm" />
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleNavigation("/profile", "races")}>
-                          <Trophy className="mr-2 h-4 w-4" />
-                          <span>Mis Carreras</span>
-                        </DropdownMenuItem>
+                        <VerificationGuard showToast={false} fallback={
+                          <DropdownMenuItem disabled className="opacity-50">
+                            <Home className="mr-2 h-4 w-4" />
+                            <span>Mis Propiedades (Verificación requerida)</span>
+                          </DropdownMenuItem>
+                        }>
+                          <DropdownMenuItem onClick={() => handleNavigation("/profile", "properties")}>
+                            <Home className="mr-2 h-4 w-4" />
+                            <span>Mis Propiedades</span>
+                          </DropdownMenuItem>
+                        </VerificationGuard>
+                        <VerificationGuard showToast={false} fallback={
+                          <DropdownMenuItem disabled className="opacity-50">
+                            <MessageCircle className="mr-2 h-4 w-4" />
+                            <span>Mensajes (Verificación requerida)</span>
+                          </DropdownMenuItem>
+                        }>
+                          <DropdownMenuItem onClick={() => handleNavigation("/messages")} className="relative">
+                            <MessageCircle className="mr-2 h-4 w-4" />
+                            <span>Mensajes</span>
+                            <UnreadBadge className="absolute -top-1 -right-1" size="sm" />
+                          </DropdownMenuItem>
+                        </VerificationGuard>
+                        <VerificationGuard showToast={false} fallback={
+                          <DropdownMenuItem disabled className="opacity-50">
+                            <Trophy className="mr-2 h-4 w-4" />
+                            <span>Mis Carreras (Verificación requerida)</span>
+                          </DropdownMenuItem>
+                        }>
+                          <DropdownMenuItem onClick={() => handleNavigation("/profile", "races")}>
+                            <Trophy className="mr-2 h-4 w-4" />
+                            <span>Mis Carreras</span>
+                          </DropdownMenuItem>
+                        </VerificationGuard>
                         <DropdownMenuSeparator />
                         {isAdmin && (
                           <>
@@ -397,9 +561,11 @@ const Layout = ({ children }: LayoutProps) => {
         </header>
       )}
 
-      {children}
+      <main className="flex-grow mb-16">
+        {children}
+      </main>
 
-
+      <Footer />
 
       {showAuthModal && (
         <AuthModalIntegrated
@@ -409,6 +575,15 @@ const Layout = ({ children }: LayoutProps) => {
           onModeChange={setAuthMode}
         />
       )}
+      
+      {showVerificationModalState && (
+        <VerificationRequiredModal
+          isOpen={showVerificationModalState}
+          onClose={() => setShowVerificationModalState(false)}
+        />
+      )}
+      
+      <CookieBanner />
     </div>
   );
 };

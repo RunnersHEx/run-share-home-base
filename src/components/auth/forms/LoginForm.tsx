@@ -1,18 +1,21 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import ReCaptcha, { ReCaptchaRef } from "@/components/common/ReCaptcha";
+import { toast } from "sonner";
 
 interface LoginFormProps {
   onSubmit: (data: { email: string; password: string }) => Promise<void>;
   isLoading: boolean;
   onModeChange: () => void;
+  onForgotPassword?: () => void;
 }
 
-const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
+const LoginForm = ({ onSubmit, isLoading, onModeChange, onForgotPassword }: LoginFormProps) => {
   const [formData, setFormData] = useState({
     email: "",
     password: ""
@@ -20,6 +23,9 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [localLoading, setLocalLoading] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [recaptchaKey, setRecaptchaKey] = useState(0); // Force re-render of reCAPTCHA
+  const recaptchaRef = useRef<ReCaptchaRef>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,14 +48,21 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
       return;
     }
     
+    // Validate reCAPTCHA
+    if (!recaptchaToken) {
+      toast.error('Por favor completa la verificación reCAPTCHA');
+      return;
+    }
+    
     setLocalLoading(true);
     
     try {
       console.log('LoginForm: Calling onSubmit with credentials');
       await onSubmit({
         email: formData.email.trim(),
-        password: formData.password
-      });
+        password: formData.password,
+        recaptchaToken
+      } as any);
       console.log('LoginForm: onSubmit completed successfully');
     } catch (error: any) {
       console.error('LoginForm: Login error:', error);
@@ -64,6 +77,31 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
     } finally {
       setLocalLoading(false);
     }
+  };
+
+  const handleRecaptchaVerify = (token: string | null) => {
+    console.log('LoginForm: reCAPTCHA verification result:', !!token);
+    setRecaptchaToken(token);
+    if (token) {
+      toast.success('Verificación reCAPTCHA completada');
+    } else {
+      toast.error('Verificación reCAPTCHA falló');
+    }
+  };
+  
+  const handleRecaptchaExpired = () => {
+    console.log('LoginForm: reCAPTCHA expired');
+    setRecaptchaToken(null);
+    // Force re-render of reCAPTCHA to ensure it works properly
+    setRecaptchaKey(prev => prev + 1);
+  };
+  
+  const handleRecaptchaError = () => {
+    console.error('LoginForm: reCAPTCHA error occurred');
+    setRecaptchaToken(null);
+    // Force re-render of reCAPTCHA
+    setRecaptchaKey(prev => prev + 1);
+    toast.error('Error en reCAPTCHA. Por favor, inténtalo de nuevo.');
   };
 
   const handleGoogleSignIn = async () => {
@@ -152,17 +190,46 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
           {errors.password && (
             <p className="text-sm text-red-600">{errors.password}</p>
           )}
+          
+          {/* Forgot Password Link */}
+          {onForgotPassword && (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={onForgotPassword}
+                className="text-sm text-blue-600 hover:text-blue-700 underline"
+                disabled={loading}
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* reCAPTCHA verification */}
+        <div className="flex justify-center py-2">
+          <ReCaptcha
+            key={recaptchaKey} // Force re-render when needed
+            ref={recaptchaRef}
+            onVerify={handleRecaptchaVerify}
+            onExpired={handleRecaptchaExpired}
+            onError={handleRecaptchaError}
+            theme="light"
+            size="normal"
+            className="recaptcha-modal-widget"
+          />
         </div>
 
         <Button 
           type="submit" 
           className="w-full bg-blue-600 hover:bg-blue-700" 
-          disabled={loading}
+          disabled={loading || !recaptchaToken}
         >
           {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
         </Button>
       </form>
 
+      {/* GOOGLE SIGN IN BUTTON - COMMENTED OUT FOR FUTURE USE
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
@@ -199,6 +266,7 @@ const LoginForm = ({ onSubmit, isLoading, onModeChange }: LoginFormProps) => {
         </svg>
         {loading ? "Conectando..." : "Continuar con Google"}
       </Button>
+      END GOOGLE SIGN IN BUTTON COMMENT */}
 
       <div className="text-center">
         <button

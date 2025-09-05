@@ -15,7 +15,7 @@ export const MessageSection = ({ formData, setFormData }: MessageSectionProps) =
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <MessageSquare className="w-5 h-5" />
-          <span>Mensaje Personal al Host</span>
+          <span>Mensaje Personal al Host <span className="text-red-500">*</span></span>
         </CardTitle>
         <CardDescription>
           Cuéntale al host sobre ti y por qué quieres vivir esta experiencia

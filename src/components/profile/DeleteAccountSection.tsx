@@ -29,7 +29,8 @@ const DeleteAccountSection = () => {
   const [showDialog, setShowDialog] = useState(false);
 
   const userEmail = user?.email || "";
-  const isConfirmationValid = confirmationText === "ELIMINAR MI CUENTA" && hasAcceptedTerms;
+  const validConfirmations = ["ELIMINAR MI CUENTA", "DELETE MY ACCOUNT"];
+  const isConfirmationValid = validConfirmations.includes(confirmationText) && hasAcceptedTerms;
 
   const handleDeleteAccount = async () => {
     if (!isConfirmationValid) {
@@ -40,49 +41,63 @@ const DeleteAccountSection = () => {
     setIsDeleting(true);
     
     try {
-      // Delete user profile data
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user?.id);
-
-      if (profileError) {
-        console.error('Error deleting profile:', profileError);
-        toast.error("Error al eliminar el perfil de usuario");
+      const userId = user?.id;
+      if (!userId) {
+        toast.error("Error: usuario no identificado");
         setIsDeleting(false);
         return;
       }
 
-      // Delete user properties
-      const { error: propertiesError } = await supabase
-        .from('properties')
-        .delete()
-        .eq('owner_id', user?.id);
+      console.log('Starting account deletion for user:', userId);
+      console.log('Confirmation text being sent:', JSON.stringify(confirmationText));
+      console.log('Confirmation text length:', confirmationText.length);
+      console.log('Valid confirmations check:', validConfirmations.includes(confirmationText));
 
-      if (propertiesError) {
-        console.error('Error deleting properties:', propertiesError);
+      // Call the delete-user Edge Function
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: {
+          user_id: userId,
+          confirmation_text: confirmationText.trim() // Ensure no extra spaces
+        }
+      });
+
+      if (error) {
+        console.error('Error calling delete-user function:', error);
+        toast.error("Error al procesar la eliminación de cuenta. Por favor, inténtalo de nuevo.");
+        setIsDeleting(false);
+        return;
       }
 
-      // Delete user races
-      const { error: racesError } = await supabase
-        .from('races')
-        .delete()
-        .eq('host_id', user?.id);
-
-      if (racesError) {
-        console.error('Error deleting races:', racesError);
+      if (data?.error) {
+        console.error('Error from delete-user function:', data.error);
+        console.error('Error details:', data.details);
+        console.error('Received text:', data.received_text);
+        console.error('Valid options:', data.valid_options);
+        toast.error(data.error || "Error al eliminar la cuenta");
+        setIsDeleting(false);
+        return;
       }
 
+      console.log('Account deletion completed:', data);
+      
       // Sign out the user
       await signOut();
       
-      toast.success("Tu cuenta ha sido eliminada correctamente");
+      // Show appropriate message based on result
+      if (data?.warning) {
+        toast.success(data.message || "Tu cuenta ha sido eliminada correctamente", {
+          description: "Si tienes problemas para acceder, contacta al soporte."
+        });
+      } else {
+        toast.success("Tu cuenta ha sido eliminada correctamente");
+      }
       
     } catch (error) {
       console.error('Error deleting account:', error);
       toast.error("Error al eliminar la cuenta. Por favor, inténtalo de nuevo.");
     } finally {
       setIsDeleting(false);
+      // Only close dialog after everything is complete
       setShowDialog(false);
     }
   };
@@ -134,14 +149,15 @@ const DeleteAccountSection = () => {
 
           <div>
             <Label htmlFor="confirmation" className="text-sm font-medium text-gray-700">
-              Para confirmar, escribe exactamente: <span className="font-bold">ELIMINAR MI CUENTA</span>
+              Para confirmar, escribe exactamente: <span className="font-bold">ELIMINAR MI CUENTA</span> o <span className="font-bold">DELETE MY ACCOUNT</span>
             </Label>
             <Input
               id="confirmation"
               value={confirmationText}
               onChange={(e) => setConfirmationText(e.target.value)}
-              placeholder="ELIMINAR MI CUENTA"
+              placeholder="ELIMINAR MI CUENTA o DELETE MY ACCOUNT"
               className="mt-1"
+              disabled={isDeleting}
             />
           </div>
 
@@ -150,6 +166,7 @@ const DeleteAccountSection = () => {
               id="accept-terms"
               checked={hasAcceptedTerms}
               onCheckedChange={(checked) => setHasAcceptedTerms(!!checked)}
+              disabled={isDeleting}
             />
             <Label htmlFor="accept-terms" className="text-sm text-gray-700">
               Entiendo que esta acción es irreversible y acepto eliminar permanentemente mi cuenta y todos mis datos
@@ -157,15 +174,20 @@ const DeleteAccountSection = () => {
           </div>
         </div>
 
-        <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
+        <AlertDialog open={showDialog} onOpenChange={(open) => {
+          // Only allow closing if not currently deleting
+          if (!isDeleting) {
+            setShowDialog(open);
+          }
+        }}>
           <AlertDialogTrigger asChild>
             <Button
               variant="destructive"
-              disabled={!isConfirmationValid}
+              disabled={!isConfirmationValid || isDeleting}
               className="w-full"
             >
               <Trash className="h-4 w-4 mr-2" />
-              Eliminar mi cuenta permanentemente
+              {isDeleting ? "Eliminando..." : "Eliminar mi cuenta permanentemente"}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -173,20 +195,41 @@ const DeleteAccountSection = () => {
               <AlertDialogTitle className="text-red-600">
                 ¿Estás completamente seguro?
               </AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta es tu última oportunidad para cancelar. Una vez confirmes, 
-                tu cuenta y todos tus datos serán eliminados permanentemente de 
-                nuestros servidores. No podremos recuperar tu información.
+              <AlertDialogDescription asChild>
+                {isDeleting ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                      <span>Eliminando tu cuenta y todos tus datos...</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Por favor espera, este proceso puede tomar unos momentos.
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    Esta es tu última oportunidad para cancelar. Una vez confirmes, tu cuenta y todos tus datos serán eliminados permanentemente de nuestros servidores. No podremos recuperar tu información.
+                  </div>
+                )}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>
+                Cancelar
+              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteAccount}
                 disabled={isDeleting}
                 className="bg-red-600 hover:bg-red-700"
               >
-                {isDeleting ? "Eliminando..." : "Sí, eliminar definitivamente"}
+                {isDeleting ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Eliminando...</span>
+                  </div>
+                ) : (
+                  "Sí, eliminar definitivamente"
+                )}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

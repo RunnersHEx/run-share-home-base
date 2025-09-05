@@ -1,0 +1,35 @@
+@echo off
+echo 🔧 Fixing User Activation System...
+echo.
+
+REM Change to project directory  
+cd /d "%~dp0"
+
+echo 📁 Current directory: %CD%
+
+REM Apply migrations using Supabase CLI
+echo ⚡ Applying database migrations...
+npx supabase db push --include-all
+
+if %ERRORLEVEL% neq 0 (
+    echo ❌ Error applying migrations. Please check your Supabase configuration.
+    pause
+    exit /b 1
+)
+
+echo.
+echo ✅ Migrations applied successfully!
+echo.
+echo 🔧 Testing the fix...
+echo 1. Go to Admin Panel ^> User Management
+echo 2. Try to activate/deactivate a user
+echo 3. The 500 error should now be resolved
+echo.
+echo 📋 What was fixed:
+echo - Removed reference to non-existent 'user_notifications' table in admin_toggle_user_status function
+echo - Created proper notification system with user_notifications table and functions  
+echo - Updated frontend to handle notifications properly after activation/deactivation
+echo.
+echo 🎉 User activation system should now work correctly!
+echo.
+pause

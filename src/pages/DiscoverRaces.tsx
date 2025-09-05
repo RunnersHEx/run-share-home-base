@@ -147,10 +147,8 @@ const DiscoverRaces = () => {
         return false;
       }
       
-      // Only show available races
-      if (!race.available) {
-        return false;
-      }
+      // NOTE: Don't filter out unavailable races - show them with "No Disponible" status
+      // Users should see all races but with correct availability status
 
       return true;
     });

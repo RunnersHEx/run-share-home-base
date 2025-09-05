@@ -1,9 +1,10 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, Globe } from "lucide-react";
 import { RaceFormData } from "@/types/race";
+import { useBookingCost } from "@/hooks/usePoints";
+import { useEffect } from "react";
 
 interface LogisticsStepProps {
   formData: Partial<RaceFormData>;
@@ -13,8 +14,26 @@ interface LogisticsStepProps {
 }
 
 const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProps) => {
+  const { getProvincialRate } = useBookingCost();
+
+  // Calculate points based on selected province
+  const calculateProvincePoints = () => {
+    if (!formData.province) return 30; // Default fallback
+    return getProvincialRate(formData.province);
+  };
+
+  // Update points_cost whenever province changes
+  useEffect(() => {
+    if (formData.province) {
+      const provincialRate = calculateProvincePoints();
+      onUpdate({ points_cost: provincialRate });
+    }
+  }, [formData.province, onUpdate]);
+
+  const provincialRate = calculateProvincePoints();
+
   const canProceed = () => {
-    return formData.points_cost && 
+    return formData.points_cost !== undefined && 
            formData.points_cost > 0 && 
            formData.max_guests && 
            formData.max_guests > 0 &&
@@ -27,8 +46,6 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
         <h2 className="text-2xl font-bold text-gray-900">Logística y Costos</h2>
         <p className="text-gray-600 mt-2">Define los aspectos prácticos y económicos</p>
       </div>
-
-
 
       {/* Información Oficial */}
       <Card>
@@ -51,8 +68,6 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
               placeholder="https://ejemplo-carrera.com"
             />
           </div>
-
-
         </CardContent>
       </Card>
 
@@ -63,23 +78,40 @@ const LogisticsStep = ({ formData, onUpdate, onNext, onPrev }: LogisticsStepProp
             <Trophy className="w-5 h-5" />
             <span>Costo en Puntos</span>
           </CardTitle>
-          <CardDescription>El sistema asignará automáticamente los puntos del costo de carrera según oferta-demanda</CardDescription>
+          <CardDescription>
+            Costo automático basado en la ubicación de la carrera
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="points_cost">Puntos requeridos para reservar</Label>
-            <input
-              id="points_cost"
-              type="number"
-              min="1"
-              value={formData.points_cost || 100}
-              readOnly
-              disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              El sistema asignará automáticamente los puntos del costo de carrera según oferta-demanda
-            </p>
+            <Label htmlFor="points_cost">Puntos requeridos por noche</Label>
+            <div className="flex items-center space-x-3">
+              <input
+                id="points_cost"
+                type="number"
+                value={provincialRate}
+                readOnly
+                disabled
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+              />
+              <div className="text-lg font-semibold text-blue-600">
+                {provincialRate} puntos/noche
+              </div>
+            </div>
+            <div className="mt-2 space-y-1">
+              <p className="text-sm text-gray-600">
+                <strong>Provincia seleccionada:</strong> {formData.province || 'No seleccionada'}
+              </p>
+              <p className="text-sm text-gray-500">
+                El costo se calcula automáticamente según la provincia donde se realiza la carrera.
+                Los guests pagarán {provincialRate} puntos por cada noche de alojamiento.
+              </p>
+              {!formData.province && (
+                <p className="text-sm text-amber-600">
+                  ⚠️ Selecciona la provincia en el paso anterior para ver el costo correcto
+                </p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

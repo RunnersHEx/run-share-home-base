@@ -8,6 +8,7 @@ import PropertyWizard from "@/components/properties/PropertyWizard";
 import PropertyEditButton from "@/components/properties/PropertyEditButton";
 import { PhotoGalleryModal } from "@/components/common/PhotoGalleryModal";
 import { Plus, Home, MapPin, Users, Bed, Bath, Eye, Star, Camera } from "lucide-react";
+import UserAccessGuard from "@/components/guards/UserAccessGuard";
 
 const PropertiesSection = () => {
   const { properties, loading, refetchProperties } = useProperties();
@@ -57,10 +58,12 @@ const PropertiesSection = () => {
             <Home className="h-6 w-6 text-blue-600" />
             Mi Propiedad
           </div>
+          <UserAccessGuard showCreateRestriction={true}>
           <Button onClick={() => setShowWizard(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Agregar Propiedad
+          <Plus className="h-4 w-4 mr-2" />
+          Agregar Propiedad
           </Button>
+          </UserAccessGuard>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -120,6 +123,19 @@ const PropertiesSection = () => {
                           <MapPin className="h-4 w-4 mr-1" />
                           {property.locality}
                         </div>
+                        {/* Province(s) display */}
+                        {property.provinces && property.provinces.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {property.provinces.map((province, index) => (
+                              <Badge 
+                                key={`${province}-${index}`}
+                                className="bg-[#FF6F0F] hover:bg-[#FF6F0F]/90 text-white text-xs px-2 py-1"
+                              >
+                                {province}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center space-x-2">
                         {property.images && property.images.length > 0 && (

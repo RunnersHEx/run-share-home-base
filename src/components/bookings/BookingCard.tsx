@@ -14,10 +14,12 @@ interface BookingCardProps {
   onRespond?: (bookingId: string, response: 'accepted' | 'rejected') => void;
   onViewDetails?: (booking: Booking) => void;
   onMessage?: (booking: Booking) => void;
-  onCancel?: (bookingId: string) => void;
+  onCancel?: (bookingId: string, cancelledBy: 'guest' | 'host') => void;
+  onConfirm?: (bookingId: string) => void;
+  onComplete?: (bookingId: string) => void;
 }
 
-const BookingCard = ({ booking, onRespond, onViewDetails, onMessage, onCancel }: BookingCardProps) => {
+const BookingCard = ({ booking, onRespond, onViewDetails, onMessage, onCancel, onConfirm, onComplete }: BookingCardProps) => {
   const { user } = useAuth();
   const [showGuestInfo, setShowGuestInfo] = useState(false);
   const isHost = user?.id === booking.host_id;
@@ -70,7 +72,13 @@ const BookingCard = ({ booking, onRespond, onViewDetails, onMessage, onCancel }:
   };
 
   const canCancel = () => {
-    return booking.status === 'pending' || booking.status === 'accepted';
+    return booking.status === 'pending' || booking.status === 'accepted' || booking.status === 'confirmed';
+  };
+
+  const handleCancelClick = () => {
+    // Determine who is cancelling based on current user
+    const cancelledBy = isHost ? 'host' : 'guest';
+    onCancel?.(booking.id, cancelledBy);
   };
 
   return (
@@ -167,6 +175,16 @@ const BookingCard = ({ booking, onRespond, onViewDetails, onMessage, onCancel }:
           </div>
         )}
 
+        {/* Completion reminder for confirmed bookings */}
+        {booking.status === 'confirmed' && isHost && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700 font-medium">
+              Una vez que la estancia de tu Huésped Aceptado haya terminado, recuerda volver aquí y hacer clic en "Experience completed" para validar tu experiencia como Host y ganar los puntos correspondientes. 
+              No olvides ir a tu sección de reseñas para calificar a tu huésped.
+            </p>
+          </div>
+        )}
+
         {/* Acciones */}
         <div className="flex flex-wrap gap-2 pt-2">
           {booking.status === 'pending' && isHost && (
@@ -175,10 +193,20 @@ const BookingCard = ({ booking, onRespond, onViewDetails, onMessage, onCancel }:
                 <>
                   <Button
                     size="sm"
-                    onClick={() => onRespond(booking.id, 'accepted')}
+                    onClick={async () => {
+                      try {
+                        await onRespond(booking.id, 'accepted');
+                        // Auto-confirm after acceptance
+                        if (onConfirm) {
+                          await onConfirm(booking.id);
+                        }
+                      } catch (error) {
+                        console.error('Error in accept and confirm:', error);
+                      }
+                    }}
                     className="bg-green-600 hover:bg-green-700"
                   >
-                    Aceptar
+                    Aceptar y Confirmar
                   </Button>
                   <Button
                     size="sm"
@@ -202,6 +230,30 @@ const BookingCard = ({ booking, onRespond, onViewDetails, onMessage, onCancel }:
             </>
           )}
 
+          {booking.status === 'confirmed' && isHost && (
+            <div className="flex gap-2">
+              {onComplete && (
+                <Button
+                  size="sm"
+                  onClick={() => onComplete(booking.id)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  Experience completed
+                </Button>
+              )}
+              {onCancel && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCancelClick}
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  Cancelar
+                </Button>
+              )}
+            </div>
+          )}
+
           {(booking.status === 'accepted' || booking.status === 'confirmed') && onMessage && (
             <Button size="sm" variant="outline" onClick={() => onMessage(booking)}>
               <MessageSquare className="w-4 h-4 mr-1" />
@@ -215,11 +267,11 @@ const BookingCard = ({ booking, onRespond, onViewDetails, onMessage, onCancel }:
             </Button>
           )}
 
-          {canCancel() && onCancel && (
+          {canCancel() && onCancel && booking.status !== 'confirmed' && (
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onCancel(booking.id)}
+              onClick={handleCancelClick}
               className="text-red-600 border-red-200 hover:bg-red-50 ml-auto"
             >
               Cancelar

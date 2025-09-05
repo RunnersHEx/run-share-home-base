@@ -20,6 +20,7 @@ import { MessagingModal } from "@/components/messaging";
 import MobileBookingCard from "./MobileBookingCard";
 import { Booking } from "@/types/booking";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface BookingWorkflowProps {
   userRole?: 'guest' | 'host' | 'both';
@@ -27,6 +28,7 @@ interface BookingWorkflowProps {
 
 const BookingWorkflow = ({ userRole = 'both' }: BookingWorkflowProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { 
     bookings, 
     loading, 
@@ -52,9 +54,24 @@ const BookingWorkflow = ({ userRole = 'both' }: BookingWorkflowProps) => {
   const completedBookings = getBookingsByStatus('completed');
 
   const handleRespond = async (bookingId: string, response: 'accepted' | 'rejected') => {
-    const success = await respondToBooking(bookingId, response);
-    if (success) {
-      toast.success(`Solicitud ${response === 'accepted' ? 'aceptada' : 'rechazada'} correctamente`);
+    if (response === 'accepted') {
+      // For acceptance, call both respond and confirm in sequence
+      const success = await respondToBooking(bookingId, response);
+      if (success) {
+        try {
+          await confirmBooking(bookingId);
+          toast.success('Solicitud aceptada y confirmada correctamente');
+        } catch (error) {
+          console.error('Auto-confirm error:', error);
+          toast.error('Reserva aceptada pero error al confirmar automáticamente');
+        }
+      }
+    } else {
+      // For rejection, just respond normally
+      const success = await respondToBooking(bookingId, response);
+      if (success) {
+        toast.success('Solicitud rechazada correctamente');
+      }
     }
   };
 
@@ -127,15 +144,12 @@ const BookingWorkflow = ({ userRole = 'both' }: BookingWorkflowProps) => {
     <div className="container mx-auto px-4 py-4 sm:py-8">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-          Panel de Reservas
+          Informative Panel de Reservas
         </h1>
-        <p className="text-gray-600 text-sm sm:text-base">
-          Gestiona todas tus reservas en un solo lugar
-        </p>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
@@ -177,20 +191,6 @@ const BookingWorkflow = ({ userRole = 'both' }: BookingWorkflowProps) => {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm text-gray-600">Puntos</p>
-                <p className="text-lg sm:text-2xl font-bold text-purple-600">
-                  {stats.totalPointsEarned}
-                </p>
-              </div>
-              <Star className="h-5 w-5 sm:h-8 sm:w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <div className="space-y-6">
@@ -210,6 +210,7 @@ const BookingWorkflow = ({ userRole = 'both' }: BookingWorkflowProps) => {
                     key={booking.id}
                     booking={booking}
                     onRespond={handleRespond}
+                    onConfirm={handleConfirm}
                     onMessage={handleMessage}
                     compact
                   />
@@ -219,6 +220,10 @@ const BookingWorkflow = ({ userRole = 'both' }: BookingWorkflowProps) => {
                     variant="outline"
                     size="sm"
                     className="w-full"
+                    onClick={() => {
+                      // Navigate to profile with bookings section active
+                      navigate('/profile', { state: { activeSection: 'bookings' } });
+                    }}
                   >
                     Ver todas las solicitudes ({pendingHostRequests.length})
                   </Button>
@@ -281,12 +286,6 @@ const BookingWorkflow = ({ userRole = 'both' }: BookingWorkflowProps) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm">
-                    {stats.totalPointsEarned} puntos ganados este mes
-                  </span>
-                </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   <span className="text-sm">

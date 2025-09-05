@@ -1,0 +1,70 @@
+-- =============================================
+-- FIX: RLS BLOCKING PROFILES ACCESS IN FUNCTION
+-- Allow the function to bypass RLS or grant proper access
+-- =============================================
+
+-- Option 1: Create a version that works around RLS
+CREATE OR REPLACE FUNCTION admin_toggle_user_status(
+  target_user_id uuid,
+  admin_user_id uuid,
+  deactivation_reason text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_status boolean;
+  new_status boolean;
+  user_email text;
+  user_first_name text;
+  user_last_name text;
+BEGIN
+  -- Bypass RLS by using a simpler query and proper SECURITY DEFINER permissions
+  -- First check if the target user exists and get basic info
+  SELECT 
+    p.is_active, 
+    p.email, 
+    p.first_name, 
+    p.last_name
+  INTO 
+    current_status, 
+    user_email, 
+    user_first_name, 
+    user_last_name
+  FROM profiles p 
+  WHERE p.id = target_user_id;
+  
+  -- Check if user was found
+  IF current_status IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'User not found');
+  END IF;
+
+  -- Toggle status
+  new_status := NOT current_status;
+  
+  -- Update user status
+  UPDATE profiles 
+  SET is_active = new_status 
+  WHERE id = target_user_id;
+  
+  -- Verify the update worked
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Failed to update user status');
+  END IF;
+
+  -- Create admin message (skip for now to isolate the profiles issue)
+  -- We'll add this back once the basic function works
+  
+  RETURN jsonb_build_object(
+    'success', true, 
+    'new_status', new_status,
+    'user_name', COALESCE(user_first_name || ' ' || user_last_name, user_email),
+    'debug_info', 'Basic function working - admin messages skipped'
+  );
+END;
+$$;
+
+-- Grant explicit permissions to the function role
+GRANT SELECT, UPDATE ON profiles TO authenticated;
+GRANT USAGE ON SCHEMA public TO authenticated;

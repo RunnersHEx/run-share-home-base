@@ -1,0 +1,24 @@
+-- =============================================
+-- ULTRA MINIMAL DEBUG - JUST RETURN SUCCESS
+-- This will tell us if the function can even be called
+-- =============================================
+
+CREATE OR REPLACE FUNCTION admin_toggle_user_status(
+  target_user_id uuid,
+  admin_user_id uuid,
+  deactivation_reason text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Just return success immediately - no database operations at all
+  RETURN jsonb_build_object(
+    'success', true, 
+    'message', 'Function can be called successfully',
+    'target_user_id', target_user_id,
+    'admin_user_id', admin_user_id
+  );
+END;
+$$;

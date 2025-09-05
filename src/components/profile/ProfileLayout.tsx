@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
+import { useVerification } from "@/hooks/useVerification";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { 
   User, 
   Heart, 
@@ -19,7 +21,10 @@ import {
   Calendar,
   CreditCard,
   Coins,
-  Star
+  Star,
+  Lock,
+  MessageSquare,
+  CheckCircle
 } from "lucide-react";
 
 interface ProfileLayoutProps {
@@ -31,6 +36,7 @@ interface ProfileLayoutProps {
 const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayoutProps) => {
   const { profile, progress } = useProfile();
   const { profile: authProfile, user } = useAuth();
+  const { canAccessPlatform } = useVerification();
   
   // ✅ Force re-render when profile image changes
   const [imageKey, setImageKey] = useState(0);
@@ -112,6 +118,7 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
     { id: "reviews", label: "Valoraciones", icon: Star },
     { id: "subscription", label: "Mi Suscripción", icon: CreditCard },
     { id: "points", label: "Sistema de Puntos", icon: Coins },
+    { id: "admin-messages", label: "Mensajes del Admin", icon: MessageSquare },
     { id: "verification", label: "Verificación", icon: Shield },
     { id: "stats", label: "Estadísticas", icon: BarChart3 },
     { id: "delete-account", label: "Eliminar Cuenta", icon: Trash2 },
@@ -186,19 +193,47 @@ const ProfileLayout = ({ children, activeSection, onSectionChange }: ProfileLayo
               <nav className="space-y-2">
                 {sections.map((section) => {
                   const Icon = section.icon;
+                  const isRestricted = !canAccessPlatform && (section.id === 'properties' || section.id === 'races');
+                  
+                  // Check if verification is complete for styling
+                  const isVerificationComplete = section.id === 'verification' && 
+                    displayProfile?.verification_documents && 
+                    displayProfile.verification_documents.some(doc => doc.includes('id_document')) && 
+                    displayProfile.verification_documents.some(doc => doc.includes('selfie_with_id'));
+                  
+                  // Use different icon for completed verification
+                  const DisplayIcon = (section.id === 'verification' && isVerificationComplete) ? CheckCircle : Icon;
+                  
+                  const handleSectionClick = () => {
+                    if (isRestricted) {
+                      toast.error("Completa la verificación de identidad subiendo los documentos requeridos para acceder a esta sección.");
+                      onSectionChange('verification');
+                      return;
+                    }
+                    onSectionChange(section.id);
+                  };
+                  
                   return (
                     <Button
                       key={section.id}
                       variant={activeSection === section.id ? "default" : "ghost"}
-                      className={`w-full justify-start text-sm ${
+                      className={`w-full justify-start text-sm relative ${
                         activeSection === section.id 
-                          ? "bg-blue-600 text-white" 
+                          ? isVerificationComplete
+                            ? "bg-green-600 text-white hover:bg-green-700" 
+                            : "bg-blue-600 text-white"
+                          : isRestricted
+                          ? "text-gray-400 hover:bg-gray-50 cursor-not-allowed"
+                          : isVerificationComplete
+                          ? "text-green-700 hover:bg-green-50"
                           : "text-gray-700 hover:bg-gray-100"
                       }`}
-                      onClick={() => onSectionChange(section.id)}
+                      onClick={handleSectionClick}
+                      disabled={isRestricted}
                     >
-                      <Icon className="h-4 w-4 mr-3" />
+                      {isRestricted ? <Lock className="h-4 w-4 mr-3" /> : <DisplayIcon className="h-4 w-4 mr-3" />}
                       {section.label}
+                      {isRestricted && <span className="ml-2 text-xs">(Verificación requerida)</span>}
                     </Button>
                   );
                 })}

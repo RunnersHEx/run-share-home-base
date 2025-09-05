@@ -13,6 +13,9 @@ const RunnerBioSection = ({ bio, isEditing, profileBio, onBioChange }: RunnerBio
   return (
     <div className="space-y-2">
       <Label>Cuéntanos sobre ti como corredor</Label>
+      <p className="text-sm text-red-600 font-medium mb-2">
+        Debes completar esta sección de biografía de corredor con al menos 50 caracteres para poder solicitar reservas de carreras
+      </p>
       <Textarea
         placeholder={isEditing ? "Háblanos de tu pasión por el running, objetivos, experiencias..." : ""}
         value={isEditing ? bio : (profileBio || "No especificado")}

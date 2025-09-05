@@ -4,6 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { verifyRecaptchaToken } from '@/utils/recaptcha';
 
 // Enhanced user type that includes profile data
 interface UserProfile {
@@ -14,6 +15,7 @@ interface UserProfile {
   phone?: string;
   is_host: boolean;
   is_guest: boolean;
+  is_active: boolean; // NEW: Account activation status
   verification_status: string;
   points_balance: number;
   total_host_experiences: number;
@@ -38,10 +40,10 @@ interface AuthContextType {
   isVerified: boolean; // ✅ NEW: Computed property
   
   // Existing methods
-  signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, userData: any, recaptchaToken?: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string, recaptchaToken?: string) => Promise<void>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
+  resetPassword: (email: string, recaptchaToken?: string) => Promise<void>;
   
   // ✅ NEW: Profile management methods
   updateProfile: (profileData: Partial<UserProfile>) => Promise<boolean>;
@@ -61,8 +63,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [initialized, setInitialized] = useState(false);
 
   // ✅ Computed properties based on profile data (safe when profile is null) - FIXED
-  const canHost = profile?.is_host ?? true; // Allow hosting if profile is null or is_host is true
-  const canGuest = profile?.is_guest ?? true; // Allow guest mode if profile is null or is_guest is true
+  const canHost = (profile?.is_active ?? true) && (profile?.is_host ?? true); // Allow hosting if account is active and is_host is true
+  const canGuest = (profile?.is_active ?? true) && (profile?.is_guest ?? true); // Allow guest mode if account is active and is_guest is true
   const isVerified = profile?.verification_status === 'verified' || profile?.verification_status === 'approved'; // Verified if status is 'verified' or 'approved'
 
   // ✅ Load profile data when user changes
@@ -94,7 +96,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: userId,
           email: '', // Will be filled from auth user
           is_host: true,
-          is_guest: true, 
+          is_guest: true,
+          is_active: true, // Default to active for new users
           verification_status: 'unverified',
           points_balance: 0,
           total_host_experiences: 0,
@@ -120,6 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: '',
         is_host: true,
         is_guest: true,
+        is_active: true, // Default to active for new users
         verification_status: 'unverified',
         points_balance: 0,
         total_host_experiences: 0,
@@ -225,8 +229,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [initialized]);
 
-  const signUp = async (email: string, password: string, userData: any) => {
+  const signUp = async (email: string, password: string, userData: any, recaptchaToken?: string) => {
     logger.debug('AuthProvider: Starting signUp for:', email);
+    
+    // Validate reCAPTCHA token
+    if (recaptchaToken) {
+      const recaptchaResult = await verifyRecaptchaToken(recaptchaToken);
+      if (!recaptchaResult.success) {
+        logger.warn('AuthProvider: reCAPTCHA validation failed for signUp:', recaptchaResult.error);
+        return { error: { message: recaptchaResult.error || 'reCAPTCHA verification failed' } };
+      }
+      logger.debug('AuthProvider: reCAPTCHA validation successful for signUp');
+    }
     
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -266,8 +280,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, recaptchaToken?: string) => {
     logger.debug('AuthProvider: Starting signIn for:', email);
+    
+    // Validate reCAPTCHA token
+    if (recaptchaToken) {
+      const recaptchaResult = await verifyRecaptchaToken(recaptchaToken);
+      if (!recaptchaResult.success) {
+        logger.warn('AuthProvider: reCAPTCHA validation failed for signIn:', recaptchaResult.error);
+        throw new Error(recaptchaResult.error || 'reCAPTCHA verification failed');
+      }
+      logger.debug('AuthProvider: reCAPTCHA validation successful for signIn');
+    }
     
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -348,8 +372,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const resetPassword = async (email: string) => {
+  const resetPassword = async (email: string, recaptchaToken?: string) => {
     logger.debug('AuthProvider: Starting password reset for:', email);
+    
+    // Validate reCAPTCHA token
+    if (recaptchaToken) {
+      const recaptchaResult = await verifyRecaptchaToken(recaptchaToken);
+      if (!recaptchaResult.success) {
+        logger.warn('AuthProvider: reCAPTCHA validation failed for resetPassword:', recaptchaResult.error);
+        throw new Error(recaptchaResult.error || 'reCAPTCHA verification failed');
+      }
+      logger.debug('AuthProvider: reCAPTCHA validation successful for resetPassword');
+    }
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {

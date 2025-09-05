@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, Trophy, Plus, Edit, Camera } from "lucide-react";
+import UserAccessGuard from "@/components/guards/UserAccessGuard";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -290,10 +291,12 @@ const RacesSection = () => {
           <h2 className="text-2xl font-bold text-gray-900">Mis Carreras</h2>
           <p className="text-gray-600">Gestiona las carreras que organizas</p>
         </div>
-        <Button onClick={handleCreateRace} className="bg-runner-blue-600 hover:bg-runner-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Nueva Carrera
-        </Button>
+        <UserAccessGuard showCreateRestriction={true}>
+          <Button onClick={handleCreateRace} className="bg-runner-blue-600 hover:bg-runner-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Nueva Carrera
+          </Button>
+        </UserAccessGuard>
       </div>
 
       {races.length === 0 ? (
@@ -306,10 +309,12 @@ const RacesSection = () => {
             <p className="text-gray-600 mb-6">
               Comienza organizando tu primera carrera y comparte tu pasión por el running
             </p>
-            <Button onClick={handleCreateRace} className="bg-runner-blue-600 hover:bg-runner-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Crear Mi Primera Carrera
-            </Button>
+            <UserAccessGuard showCreateRestriction={true}>
+              <Button onClick={handleCreateRace} className="bg-runner-blue-600 hover:bg-runner-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Crear Mi Primera Carrera
+              </Button>
+            </UserAccessGuard>
           </CardContent>
         </Card>
       ) : (

@@ -1,10 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Booking, BookingFormData, BookingFilters, BookingMessage, PointsTransaction, BookingStats } from "@/types/booking";
 import { NotificationService } from "./notificationService";
+import { PointsCalculationService } from "./pointsCalculationService";
+import { PointsManagementService } from "./pointsManagementService";
 
 export class BookingService {
   static async createBookingRequest(bookingData: BookingFormData, guestId: string): Promise<Booking> {
-
+    console.log('Creating booking request:', bookingData);
     
     // Validate required fields
     if (!bookingData.race_id || !bookingData.host_id) {
@@ -34,8 +36,21 @@ export class BookingService {
       
       actualPropertyId = hostProperty.id;
     }
-    
-    // Create insert data without host_response_deadline (handled by trigger)
+
+    // Calculate booking cost using provincial points system
+    const calculatedCost = await PointsCalculationService.calculateProvincialBookingCost({
+      raceId: bookingData.race_id,
+      checkInDate: bookingData.check_in_date,
+      checkOutDate: bookingData.check_out_date
+    });
+
+    // Check if guest has sufficient points
+    const hasSufficientPoints = await PointsManagementService.validateSufficientPoints(guestId, calculatedCost);
+    if (!hasSufficientPoints) {
+      throw new Error(`Insufficient points. Required: ${calculatedCost}, but you need more points to complete this booking.`);
+    }
+
+    // Create insert data
     const insertData = {
       race_id: bookingData.race_id,
       property_id: actualPropertyId,
@@ -48,12 +63,12 @@ export class BookingService {
       special_requests: bookingData.special_requests,
       guest_phone: bookingData.guest_phone,
       estimated_arrival_time: bookingData.estimated_arrival_time,
-      points_cost: bookingData.points_cost,
+      points_cost: calculatedCost, // Use calculated cost from provincial system
       // Add required field with placeholder - will be overwritten by trigger
       host_response_deadline: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
     };
     
-
+    console.log('Inserting booking with calculated cost:', calculatedCost);
 
     const { data, error } = await supabase
       .from('bookings')
@@ -68,6 +83,7 @@ export class BookingService {
       .single();
 
     if (error) {
+      console.error('Error creating booking:', error);
       throw error;
     }
     
@@ -87,7 +103,7 @@ export class BookingService {
   }
 
   static async fetchUserBookings(userId: string, filters?: BookingFilters): Promise<Booking[]> {
-
+    console.log('Fetching bookings for user:', userId, 'with filters:', filters);
     
     let query = supabase
       .from('bookings')
@@ -129,12 +145,11 @@ export class BookingService {
       throw error;
     }
 
-
     return (data || []) as unknown as Booking[];
   }
 
   static async respondToBooking(bookingId: string, response: 'accepted' | 'rejected', message?: string): Promise<void> {
-
+    console.log('Responding to booking:', bookingId, 'with response:', response);
     
     const updates: any = {
       status: response,
@@ -165,12 +180,27 @@ export class BookingService {
       .eq('id', bookingId)
       .single();
 
-    // Si se acepta la reserva, procesar transacción de puntos
+    // Process response-specific actions
     if (response === 'accepted') {
+      // Process booking payment using new points management system
       await this.processBookingPayment(bookingId);
       
       // Lock availability for these dates
-      await this.lockPropertyAvailability(updatedBooking);
+      if (updatedBooking) {
+        await this.lockPropertyAvailability(updatedBooking);
+        // Also mark the race as unavailable since it's been booked
+        await this.markRaceAsUnavailable(updatedBooking.race_id);
+      }
+      
+      // Create conversation between guest and host
+      if (updatedBooking) {
+        try {
+          await this.createConversationForBooking(updatedBooking);
+        } catch (conversationError) {
+          console.error('Error creating conversation for booking:', conversationError);
+          // Don't fail the booking acceptance if conversation creation fails
+        }
+      }
       
       // Send acceptance notifications
       if (updatedBooking) {
@@ -190,54 +220,40 @@ export class BookingService {
         }
       }
     }
-
-
   }
 
   static async processBookingPayment(bookingId: string): Promise<void> {
-    // Obtener datos de la reserva
+    console.log('Processing booking payment for:', bookingId);
+    
+    // Get booking data
     const { data: booking, error } = await supabase
       .from('bookings')
-      .select('guest_id, host_id, points_cost')
+      .select('guest_id, host_id, points_cost, race_id, check_in_date, check_out_date')
       .eq('id', bookingId)
       .single();
 
     if (error || !booking) {
-      throw new Error('No se pudo obtener la información de la reserva');
+      throw new Error('Could not retrieve booking information');
     }
 
-    // Llamar a la función de base de datos para procesar la transacción
-    const { error: transactionError } = await supabase.rpc('process_booking_points_transaction', {
-      p_booking_id: bookingId,
-      p_guest_id: booking.guest_id,
-      p_host_id: booking.host_id,
-      p_points_cost: booking.points_cost,
-      p_transaction_type: 'booking_payment'
+    // Use the new points management service for processing payment
+    await PointsManagementService.processBookingPayment({
+      bookingId,
+      guestId: booking.guest_id,
+      hostId: booking.host_id,
+      raceId: booking.race_id,
+      checkInDate: booking.check_in_date,
+      checkOutDate: booking.check_out_date
     });
 
-    if (transactionError) {
-      console.error('BookingService: Error processing payment:', transactionError);
-      throw transactionError;
-    }
+    console.log('Booking payment processed successfully');
   }
 
-  static async cancelBooking(bookingId: string, cancelledBy: 'guest' | 'host', refundPoints = false): Promise<void> {
-    const updates = {
-      status: 'cancelled',
-      cancelled_at: new Date().toISOString()
-    };
-
-    const { error } = await supabase
-      .from('bookings')
-      .update(updates)
-      .eq('id', bookingId);
-
-    if (error) {
-      throw error;
-    }
-
-    // Get booking data for notifications and penalties
-    const { data: booking } = await supabase
+  static async cancelBooking(bookingId: string, cancelledBy: 'guest' | 'host', reason?: string): Promise<void> {
+    console.log('Cancelling booking:', bookingId, 'cancelled by:', cancelledBy);
+    
+    // Get booking data first
+    const { data: booking, error: fetchError } = await supabase
       .from('bookings')
       .select(`
         *,
@@ -249,48 +265,53 @@ export class BookingService {
       .eq('id', bookingId)
       .single();
 
-    if (!booking) {
+    if (fetchError || !booking) {
       throw new Error('Booking not found');
     }
 
-    // Calculate penalties based on timing and who cancelled
-    let penalty = 0;
-    const now = new Date();
-    const checkInDate = new Date(booking.check_in_date);
-    const daysUntilCheckIn = Math.ceil((checkInDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    // Update booking status with cancellation details
+    const updates = {
+      status: 'cancelled',
+      cancelled_at: new Date().toISOString(),
+      cancelled_by: cancelledBy,
+      cancellation_reason: reason || `Cancelled by ${cancelledBy}`
+    };
 
-    if (cancelledBy === 'host' && daysUntilCheckIn < 60) {
-      // Host cancels less than 60 days before: -30 points penalty
-      penalty = 30;
-      await this.applyPenalty(booking.host_id, penalty, 'host_cancellation');
-    } else if (cancelledBy === 'guest' && daysUntilCheckIn < 7) {
-      // Guest cancels less than 7 days before: lose points
-      penalty = booking.points_cost;
-      refundPoints = false; // No refund for late guest cancellation
+    const { error } = await supabase
+      .from('bookings')
+      .update(updates)
+      .eq('id', bookingId);
+
+    if (error) {
+      throw error;
     }
 
-    // Procesar reembolso si es necesario
-    if (refundPoints) {
-      await supabase.rpc('process_booking_points_transaction', {
-        p_booking_id: bookingId,
-        p_guest_id: booking.guest_id,
-        p_host_id: booking.host_id,
-        p_points_cost: booking.points_cost,
-        p_transaction_type: 'booking_refund'
-      });
+    // Handle points based on who cancelled
+    if (cancelledBy === 'host') {
+      // Host cancellation penalty will be handled automatically by database trigger
+      // Remove manual RPC call to prevent double processing
+      console.log('Host cancellation - penalty will be applied by database trigger automatically');
+    } else if (cancelledBy === 'guest') {
+      // Guest cancellation refund will be handled automatically by database trigger  
+      // Remove manual RPC call to prevent double processing
+      console.log('Guest cancellation - refund policy will be applied by database trigger automatically');
     }
 
-    // Release availability if was accepted
+    // Release availability if booking was accepted
     if (booking.status === 'accepted' || booking.status === 'confirmed') {
       await this.releasePropertyAvailability(booking);
+      // Also mark the race as available again
+      await this.markRaceAsAvailable(booking.race_id);
     }
 
     // Send cancellation notifications
     try {
-      await NotificationService.notifyBookingCancelled(booking, cancelledBy, penalty);
+      await NotificationService.notifyBookingCancelled(booking, cancelledBy, 0);
     } catch (notifError) {
       console.error('Error sending cancellation notification:', notifError);
     }
+
+    console.log('Booking cancellation processed successfully');
   }
 
   static async sendBookingMessage(bookingId: string, senderId: string, message: string): Promise<BookingMessage> {
@@ -335,17 +356,12 @@ export class BookingService {
       throw error;
     }
 
-    const { data: transactions } = await supabase
-      .from('points_transactions')
-      .select('*')
-      .eq('user_id', userId);
+    // Use the new points management service for statistics
+    const pointsSummary = await PointsManagementService.getUserPointsSummary(userId);
 
     const totalBookings = bookings?.length || 0;
     const pendingRequests = bookings?.filter(b => b.status === 'pending').length || 0;
     const completedBookings = bookings?.filter(b => b.status === 'completed').length || 0;
-    
-    const pointsEarned = transactions?.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0) || 0;
-    const pointsSpent = Math.abs(transactions?.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0) || 0);
     
     const hostBookings = bookings?.filter(b => b.host_id === userId) || [];
     const acceptedBookings = hostBookings.filter(b => b.status === 'accepted' || b.status === 'completed');
@@ -355,39 +371,117 @@ export class BookingService {
       totalBookings,
       pendingRequests,
       completedBookings,
-      totalPointsEarned: pointsEarned,
-      totalPointsSpent: pointsSpent,
-      averageResponseTime: 24, // Placeholder - calcular basado en timestamps reales
+      totalPointsEarned: pointsSummary.total_earned,
+      totalPointsSpent: pointsSummary.total_spent,
+      averageResponseTime: 24, // Calculate based on actual timestamps
       acceptanceRate: Math.round(acceptanceRate)
     };
   }
 
   static async fetchPointsTransactions(userId: string): Promise<PointsTransaction[]> {
-    const { data, error } = await supabase
-      .from('points_transactions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      throw error;
-    }
-
-    return (data || []) as PointsTransaction[];
+    // Use the new points management service
+    return await PointsManagementService.getUserPointsHistory(userId);
   }
 
   static async checkUserPointsBalance(userId: string): Promise<number> {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('points_balance')
-      .eq('id', userId)
-      .single();
+    // Use the new points calculation service
+    return await PointsCalculationService.getUserPointsBalance(userId);
+  }
 
-    if (error) {
-      throw error;
+  /**
+   * Get booking cost estimate using provincial points system
+   */
+  static async getBookingCostEstimate(raceId: string, checkInDate: string, checkOutDate: string): Promise<number> {
+    return await PointsCalculationService.calculateProvincialBookingCost({
+      raceId,
+      checkInDate,
+      checkOutDate
+    });
+  }
+
+  /**
+   * Creates a conversation between guest and host for an accepted booking
+   */
+  static async createConversationForBooking(booking: any): Promise<void> {
+    try {
+      console.log('Creating conversation for booking:', booking.id);
+
+      // Create new conversation directly - the database will handle uniqueness with the UNIQUE constraint
+      // This avoids the RLS policy check that was causing the 406 error
+      const conversationData: any = {
+        booking_id: booking.id,
+        participant_1_id: booking.guest_id,
+        participant_2_id: booking.host_id,
+        last_message_at: new Date().toISOString()
+      };
+      
+      // Add optional fields
+      conversationData.last_message = '¡Reserva aceptada! Ahora pueden empezar a comunicarse.';
+      conversationData.unread_count_p1 = 0;
+      conversationData.unread_count_p2 = 0;
+
+      const { data: newConversation, error: createError } = await supabase
+        .from('conversations')
+        .insert(conversationData)
+        .select('id')
+        .single();
+
+      if (createError) {
+        // Check if error is due to conversation already existing (unique constraint violation)
+        if (createError.code === '23505') {
+          console.log('Conversation already exists for booking:', booking.id);
+          return;
+        }
+        
+        console.error('Error creating conversation:', createError);
+        throw createError;
+      }
+
+      // Send initial system message to both participants
+      const welcomeMessage = `¡Buenas noticias! Tu reserva ha sido aceptada. Ahora pueden comunicarse directamente entre ustedes para coordinar los detalles del check-in y resolver cualquier duda sobre la estancia.
+
+**Directrices de mensajería**
+
+**Para huéspedes:**
+• Sé respetuoso y comunica con claridad
+• Indica con precisión tu hora de llegada
+• Haz preguntas sobre la propiedad o la zona
+• Confirma los detalles del check-in con tu anfitrión
+
+**Para anfitriones:**
+• Responde con prontitud a los mensajes de los huéspedes
+• Facilita información útil sobre actividades locales
+• Comparte las instrucciones de check-in de forma clara
+• Sé acogedor y profesional`;
+      
+      // Prepare message data
+      const messageData: any = {
+        booking_id: booking.id,
+        sender_id: booking.host_id, // System message from host
+        message: welcomeMessage,
+        message_type: 'system'
+      };
+      
+      // Add conversation_id if available
+      if (newConversation?.id) {
+        messageData.conversation_id = newConversation.id;
+      }
+      
+      const { error: messageError } = await supabase
+        .from('booking_messages')
+        .insert(messageData);
+
+      if (messageError) {
+        console.error('Error creating welcome message:', messageError);
+        // Don't throw error - conversation creation was successful
+      }
+
+      console.log('Successfully created conversation for booking:', booking.id);
+    } catch (error) {
+      console.error('Error in createConversationForBooking:', error);
+      // Don't throw error to avoid breaking booking acceptance
+      // Log it for debugging but let the booking acceptance continue
     }
-
-    return data?.points_balance || 0;
   }
 
   /**
@@ -446,17 +540,80 @@ export class BookingService {
   }
 
   /**
-   * Applies penalty points to a user
+   * Marks a race as unavailable when a booking is accepted
    */
-  private static async applyPenalty(userId: string, penaltyPoints: number, reason: string): Promise<void> {
+  private static async markRaceAsUnavailable(raceId: string): Promise<void> {
     try {
-      await supabase.rpc('process_penalty_transaction', {
-        p_user_id: userId,
-        p_penalty_points: penaltyPoints,
-        p_reason: reason
-      });
+      console.log('Marking race as unavailable:', raceId);
+      
+      // First check if the is_available_for_booking column exists
+      const { data: raceCheck } = await supabase
+        .from('races')
+        .select('id, is_available_for_booking')
+        .eq('id', raceId)
+        .limit(1)
+        .single();
+      
+      let updateData: any = {
+        updated_at: new Date().toISOString()
+      };
+      
+      // Only update is_available_for_booking if the column exists
+      if (raceCheck && 'is_available_for_booking' in raceCheck) {
+        updateData.is_available_for_booking = false;
+      }
+      
+      const { error } = await supabase
+        .from('races')
+        .update(updateData)
+        .eq('id', raceId);
+
+      if (error) {
+        console.error('Error marking race as unavailable:', error);
+      } else {
+        console.log('Successfully marked race as unavailable:', raceId);
+      }
     } catch (error) {
-      console.error('Error applying penalty:', error);
+      console.error('Error in markRaceAsUnavailable:', error);
+    }
+  }
+
+  /**
+   * Marks a race as available when a booking is cancelled
+   */
+  private static async markRaceAsAvailable(raceId: string): Promise<void> {
+    try {
+      console.log('Marking race as available:', raceId);
+      
+      // First check if the is_available_for_booking column exists
+      const { data: raceCheck } = await supabase
+        .from('races')
+        .select('id, is_available_for_booking')
+        .eq('id', raceId)
+        .limit(1)
+        .single();
+      
+      let updateData: any = {
+        updated_at: new Date().toISOString()
+      };
+      
+      // Only update is_available_for_booking if the column exists
+      if (raceCheck && 'is_available_for_booking' in raceCheck) {
+        updateData.is_available_for_booking = true;
+      }
+      
+      const { error } = await supabase
+        .from('races')
+        .update(updateData)
+        .eq('id', raceId);
+
+      if (error) {
+        console.error('Error marking race as available:', error);
+      } else {
+        console.log('Successfully marked race as available:', raceId);
+      }
+    } catch (error) {
+      console.error('Error in markRaceAsAvailable:', error);
     }
   }
 }

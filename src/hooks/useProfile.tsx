@@ -343,39 +343,83 @@ export const useProfile = () => {
     if (!user || !mountedRef.current) return null;
 
     try {
+      console.log(`uploadVerificationDoc: Starting ${docType} upload for user:`, user.id);
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${docType}_${Date.now()}.${fileExt}`;
 
+      // First, upload to storage
+      console.log(`uploadVerificationDoc: Uploading ${docType} to storage`);
       const { error: uploadError } = await supabase.storage
         .from('verification-docs')
         .upload(fileName, file);
 
       if (!mountedRef.current) return null;
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error(`uploadVerificationDoc: Storage upload error for ${docType}:`, uploadError);
+        throw uploadError;
+      }
 
-      const currentDocs = profile?.verification_documents || [];
+      console.log(`uploadVerificationDoc: ${docType} uploaded to storage successfully`);
+
+      // CRITICAL FIX: Get the LATEST documents from database, not from component state
+      console.log(`uploadVerificationDoc: Fetching latest verification documents from database`);
+      const { data: currentProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('verification_documents')
+        .eq('id', user.id)
+        .single();
       
-      // Remover documento anterior del mismo tipo
+      if (fetchError) {
+        console.error(`uploadVerificationDoc: Error fetching current profile:`, fetchError);
+        throw fetchError;
+      }
+      
+      const currentDocs = currentProfile?.verification_documents || [];
+      console.log(`uploadVerificationDoc: Current docs from DB:`, currentDocs);
+      
+      // Remove any existing document of the same type to avoid duplicates
       const filteredDocs = currentDocs.filter(doc => !doc.includes(docType));
       const newDocs = [...filteredDocs, fileName];
       
-      const success = await updateProfile({ verification_documents: newDocs });
-      
-      // ✅ SYNC FIX: Also refresh AuthContext after verification doc upload
-      if (success && refreshAuthProfile) {
-        setTimeout(() => {
-          refreshAuthProfile().catch(error => {
-            console.warn('uploadVerificationDoc: Failed to refresh AuthContext profile:', error);
-          });
-        }, 500);
+      console.log(`uploadVerificationDoc: Updated docs array:`, {
+        filtered: filteredDocs,
+        new: newDocs,
+        docType,
+        fileName
+      });
+
+      // Update database directly with new documents array
+      console.log(`uploadVerificationDoc: Updating database with new documents`);
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ verification_documents: newDocs })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error(`uploadVerificationDoc: Database update error:`, updateError);
+        throw updateError;
       }
-      
-      return success ? fileName : null;
-    } catch (error) {
-      console.error('Error uploading verification document:', error);
+
+      console.log(`uploadVerificationDoc: Database updated successfully with ${docType}`);
+
+      // Update local state to match database
       if (mountedRef.current) {
-        toast.error('Error al subir el documento de verificación');
+        setProfile(prev => prev ? { 
+          ...prev, 
+          verification_documents: newDocs 
+        } : null);
+        console.log(`uploadVerificationDoc: Local state updated`);
+      }
+
+      console.log(`uploadVerificationDoc: ${docType} upload completed successfully`);
+      return fileName;
+      
+    } catch (error) {
+      console.error(`uploadVerificationDoc: Error uploading ${docType}:`, error);
+      if (mountedRef.current) {
+        toast.error(`Error al subir ${docType === 'id_document' ? 'documento de identidad' : 'selfie con ID'}`);
       }
       return null;
     }

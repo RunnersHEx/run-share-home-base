@@ -20,6 +20,84 @@ const log = {
   }
 };
 
+// Helper function to get or create the annual price
+// This prevents duplicate products being created for each subscription
+async function getOrCreateAnnualPrice(stripe: any): Promise<string> {
+  try {
+    // Check if product already exists
+    const existingProducts = await stripe.products.list({
+      active: true,
+      limit: 100
+    });
+
+    const runnerProduct = existingProducts.data.find((p: any) => 
+      p.name === "Membresía RunnersHEx" || 
+      p.metadata?.type === "runner_membership"
+    );
+
+    let productId: string;
+
+    if (runnerProduct) {
+      log.info("Found existing product", { productId: runnerProduct.id });
+      productId = runnerProduct.id;
+    } else {
+      // Create the main product
+      const product = await stripe.products.create({
+        name: "Membresía RunnersHEx",
+        description: "Membresía anual para corredores - Acceso completo a la plataforma RunnersHEx",
+        metadata: {
+          type: "runner_membership",
+          plan: "annual"
+        },
+        tax_code: "txcd_10000000", // Digital services tax code
+      });
+      
+      log.info("Created new product", { productId: product.id });
+      productId = product.id;
+    }
+
+    // Check if price already exists for this product
+    const existingPrices = await stripe.prices.list({
+      product: productId,
+      active: true,
+      limit: 100
+    });
+
+    const annualPrice = existingPrices.data.find((p: any) => 
+      p.unit_amount === 5900 && 
+      p.currency === "eur" && 
+      p.recurring?.interval === "year"
+    );
+
+    if (annualPrice) {
+      log.info("Found existing annual price", { priceId: annualPrice.id });
+      return annualPrice.id;
+    } else {
+      // Create the annual price
+      const price = await stripe.prices.create({
+        currency: "eur",
+        unit_amount: 5900, // €59.00
+        recurring: {
+          interval: "year",
+          interval_count: 1,
+        },
+        product: productId,
+        nickname: "Annual Runner Membership",
+        metadata: {
+          plan_type: "runner_annual",
+          points_awarded: "30_new_50_renewal"
+        }
+      });
+
+      log.info("Created new annual price", { priceId: price.id });
+      return price.id;
+    }
+  } catch (error) {
+    log.error("Failed to get/create annual price", error);
+    throw error;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -32,6 +110,10 @@ serve(async (req) => {
   );
 
   try {
+    // Parse request body to get coupon code if provided
+    const body = await req.json().catch(() => ({}));
+    const { couponCode } = body;
+
     // Retrieve authenticated user
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
@@ -51,32 +133,58 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    // Create a subscription checkout session with 59€ price
-    const session = await stripe.checkout.sessions.create({
+    // Use predefined price ID to avoid creating duplicate products
+    // This prevents multiple products being created for each subscription
+    const ANNUAL_PRICE_ID = await getOrCreateAnnualPrice(stripe);
+    
+    // Prepare session configuration
+    const sessionConfig: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price_data: {
-            currency: "eur",
-            product_data: { 
-              name: "Membresía RunnersHEx"
-            },
-            unit_amount: 5900, // 59€ in cents
-            recurring: { interval: "year" },
-          },
+          price: ANNUAL_PRICE_ID,
           quantity: 1,
         },
       ],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/profile?tab=subscription&success=true`,
+      metadata: {
+        user_id: user.id,
+        plan_type: "runner_annual",
+        user_email: user.email,
+        coupon_code: couponCode || "none"
+      },
+      success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/profile?tab=subscription`,
-    });
+    };
+
+    // Add coupon if provided and valid
+    if (couponCode) {
+      try {
+        // Verify the coupon exists and is valid
+        const coupon = await stripe.coupons.retrieve(couponCode);
+        if (coupon && coupon.valid) {
+          sessionConfig.discounts = [{
+            coupon: couponCode
+          }];
+          log.info('Applied coupon to session', { couponCode, discountAmount: coupon.amount_off });
+        } else {
+          log.error('Invalid coupon provided', { couponCode });
+          throw new Error(`Coupon ${couponCode} is not valid or has expired`);
+        }
+      } catch (error) {
+        log.error('Coupon validation failed', { couponCode, error: error.message });
+        throw new Error(`Invalid coupon code: ${couponCode}`);
+      }
+    }
+    
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     log.info('Subscription session created successfully', {
       sessionId: session.id,
       userEmail: user.email,
-      customerId: customerId || 'new'
+      customerId: customerId || 'new',
+      couponCode: couponCode || 'none'
     });
 
     return new Response(JSON.stringify({ url: session.url }), {

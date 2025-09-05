@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, X, Download, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Star } from "lucide-react";
 
 interface Photo {
   id: string;
@@ -123,9 +123,6 @@ export const PhotoGalleryModal = ({
               >
                 <Download className="w-4 h-4 mr-1" />
                 Descargar
-              </Button>
-              <Button variant="ghost" size="icon" onClick={handleModalClose}>
-                <X className="w-5 h-5" />
               </Button>
             </div>
           </div>

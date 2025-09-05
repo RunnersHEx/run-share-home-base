@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStatsCount } from "@/hooks/useStatsCount";
 import { toast } from "sonner";
 
 interface HeroSectionProps {
@@ -10,6 +11,7 @@ interface HeroSectionProps {
 
 const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
   const { user } = useAuth();
+  const { stats, loading: statsLoading, error: statsError } = useStatsCount();
   
   const handleJoinCommunity = () => {
     console.log('HeroSection: Join community button clicked');
@@ -90,16 +92,22 @@ const HeroSection = ({ onAuthModal }: HeroSectionProps) => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl font-bold mb-1" style={{ color: '#fb923c' }}>500+</div>
-              <div className="text-sm text-white/80">Runners activos</div>
+              <div className="text-3xl font-bold mb-1" style={{ color: '#fb923c' }}>
+                {statsLoading ? "..." : (statsError ? "0" : stats.activeUsers)}
+              </div>
+              <div className="text-sm text-white/80">Usuarios Activos</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold mb-1" style={{ color: '#fb923c' }}>50+</div>
-              <div className="text-sm text-white/80">Ciudades</div>
+              <div className="text-3xl font-bold mb-1" style={{ color: '#fb923c' }}>
+                {statsLoading ? "..." : (statsError ? "0" : stats.locations)}
+              </div>
+              <div className="text-sm text-white/80">Ubicaciones</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold mb-1" style={{ color: '#fb923c' }}>1000+</div>
-              <div className="text-sm text-white/80">Experiencias</div>
+              <div className="text-3xl font-bold mb-1" style={{ color: '#fb923c' }}>
+                {statsLoading ? "..." : (statsError ? "0" : stats.careers)}
+              </div>
+              <div className="text-sm text-white/80">Carreras</div>
             </div>
           </div>
         </div>

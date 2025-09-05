@@ -18,6 +18,7 @@ import {
 import { useState, useEffect } from "react";
 import { ReviewsService } from "@/services/reviews/properReviewsService";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface GuestInfo {
   id: string;
@@ -35,6 +36,7 @@ interface GuestInfo {
   personal_records?: any;
   created_at: string;
   points_balance: number;
+  birth_date?: string;
 }
 
 interface GuestReview {
@@ -50,12 +52,12 @@ interface GuestReview {
     last_name: string;
     profile_image_url?: string;
   };
-  booking: {
-    race: {
+  booking?: {
+    race?: {
       name: string;
       race_date: string;
     };
-  };
+  } | null;
 }
 
 interface GuestInfoModalProps {
@@ -140,6 +142,24 @@ export const GuestInfoModal = ({ isOpen, onClose, guestId }: GuestInfoModalProps
     return labels[distance as keyof typeof labels] || distance;
   };
 
+  const calculateAge = (birthDate: string): number => {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
+  const handleViewProfile = () => {
+    // Show toast indicating all information is displayed in this modal
+    toast.info('Esta ventana muestra toda la información disponible del runner.');
+  };
+
   if (loading && !guestInfo) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -183,7 +203,11 @@ export const GuestInfoModal = ({ isOpen, onClose, guestId }: GuestInfoModalProps
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-start space-x-4">
-                <Avatar className="w-16 h-16">
+                <Avatar 
+                  className="w-16 h-16 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all duration-200" 
+                  onClick={handleViewProfile}
+                  title="Hacer clic para ver el perfil completo"
+                >
                   <AvatarImage src={guestInfo.profile_image_url} />
                   <AvatarFallback className="text-lg">
                     {guestInfo.first_name?.[0]}{guestInfo.last_name?.[0]}
@@ -194,6 +218,11 @@ export const GuestInfoModal = ({ isOpen, onClose, guestId }: GuestInfoModalProps
                   <div className="flex items-center space-x-2 mb-2">
                     <h3 className="text-xl font-semibold">
                       {guestInfo.first_name} {guestInfo.last_name}
+                      {guestInfo.birth_date && (
+                        <span className="text-gray-600 font-normal ml-2 text-lg">
+                          ({calculateAge(guestInfo.birth_date)} años)
+                        </span>
+                      )}
                     </h3>
                     {guestInfo.verification_status === 'approved' && (
                       <Badge className="bg-green-100 text-green-800">
@@ -334,7 +363,7 @@ export const GuestInfoModal = ({ isOpen, onClose, guestId }: GuestInfoModalProps
                                 {review.reviewer.first_name} {review.reviewer.last_name}
                               </h5>
                               <p className="text-xs text-gray-500">
-                                {review.booking.race.name} - {formatDate(review.booking.race.race_date)}
+                                {review.booking?.race?.name || 'Carrera no disponible'} - {review.booking?.race?.race_date ? formatDate(review.booking.race.race_date) : 'Fecha no disponible'}
                               </p>
                             </div>
                             <div className="text-right">

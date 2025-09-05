@@ -44,7 +44,7 @@ const QuickSearchSection = () => {
   ];
 
   const modalityOptions = [
-    { value: "road", label: "Asfalto" },
+    { value: "road", label: "Ruta/Asfalto" },
     { value: "trail", label: "Trail/Montaña" }
   ];
 
@@ -59,35 +59,23 @@ const QuickSearchSection = () => {
   ];
 
   const handleSearch = () => {
-    // Define default values that match the placeholders
-    const defaultProvince = "Valencia";
-    const defaultMonth = "1"; // Enero
-    const defaultModality = "road"; // Asfalto
-    const defaultDistance = "10k"; // 10K
-    
-    // Use selected values or fallback to defaults
-    const finalProvince = selectedProvince || defaultProvince;
-    const finalMonth = selectedMonth || defaultMonth;
-    const finalModality = selectedModality || defaultModality;
-    const finalDistance = selectedDistance || defaultDistance;
-    
-    // Build filters object
+    // Build filters object only with selected values (no defaults)
     const filters: RaceFilters = {};
     
-    if (finalProvince) {
-      filters.province = finalProvince;
+    if (selectedProvince) {
+      filters.province = selectedProvince;
     }
     
-    if (finalMonth) {
-      filters.month = finalMonth;
+    if (selectedMonth) {
+      filters.month = selectedMonth;
     }
     
-    if (finalModality) {
-      filters.modalities = [finalModality as any];
+    if (selectedModality) {
+      filters.modalities = [selectedModality as any];
     }
     
-    if (finalDistance) {
-      filters.distances = [finalDistance as any];
+    if (selectedDistance) {
+      filters.distances = [selectedDistance as any];
     }
 
     console.log('QuickSearch: Navigating with filters:', filters);
@@ -95,20 +83,20 @@ const QuickSearchSection = () => {
     // Navigate to discover page with filters as URL parameters
     const searchParams = new URLSearchParams();
     
-    if (finalProvince) {
-      searchParams.set('province', finalProvince);
+    if (selectedProvince) {
+      searchParams.set('province', selectedProvince);
     }
     
-    if (finalMonth) {
-      searchParams.set('month', finalMonth);
+    if (selectedMonth) {
+      searchParams.set('month', selectedMonth);
     }
     
-    if (finalModality) {
-      searchParams.set('modality', finalModality);
+    if (selectedModality) {
+      searchParams.set('modality', selectedModality);
     }
     
-    if (finalDistance) {
-      searchParams.set('distance', finalDistance);
+    if (selectedDistance) {
+      searchParams.set('distance', selectedDistance);
     }
 
     const queryString = searchParams.toString();
@@ -125,7 +113,7 @@ const QuickSearchSection = () => {
           Encuentra tu próxima aventura
         </h2>
         <p className="text-gray-600">
-          Filtra por destino, fechas y características para descubrir carreras únicas
+          Filtra por cualquier criterio que desees - todos los campos son opcionales
         </p>
       </div>
 
@@ -140,7 +128,7 @@ const QuickSearchSection = () => {
             value={selectedProvince}
             onValueChange={setSelectedProvince}
             options={provinceOptions}
-            placeholder="Valencia"
+            placeholder="Selecciona provincia"
             className="w-full"
           />
         </div>
@@ -155,7 +143,7 @@ const QuickSearchSection = () => {
             value={selectedMonth}
             onValueChange={setSelectedMonth}
             options={monthOptions}
-            placeholder="Enero"
+            placeholder="Selecciona mes"
             className="w-full"
           />
         </div>
@@ -170,7 +158,7 @@ const QuickSearchSection = () => {
             value={selectedModality}
             onValueChange={setSelectedModality}
             options={modalityOptions}
-            placeholder="Asfalto"
+            placeholder="Selecciona modalidad"
             className="w-full"
           />
         </div>
@@ -184,7 +172,7 @@ const QuickSearchSection = () => {
             value={selectedDistance}
             onValueChange={setSelectedDistance}
             options={distanceOptions}
-            placeholder="10K"
+            placeholder="Selecciona distancia"
             className="w-full"
           />
         </div>

@@ -19,6 +19,9 @@ const envSchema = z.object({
   VITE_ENVIRONMENT: z.enum(['development', 'staging', 'production']).default('development'),
   VITE_GA_TRACKING_ID: z.string().optional(),
   VITE_SENTRY_DSN: z.string().optional(),
+  VITE_EMAILJS_SERVICE_ID: z.string().optional(),
+  VITE_EMAILJS_TEMPLATE_ID: z.string().optional(),
+  VITE_EMAILJS_PUBLIC_KEY: z.string().optional(),
 });
 
 type Environment = z.infer<typeof envSchema>;
@@ -31,6 +34,9 @@ function validateEnvironment(): Environment {
       VITE_ENVIRONMENT: import.meta.env.VITE_ENVIRONMENT,
       VITE_GA_TRACKING_ID: import.meta.env.VITE_GA_TRACKING_ID,
       VITE_SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN,
+      VITE_EMAILJS_SERVICE_ID: import.meta.env.VITE_EMAILJS_SERVICE_ID,
+      VITE_EMAILJS_TEMPLATE_ID: import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+      VITE_EMAILJS_PUBLIC_KEY: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
     });
   } catch (error) {
     startupLog.error('Environment validation failed:');

@@ -1,4 +1,5 @@
 import { ErrorInfo } from 'react';
+import { errorTracker } from '../lib/errorTracking';
 
 /**
  * Utility to handle known safe-to-ignore DOM manipulation errors
@@ -59,10 +60,8 @@ export class ErrorSuppressor {
    */
   static trackErrorIfSignificant(error: Error, context?: any): void {
     if (this.shouldHandleError(error)) {
-      // Only import errorTracker when we actually need it
-      import('../lib/errorTracking').then(({ errorTracker }) => {
-        errorTracker.trackError(error, context);
-      });
+      // Track significant errors immediately
+      errorTracker.trackError(error, context);
     }
   }
 }

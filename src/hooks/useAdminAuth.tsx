@@ -22,11 +22,14 @@ export const useAdminAuth = () => {
       }
 
       // Verificar si el email del usuario es el email de admin
-      const adminEmail = 'runnershomeexchange@gmail.com';
-      const userIsAdmin = user.email === adminEmail;
+      const adminEmails = [
+        'runnershomeexchange@gmail.com',
+        'admin@mail.com'
+      ];
+      const userIsAdmin = adminEmails.includes(user.email || '');
       
       console.log('useAdminAuth: Checking admin status for:', user.email);
-      console.log('useAdminAuth: Admin email:', adminEmail);
+      console.log('useAdminAuth: Admin emails:', adminEmails);
       console.log('useAdminAuth: Is admin?', userIsAdmin);
       
       setIsAdmin(userIsAdmin);

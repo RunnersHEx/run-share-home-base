@@ -45,7 +45,7 @@ export const usePropertyWizardLogic = (propertyId?: string, initialData?: Proper
       case 1:
         return formData.title.trim() !== "" && formData.description.trim() !== "";
       case 2:
-        return formData.provinces.length > 0 && formData.locality.trim() !== "" && formData.full_address.trim() !== "";
+        return formData.provinces.length > 0 && formData.locality.trim() !== "";
       case 3:
         return acknowledgedImportantNote;
       case 4:
@@ -55,7 +55,7 @@ export const usePropertyWizardLogic = (propertyId?: string, initialData?: Proper
       default:
         return false;
     }
-  }, [formData.title, formData.description, formData.provinces.length, formData.locality, formData.full_address, acknowledgedImportantNote, acceptedCancellationPolicy]);
+  }, [formData.title, formData.description, formData.provinces.length, formData.locality, acknowledgedImportantNote, acceptedCancellationPolicy]);
 
   const handleSubmit = useCallback(async (photos: PhotoPreview[]) => {
     setIsSubmitting(true);
