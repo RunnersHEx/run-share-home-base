@@ -24,6 +24,8 @@ import VerificationGuard from "../verification/VerificationGuard";
 import { UnreadBadge } from "@/components/messaging";
 import CookieBanner from "@/components/legal/CookieBanner";
 import Footer from "./Footer";
+import PricingModal from "./PricingModal";
+import HowItWorksModal from "./HowItWorksModal";
 
 
 interface LayoutProps {
@@ -155,7 +157,57 @@ const Layout = ({ children }: LayoutProps) => {
                     className="h-20 w-auto object-contain"
                   />
                 </div>
-                <div className="text-white">Cargando...</div>
+
+                <div className="text-white">
+                  {/* Desktop version */}
+                  <div className="hidden md:flex items-center space-x-2">
+                    <HowItWorksModal>
+                      <Button
+                        variant="ghost"
+                        className="text-white hover:bg-white/20 border border-white/30"
+                      >
+                        ¿Cómo funciona?
+                      </Button>
+                    </HowItWorksModal>
+                    
+                    <PricingModal>
+                      <Button
+                        variant="ghost"
+                        className="text-white hover:bg-white/20 border border-white/30"
+                      >
+                        ¿Cuánto cuesta?
+                      </Button>
+                    </PricingModal>
+                    
+                    <span className="text-white text-sm">Cargando...</span>
+                  </div>
+                  
+                  {/* Mobile version - 2x2 buttons */}
+                  <div className="md:hidden flex flex-col space-y-2 min-w-0">
+                    <div className="flex space-x-1">
+                      <HowItWorksModal>
+                        <Button
+                          variant="ghost"
+                          className="text-white hover:bg-white/20 border border-white/30 text-xs px-2 py-1"
+                        >
+                          ¿Cómo funciona?
+                        </Button>
+                      </HowItWorksModal>
+                      
+                      <PricingModal>
+                        <Button
+                          variant="ghost"
+                          className="text-white hover:bg-white/20 border border-white/30 text-xs px-2 py-1"
+                        >
+                          ¿Cuánto cuesta?
+                        </Button>
+                      </PricingModal>
+                    </div>
+                    <div className="text-center">
+                      <span className="text-white text-xs">Cargando...</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </header>
@@ -335,26 +387,92 @@ const Layout = ({ children }: LayoutProps) => {
                     </DropdownMenu>
                   </>
                 ) : (
-                  <div className="flex items-center space-x-4">
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        console.log('Layout: Homepage login button clicked');
-                        handleAuthModal("login");
-                      }}
-                      className="text-white hover:bg-white/20 border border-white/30"
-                    >
-                      Iniciar Sesión
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        console.log('Layout: Homepage register button clicked');
-                        handleAuthModal("register");
-                      }}
-                      className="bg-runner-orange-500 hover:bg-runner-orange-600 text-white font-semibold"
-                    >
-                      Únete a la Comunidad
-                    </Button>
+                  <div className="flex items-center">
+                    {/* Desktop buttons */}
+                    <div className="hidden md:flex items-center space-x-4">
+                      <HowItWorksModal>
+                        <Button
+                          variant="ghost"
+                          className="text-white hover:bg-white/20 border border-white/30"
+                        >
+                          ¿Cómo funciona?
+                        </Button>
+                      </HowItWorksModal>
+                      
+                      <PricingModal>
+                        <Button
+                          variant="ghost"
+                          className="text-white hover:bg-white/20 border border-white/30"
+                        >
+                          ¿Cuánto cuesta?
+                        </Button>
+                      </PricingModal>
+                      
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          console.log('Layout: Homepage login button clicked');
+                          handleAuthModal("login");
+                        }}
+                        className="text-white hover:bg-white/20 border border-white/30"
+                      >
+                        Iniciar Sesión
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          console.log('Layout: Homepage register button clicked');
+                          handleAuthModal("register");
+                        }}
+                        className="bg-runner-orange-500 hover:bg-runner-orange-600 text-white font-semibold"
+                      >
+                        Únete a la Comunidad
+                      </Button>
+                    </div>
+                    
+                    {/* Mobile buttons - 2x2 layout */}
+                    <div className="md:hidden flex flex-col space-y-2">
+                      <div className="flex space-x-2">
+                        <HowItWorksModal>
+                          <Button
+                            variant="ghost"
+                            className="text-white hover:bg-white/20 border border-white/30 text-xs px-2 py-1"
+                          >
+                            ¿Cómo funciona?
+                          </Button>
+                        </HowItWorksModal>
+                        
+                        <PricingModal>
+                          <Button
+                            variant="ghost"
+                            className="text-white hover:bg-white/20 border border-white/30 text-xs px-2 py-1"
+                          >
+                            ¿Cuánto cuesta?
+                          </Button>
+                        </PricingModal>
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            console.log('Layout: Homepage login button clicked');
+                            handleAuthModal("login");
+                          }}
+                          className="text-white hover:bg-white/20 border border-white/30 text-xs px-2 py-1"
+                        >
+                          Iniciar Sesión
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            console.log('Layout: Homepage register button clicked');
+                            handleAuthModal("register");
+                          }}
+                          className="bg-runner-orange-500 hover:bg-runner-orange-600 text-white font-semibold text-xs px-2 py-1"
+                        >
+                          Únete a la Comunidad
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
