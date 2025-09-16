@@ -13,9 +13,10 @@ interface LocationFiltersProps {
 }
 
 const spanishProvinces = [
+  "Outside Spain", // Option to search for international races
   "A Coruña", "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz",
-  "Baleares", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
-  "Córdoba", "Cuenca", "Girona", "Granada", "Guadalajara", "Gipuzkoa", "Huelva", "Huesca",
+  "Illes Balears", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
+  "Córdoba", "Cuenca", "Girona", "Granada", "Guadalajara", "Guipúzcoa", "Huelva", "Huesca",
   "Jaén", "León", "Lleida", "La Rioja", "Lugo", "Madrid", "Málaga", "Murcia", "Navarra",
   "Ourense", "Palencia", "Las Palmas", "Pontevedra", "Salamanca", "Santa Cruz de Tenerife",
   "Segovia", "Sevilla", "Soria", "Tarragona", "Teruel", "Toledo", "Valencia", "Valladolid",
@@ -71,12 +72,12 @@ export const LocationFilters = ({
       
       <div className="space-y-3">
         <div>
-          <Label htmlFor="province">Provincia</Label>
+          <Label htmlFor="province">Destino</Label>
           <CustomSelect
             value={selectedProvince}
             onValueChange={onProvinceChange}
             options={provinceOptions}
-            placeholder="Seleccionar provincia..."
+            placeholder="Seleccionar destino..."
             className="mt-1"
           />
         </div>

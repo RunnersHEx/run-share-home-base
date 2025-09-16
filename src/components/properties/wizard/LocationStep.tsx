@@ -8,6 +8,7 @@ import { PropertyFormData } from "@/types/property";
 
 // Spanish provinces (matching the database provincial_point_costs table)
 const SPANISH_PROVINCES = [
+  "Outside Spain", // Option for international properties
   "A Coruña", "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz",
   "Illes Balears", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
   "Córdoba", "Cuenca", "Girona", "Granada", "Guadalajara", "Guipúzcoa", "Huelva", "Huesca",
@@ -57,7 +58,7 @@ const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps)
               className="w-full"
             />
             <p className="text-sm text-gray-600 mt-1">
-              Selecciona las provincias donde está ubicada tu propiedad
+              Selecciona las provincias donde está ubicada tu propiedad. Elige "Outside Spain" si tu propiedad está fuera de España.
             </p>
           </div>
 
@@ -68,7 +69,7 @@ const LocationStep = ({ formData, onUpdate, onNext, onPrev }: LocationStepProps)
               id="locality"
               value={formData.locality}
               onChange={(e) => onUpdate({ locality: e.target.value })}
-              placeholder="Ej: Valencia, Barcelona, Madrid..."
+              placeholder="Ej: Valencia, Barcelona, London, New York..."
               className="mt-1"
             />
           </div>

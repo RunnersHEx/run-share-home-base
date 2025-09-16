@@ -24,6 +24,7 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
 
   // Spanish provinces for dropdown (matching the database provincial_point_costs table)
   const spanishProvinces = [
+    "Outside Spain", // Option for international races
     "A Coruña", "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz",
     "Illes Balears", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
     "Córdoba", "Cuenca", "Girona", "Granada", "Guadalajara", "Guipúzcoa", "Huelva", "Huesca",
@@ -109,7 +110,7 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
               className="w-full"
             />
             <p className="text-sm text-gray-600 mt-1">
-              Ciudad o provincia donde se celebra la carrera (para filtros de búsqueda)
+              Ciudad o provincia donde se celebra la carrera. Elige "Outside Spain" para carreras internacionales.
             </p>
           </div>
 

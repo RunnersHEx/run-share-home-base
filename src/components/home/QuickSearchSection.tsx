@@ -14,9 +14,10 @@ const QuickSearchSection = () => {
   const [selectedDistance, setSelectedDistance] = useState("");
 
   const spanishProvinces = [
+    "Outside Spain", // Option to search for international races
     "A Coruña", "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz",
-    "Baleares", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
-    "Córdoba", "Cuenca", "Girona", "Granada", "Guadalajara", "Gipuzkoa", "Huelva", "Huesca",
+    "Illes Balears", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
+    "Córdoba", "Cuenca", "Girona", "Granada", "Guadalajara", "Guipúzcoa", "Huelva", "Huesca",
     "Jaén", "León", "Lleida", "La Rioja", "Lugo", "Madrid", "Málaga", "Murcia", "Navarra",
     "Ourense", "Palencia", "Las Palmas", "Pontevedra", "Salamanca", "Santa Cruz de Tenerife",
     "Segovia", "Sevilla", "Soria", "Tarragona", "Teruel", "Toledo", "Valencia", "Valladolid",
@@ -128,7 +129,7 @@ const QuickSearchSection = () => {
             value={selectedProvince}
             onValueChange={setSelectedProvince}
             options={provinceOptions}
-            placeholder="Selecciona provincia"
+            placeholder="Selecciona destino"
             className="w-full"
           />
         </div>
