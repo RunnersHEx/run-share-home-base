@@ -21,9 +21,10 @@ export const HeroSearchSection = ({
   onFiltersChange
 }: HeroSearchSectionProps) => {
   const spanishProvinces = [
+    "Outside Spain", // Option to search for international races
     "A Coruña", "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila", "Badajoz",
-    "Baleares", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
-    "Córdoba", "Cuenca", "Girona", "Granada", "Guadalajara", "Gipuzkoa", "Huelva", "Huesca",
+    "Illes Balears", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
+    "Córdoba", "Cuenca", "Girona", "Granada", "Guadalajara", "Guipúzcoa", "Huelva", "Huesca",
     "Jaén", "León", "Lleida", "La Rioja", "Lugo", "Madrid", "Málaga", "Murcia", "Navarra",
     "Ourense", "Palencia", "Las Palmas", "Pontevedra", "Salamanca", "Santa Cruz de Tenerife",
     "Segovia", "Sevilla", "Soria", "Tarragona", "Teruel", "Toledo", "Valencia", "Valladolid",
@@ -153,7 +154,7 @@ export const HeroSearchSection = ({
                     onFiltersChange(newFilters);
                   }}
                   options={provinceOptions}
-                  placeholder="Provincia"
+                  placeholder="Destino"
                   className="w-full sm:w-40"
                 />
 
@@ -205,7 +206,7 @@ export const HeroSearchSection = ({
               
               {filters.province && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  Provincia: {filters.province}
+                  Destino: {filters.province}
                   <X 
                     className="w-3 h-3 ml-1 cursor-pointer" 
                     onClick={() => clearFilter('province')}

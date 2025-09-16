@@ -1,5 +1,7 @@
 
 import { Button } from "@/components/ui/button";
+import PricingModal from "./PricingModal";
+import HowItWorksModal from "./HowItWorksModal";
 
 interface MainHeaderProps {
   onAuthModal: (mode: "login" | "register") => void;
@@ -31,6 +33,24 @@ const MainHeader = ({ onAuthModal }: MainHeaderProps) => {
           </div>
 
           <div className="flex items-center space-x-4">
+            <HowItWorksModal>
+              <Button
+                variant="ghost"
+                className="text-white hover:bg-white/20 border border-white/30"
+              >
+                ¿Cómo funciona?
+              </Button>
+            </HowItWorksModal>
+            
+            <PricingModal>
+              <Button
+                variant="ghost"
+                className="text-white hover:bg-white/20 border border-white/30"
+              >
+                ¿Cuánto cuesta?
+              </Button>
+            </PricingModal>
+            
             <Button
               variant="ghost"
               onClick={handleLoginClick}
