@@ -24,7 +24,7 @@ const Footer = () => {
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4">
             <p className="text-gray-400">
-              Copyright © 2025 HomeExchange. All rights reserved.
+              Copyright © 2025 Runners Home Exchange. All rights reserved.
             </p>
             
             <div className="flex flex-wrap justify-center items-center gap-4">
