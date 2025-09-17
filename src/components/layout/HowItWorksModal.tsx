@@ -32,16 +32,17 @@ const HowItWorksModal = ({ children }: HowItWorksModalProps) => {
               <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-600 rounded-full mr-2 sm:mr-3 flex items-center justify-center">
                 <span className="text-white text-xs sm:text-sm font-bold">H</span>
               </div>
-              Como Anfitrión:
+              Como Anfitrión → Host:
             </h3>
             <ol className="space-y-2 sm:space-y-3 list-decimal list-inside text-gray-700 text-sm sm:text-base">
               <li><strong>Regístrate y verifica tu identidad.</strong> La seguridad es lo primero.</li>
               <li><strong>Añade tu propiedad.</strong></li>
               <li><strong>Sugiere carreras locales interesantes</strong> para otros corredores.</li>
+              <li><strong>Recuerda que debes estar disponible en las fechas de cada carrera que propongas. Debes alojar a tu(s) huésped(es).</strong></li>
               <li><strong>Gana puntos.</strong></li>
               <li><strong>Acepta o rechaza solicitudes de alojamiento</strong> basándote en la información y reseñas del Huésped.</li>
               <li><strong>Conviértete en un Súper Anfitrión.</strong></li>
-              <li><strong>Después de cada experiencia, no olvides dejar una reseña</strong> en la sección "Reseñas". El Huésped también te reseñará.</li>
+              <li><strong>No olvides dejar una reseña en la sección 'Valoraciones'. El Huésped también te valorará.</strong></li>
             </ol>
           </div>
 
@@ -51,14 +52,14 @@ const HowItWorksModal = ({ children }: HowItWorksModalProps) => {
               <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-600 rounded-full mr-2 sm:mr-3 flex items-center justify-center">
                 <span className="text-white text-xs sm:text-sm font-bold">G</span>
               </div>
-              Como Huésped:
+              Como Huésped → Guest:
             </h3>
             <ol className="space-y-2 sm:space-y-3 list-decimal list-inside text-gray-700 text-sm sm:text-base">
-              <li><strong>Busca carreras que te interesen.</strong> Explora por ubicación, fecha, tipo y distancia.</li>
+              <li><strong>Busca carreras que te interesen.</strong> Explora por ubicación, mes del evento, tipo y distancia.</li>
               <li><strong>Solicita alojamiento para tu carrera elegida</strong> canjeando tus puntos. Envía tu solicitud al Anfitrión local de la carrera.</li>
               <li><strong>Conecta y planifica.</strong> Una vez que el Anfitrión acepte, coordina todos los detalles a través del sistema de mensajería interno.</li>
               <li><strong>Vive la experiencia.</strong> Disfruta del alojamiento, el conocimiento local y la compañía de otro entusiasta del running.</li>
-              <li><strong>Una vez en casa, recuerda reseñar a tu Anfitrión</strong> en la sección "Reseñas". Ellos también te reseñarán.</li>
+              <li><strong>Una vez en casa, recuerda valorar a tu Anfitrión en la sección 'Valoraciones'. Ellos también te valorarán.</strong></li>
             </ol>
           </div>
 

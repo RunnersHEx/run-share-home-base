@@ -163,8 +163,7 @@ const Layout = ({ children }: LayoutProps) => {
                   <div className="hidden md:flex items-center space-x-2">
                     <HowItWorksModal>
                       <Button
-                        variant="ghost"
-                        className="text-white hover:bg-white/20 border border-white/30"
+                        className="text-white bg-runner-orange-500 hover:bg-runner-orange-600"
                       >
                         ¿Cómo funciona?
                       </Button>
@@ -172,8 +171,7 @@ const Layout = ({ children }: LayoutProps) => {
                     
                     <PricingModal>
                       <Button
-                        variant="ghost"
-                        className="text-white hover:bg-white/20 border border-white/30"
+                        className="text-white bg-runner-orange-500 hover:bg-runner-orange-600"
                       >
                         ¿Cuánto cuesta?
                       </Button>
@@ -187,8 +185,7 @@ const Layout = ({ children }: LayoutProps) => {
                     <div className="flex space-x-1">
                       <HowItWorksModal>
                         <Button
-                          variant="ghost"
-                          className="text-white hover:bg-white/20 border border-white/30 text-xs px-2 py-1"
+                          className="text-white bg-runner-orange-500 hover:bg-runner-orange-600 text-xs px-2 py-1"
                         >
                           ¿Cómo funciona?
                         </Button>
@@ -196,8 +193,7 @@ const Layout = ({ children }: LayoutProps) => {
                       
                       <PricingModal>
                         <Button
-                          variant="ghost"
-                          className="text-white hover:bg-white/20 border border-white/30 text-xs px-2 py-1"
+                          className="text-white bg-runner-orange-500 hover:bg-runner-orange-600 text-xs px-2 py-1"
                         >
                           ¿Cuánto cuesta?
                         </Button>
@@ -392,8 +388,7 @@ const Layout = ({ children }: LayoutProps) => {
                     <div className="hidden md:flex items-center space-x-4">
                       <HowItWorksModal>
                         <Button
-                          variant="ghost"
-                          className="text-white hover:bg-white/20 border border-white/30"
+                          className="text-white bg-runner-orange-500 hover:bg-runner-orange-600"
                         >
                           ¿Cómo funciona?
                         </Button>
@@ -401,8 +396,7 @@ const Layout = ({ children }: LayoutProps) => {
                       
                       <PricingModal>
                         <Button
-                          variant="ghost"
-                          className="text-white hover:bg-white/20 border border-white/30"
+                          className="text-white bg-runner-orange-500 hover:bg-runner-orange-600"
                         >
                           ¿Cuánto cuesta?
                         </Button>
@@ -434,8 +428,7 @@ const Layout = ({ children }: LayoutProps) => {
                       <div className="flex space-x-2">
                         <HowItWorksModal>
                           <Button
-                            variant="ghost"
-                            className="text-white hover:bg-white/20 border border-white/30 text-xs px-2 py-1"
+                            className="text-white bg-runner-orange-500 hover:bg-runner-orange-600 text-xs px-2 py-1"
                           >
                             ¿Cómo funciona?
                           </Button>
@@ -443,8 +436,7 @@ const Layout = ({ children }: LayoutProps) => {
                         
                         <PricingModal>
                           <Button
-                            variant="ghost"
-                            className="text-white hover:bg-white/20 border border-white/30 text-xs px-2 py-1"
+                            className="text-white bg-runner-orange-500 hover:bg-runner-orange-600 text-xs px-2 py-1"
                           >
                             ¿Cuánto cuesta?
                           </Button>
