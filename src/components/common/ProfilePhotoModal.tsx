@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
@@ -25,6 +25,10 @@ export const ProfilePhotoModal = ({
         className="max-w-4xl max-h-[90vh] p-0 overflow-hidden border-0"
         onKeyDown={handleKeyPress}
       >
+        <DialogHeader className="sr-only">
+          <DialogTitle>Foto de perfil de {userName}</DialogTitle>
+        </DialogHeader>
+
         {/* Header with close button */}
         <div className="absolute top-4 right-4 z-10">
           <Button
