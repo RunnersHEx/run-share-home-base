@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Star } from "lucide-react";
 import { ReviewsModal } from "./ReviewsModal";
+import { ProfilePhotoModal } from "@/components/common/ProfilePhotoModal";
 import { useState, useEffect } from "react";
 import { ReviewsService, BookingReviewsService } from "@/services/reviews/properReviewsService";
 
@@ -20,6 +21,7 @@ interface RaceHostCardProps {
 
 export const RaceHostCard = ({ host, raceId, propertyId }: RaceHostCardProps) => {
   const [showReviews, setShowReviews] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [dynamicRating, setDynamicRating] = useState(host.rating);
   const [reviewCount, setReviewCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,9 @@ export const RaceHostCard = ({ host, raceId, propertyId }: RaceHostCardProps) =>
             <img 
               src={host.imageUrl} 
               alt={host.name}
-              className="w-12 h-12 rounded-full"
+              className="w-12 h-12 rounded-full cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all duration-200"
+              onClick={() => setShowPhotoModal(true)}
+              title="Hacer clic para ver la foto en tamaño completo"
             />
             <div className="flex-1">
               <div className="flex items-center">
@@ -102,6 +106,13 @@ export const RaceHostCard = ({ host, raceId, propertyId }: RaceHostCardProps) =>
         propertyId={propertyId}
         hostId={host.id}
         hostName={host.name}
+      />
+
+      <ProfilePhotoModal
+        isOpen={showPhotoModal}
+        onClose={() => setShowPhotoModal(false)}
+        imageUrl={host.imageUrl}
+        userName={host.name}
       />
     </>
   );
