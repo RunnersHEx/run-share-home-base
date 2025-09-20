@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, AlertCircle } from 'lucide-react';
+import { MessageCircle, AlertCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMessagingAccess } from '@/hooks/useMessaging';
+import { BookingService } from '@/services/bookingService';
 import ChatInterface from './ChatInterface';
 import MessagingErrorBoundary from './MessagingErrorBoundary';
 
@@ -22,6 +23,30 @@ interface MessagingModalProps {
 // ==========================================
 // COMPONENTS
 // ==========================================
+
+function MessagingBlockedState({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="p-6 text-center">
+      <div className="w-16 h-16 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+        <Lock className="h-8 w-8 text-red-500" />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">Conversación Bloqueada</h3>
+      <p className="text-gray-600 mb-6">
+        Esta conversación ha sido bloqueada por motivos de seguridad debido a la cancelación de la reserva. 
+        Ya no es posible enviar ni recibir mensajes.
+      </p>
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <p className="text-yellow-800 text-sm">
+          <strong>Nota:</strong> Si necesitas comunicarte sobre temas importantes relacionados con la reserva, 
+          puedes contactar con nuestro equipo de soporte.
+        </p>
+      </div>
+      <Button onClick={onClose} className="w-full">
+        Cerrar
+      </Button>
+    </div>
+  );
+}
 
 function AccessDeniedState({ onClose }: { onClose: () => void }) {
   return (
@@ -86,12 +111,38 @@ export function MessagingModal({
   otherParticipantName
 }: MessagingModalProps) {
   const [mounted, setMounted] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [checkingBlockStatus, setCheckingBlockStatus] = useState(true);
   const { hasAccess, loading: accessLoading } = useMessagingAccess(bookingId);
 
   // Handle component mounting
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Check if messaging is blocked
+  useEffect(() => {
+    async function checkBlockedStatus() {
+      if (!bookingId) {
+        setCheckingBlockStatus(false);
+        return;
+      }
+      
+      try {
+        const blocked = await BookingService.isMessagingBlocked(bookingId);
+        setIsBlocked(blocked);
+      } catch (error) {
+        console.error('Error checking messaging blocked status:', error);
+        setIsBlocked(false);
+      } finally {
+        setCheckingBlockStatus(false);
+      }
+    }
+    
+    if (mounted && bookingId) {
+      checkBlockedStatus();
+    }
+  }, [mounted, bookingId]);
 
   // Don't render on server
   if (!mounted) {
@@ -139,8 +190,10 @@ export function MessagingModal({
           </DialogHeader>
 
           <div className="flex-1 overflow-hidden">
-            {accessLoading ? (
+            {accessLoading || checkingBlockStatus ? (
               <LoadingState />
+            ) : isBlocked ? (
+              <MessagingBlockedState onClose={handleClose} />
             ) : hasAccess === false ? (
               <AccessDeniedState onClose={handleClose} />
             ) : hasAccess === true ? (
@@ -149,6 +202,7 @@ export function MessagingModal({
                 currentUserId={currentUserId}
                 onClose={undefined} // No close button in modal - use dialog close
                 className="h-full"
+                isBlocked={isBlocked}
               />
             ) : (
               <ErrorState

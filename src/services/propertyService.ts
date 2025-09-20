@@ -40,6 +40,7 @@ export class PropertyService {
     if (error) throw error;
     
     // Add default approval_status if missing with type assertion
+    // Points are awarded automatically by database trigger
     return {
       ...data,
       approval_status: (data as any).approval_status ?? 'pending'

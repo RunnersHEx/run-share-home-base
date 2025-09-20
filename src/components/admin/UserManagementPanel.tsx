@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -50,6 +51,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { NotificationService } from "@/services/notificationService";
 import { useAuth } from "@/contexts/AuthContext";
+import { ProfilePhotoModal } from "@/components/common/ProfilePhotoModal";
 
 interface UserProfile {
   id: string;
@@ -64,6 +66,7 @@ interface UserProfile {
   total_bookings: number;
   points_balance: number;
   average_rating: number;
+  profile_image_url: string | null;
 }
 
 interface DeactivationModal {
@@ -74,6 +77,12 @@ interface DeactivationModal {
 interface DeletionModal {
   isOpen: boolean;
   user: UserProfile | null;
+}
+
+interface ProfilePhotoModalState {
+  isOpen: boolean;
+  imageUrl: string;
+  userName: string;
 }
 
 const UserManagementPanel = () => {
@@ -90,6 +99,11 @@ const UserManagementPanel = () => {
   const [deletionModal, setDeletionModal] = useState<DeletionModal>({ isOpen: false, user: null });
   const [deactivationReason, setDeactivationReason] = useState("");
   const [deletionReason, setDeletionReason] = useState("");
+  const [profilePhotoModal, setProfilePhotoModal] = useState<ProfilePhotoModalState>({
+    isOpen: false,
+    imageUrl: "",
+    userName: ""
+  });
 
   const fetchUsers = async () => {
     try {
@@ -98,7 +112,7 @@ const UserManagementPanel = () => {
         .from('profiles')
         .select(`
           id, email, first_name, last_name, created_at, verification_status,
-          points_balance, average_rating, is_active
+          points_balance, average_rating, is_active, profile_image_url
         `);
 
       if (error) {
@@ -359,6 +373,7 @@ const UserManagementPanel = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Foto</TableHead>
                   <TableHead>Usuario</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Actividad</TableHead>
@@ -371,6 +386,26 @@ const UserManagementPanel = () => {
               <TableBody>
                 {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
+                    <TableCell>
+                      <Avatar 
+                        className="w-8 h-8 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all duration-200"
+                        onClick={() => {
+                          if (user.profile_image_url) {
+                            setProfilePhotoModal({
+                              isOpen: true,
+                              imageUrl: user.profile_image_url,
+                              userName: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
+                            });
+                          }
+                        }}
+                        title={user.profile_image_url ? "Hacer clic para ver en tamaño completo" : "Sin foto de perfil"}
+                      >
+                        <AvatarImage src={user.profile_image_url || undefined} />
+                        <AvatarFallback className="text-xs">
+                          {user.first_name?.[0] || '?'}{user.last_name?.[0] || ''}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TableCell>
                     <TableCell>
                       <div className="font-medium">
                         {user.first_name && user.last_name 
@@ -661,6 +696,14 @@ const UserManagementPanel = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Profile Photo Modal */}
+      <ProfilePhotoModal
+        isOpen={profilePhotoModal.isOpen}
+        onClose={() => setProfilePhotoModal({ isOpen: false, imageUrl: "", userName: "" })}
+        imageUrl={profilePhotoModal.imageUrl}
+        userName={profilePhotoModal.userName}
+      />
     </>
   );
 };

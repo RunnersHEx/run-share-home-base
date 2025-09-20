@@ -34,9 +34,9 @@ const ReviewForm = ({
   const hostCategories = [
     { key: 'comunicacion', label: 'Comunicación' },
     { key: 'limpieza', label: 'Limpieza' },
-    { key: 'precision', label: 'Precisión' },
+    { key: 'precision', label: 'Puntualidad' },
     { key: 'ubicacion', label: 'Ubicación' },
-    { key: 'valor', label: 'Valor' },
+    { key: 'valor', label: 'Facilidad' },
     { key: 'experiencia_local', label: 'Experiencia Local' }
   ];
 

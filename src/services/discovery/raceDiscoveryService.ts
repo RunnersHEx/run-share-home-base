@@ -35,7 +35,9 @@ export class RaceDiscoveryService {
           )
         `)
         .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        // Filter out expired races - only show future races
+        .gte('race_date', new Date().toISOString().split('T')[0])
+        .order('race_date', { ascending: true });
 
       // Apply simple filters that work with Supabase
       if (filters) {
@@ -113,7 +115,7 @@ export class RaceDiscoveryService {
         }
       }
 
-      console.log('RaceDiscoveryService: Fetched and filtered races:', races.length);
+      console.log('RaceDiscoveryService: Fetched and filtered races (excluding expired):', races.length);
       return races;
     } catch (error) {
       console.error('RaceDiscoveryService: Exception in fetchAllRaces:', error);
@@ -162,7 +164,9 @@ export class RaceDiscoveryService {
           )
         `)
         .eq('is_active', true)
-        .order('created_at', { ascending: false })
+        // Filter out expired races for featured section too
+        .gte('race_date', new Date().toISOString().split('T')[0])
+        .order('race_date', { ascending: true })
         .limit(limit);
 
       if (error) {
@@ -170,7 +174,7 @@ export class RaceDiscoveryService {
         throw error;
       }
 
-      console.log('RaceDiscoveryService: Fetched', data?.length || 0, 'featured races with property info');
+      console.log('RaceDiscoveryService: Fetched', data?.length || 0, 'featured races (excluding expired)');
       return data || [];
     } catch (error) {
       console.error('RaceDiscoveryService: Exception in fetchFeaturedRaces:', error);

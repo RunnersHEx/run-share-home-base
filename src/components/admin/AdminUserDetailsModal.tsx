@@ -3,6 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfilePhotoModal } from "@/components/common/ProfilePhotoModal";
+import { VerificationPhotosModal } from "./VerificationPhotosModal";
+import { AdminStorageService } from "@/services/adminStorageService";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -16,7 +21,10 @@ import {
   Phone,
   Mail,
   Shield,
-  Activity
+  Activity,
+  Camera,
+  FileText,
+  Eye
 } from "lucide-react";
 
 interface UserDetailsModalProps {
@@ -45,6 +53,10 @@ interface UserDetailData {
 const AdminUserDetailsModal = ({ isOpen, onClose, userId, userName }: UserDetailsModalProps) => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<UserDetailData | null>(null);
+  const [showProfilePhotoModal, setShowProfilePhotoModal] = useState(false);
+  const [showVerificationPhotosModal, setShowVerificationPhotosModal] = useState(false);
+  const [verificationPhotos, setVerificationPhotos] = useState<Array<{url: string, type: string, index: number}>>([]);
+  const [loadingVerificationPhotos, setLoadingVerificationPhotos] = useState(false);
 
   const fetchUserDetails = async () => {
     if (!userId) return;
@@ -78,29 +90,35 @@ const AdminUserDetailsModal = ({ isOpen, onClose, userId, userName }: UserDetail
         `)
         .eq('host_id', userId);
 
-      // Reservas como guest
-      const { data: guestBookings } = await supabase
+      // Reservas como guest - Fix foreign key reference
+      const { data: guestBookings, error: guestError } = await supabase
         .from('bookings')
         .select(`
           *,
-          race:races (name, race_date),
-          host:profiles!bookings_host_id_fkey (first_name, last_name),
-          property:properties (title, locality)
+          races!inner (name, race_date),
+          properties!inner (title, locality)
         `)
         .eq('guest_id', userId)
         .order('created_at', { ascending: false });
 
-      // Reservas como host
-      const { data: hostBookings } = await supabase
+      if (guestError) {
+        console.warn('Error fetching guest bookings:', guestError);
+      }
+
+      // Reservas como host - Fix foreign key reference
+      const { data: hostBookings, error: hostError } = await supabase
         .from('bookings')
         .select(`
           *,
-          race:races (name, race_date),
-          guest:profiles!bookings_guest_id_fkey (first_name, last_name),
-          property:properties (title, locality)
+          races!inner (name, race_date),
+          properties!inner (title, locality)
         `)
         .eq('host_id', userId)
         .order('created_at', { ascending: false });
+
+      if (hostError) {
+        console.warn('Error fetching host bookings:', hostError);
+      }
 
       setUserData({
         profile,
@@ -117,10 +135,76 @@ const AdminUserDetailsModal = ({ isOpen, onClose, userId, userName }: UserDetail
           pointsBalance: profile?.points_balance || 0,
         }
       });
+      
+      // Load verification photos using AdminStorageService
+      if (profile?.verification_documents) {
+        await loadVerificationPhotos(profile.verification_documents);
+      }
     } catch (error) {
       console.error('Error fetching user details:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadVerificationPhotos = async (documents: string[] | string) => {
+    try {
+      setLoadingVerificationPhotos(true);
+      console.log('Loading verification photos for documents:', documents);
+      
+      // Handle both array and string formats
+      let documentPaths: string[] = [];
+      if (typeof documents === 'string') {
+        try {
+          documentPaths = JSON.parse(documents);
+        } catch (e) {
+          console.error('Error parsing verification documents:', e);
+          setVerificationPhotos([]);
+          return;
+        }
+      } else if (Array.isArray(documents)) {
+        documentPaths = documents;
+      }
+      
+      if (!Array.isArray(documentPaths) || documentPaths.length === 0) {
+        console.log('No verification documents to load');
+        setVerificationPhotos([]);
+        return;
+      }
+      
+      console.log('Fetching signed URLs for documents:', documentPaths);
+      const urlResults = await AdminStorageService.getVerificationDocumentUrls(documentPaths);
+      console.log('AdminStorageService results:', urlResults);
+      
+      // Check if AdminStorageService is properly configured
+      const isServiceRoleConfigured = AdminStorageService.isServiceRoleAvailable();
+      console.log('Service role configured:', isServiceRoleConfigured);
+      
+      const photos = urlResults
+        .filter(result => result.url && !result.error)
+        .map((result, index) => ({
+          url: result.url!,
+          type: 'verification',
+          index
+        }));
+      
+      console.log('Successfully loaded verification photos:', photos);
+      setVerificationPhotos(photos);
+      
+      // Log any errors with helpful context
+      const errors = urlResults.filter(result => result.error);
+      if (errors.length > 0) {
+        console.warn('Some verification documents could not be loaded:', errors);
+        if (!isServiceRoleConfigured) {
+          console.warn('Service role not configured - set VITE_SUPABASE_SERVICE_ROLE_KEY for admin access to verification documents');
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error loading verification photos:', error);
+      setVerificationPhotos([]);
+    } finally {
+      setLoadingVerificationPhotos(false);
     }
   };
 
@@ -134,6 +218,9 @@ const AdminUserDetailsModal = ({ isOpen, onClose, userId, userName }: UserDetail
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Cargando detalles de usuario</DialogTitle>
+          </DialogHeader>
           <div className="flex items-center justify-center p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
@@ -162,6 +249,7 @@ const AdminUserDetailsModal = ({ isOpen, onClose, userId, userName }: UserDetail
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -247,7 +335,127 @@ const AdminUserDetailsModal = ({ isOpen, onClose, userId, userName }: UserDetail
             </Card>
           </div>
 
-          {/* Información del Perfil */}
+          {/* Fotos y Verificación */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Foto de Perfil */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Camera className="h-5 w-5" />
+                  <span>Foto de Perfil</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center space-y-4 p-6">
+                {userData.profile.profile_image_url ? (
+                  <>
+                    <Avatar 
+                      className="w-40 h-40 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all duration-200 shadow-lg"
+                      onClick={() => setShowProfilePhotoModal(true)}
+                      title="Hacer clic para ver en tamaño completo"
+                    >
+                      <AvatarImage 
+                        src={userData.profile.profile_image_url} 
+                        onError={(e) => {
+                          console.error('Error loading profile image:', userData.profile.profile_image_url);
+                        }}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="text-4xl font-semibold">
+                        {userData.profile.first_name?.[0]}{userData.profile.last_name?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-center">
+                      <p className="font-medium text-lg">
+                        {userData.profile.first_name && userData.profile.last_name 
+                          ? `${userData.profile.first_name} ${userData.profile.last_name}` 
+                          : 'Usuario'}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowProfilePhotoModal(true)}
+                        className="mt-2"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Ver en tamaño completo
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    <Camera className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-base font-medium">Sin foto de perfil</p>
+                    <p className="text-sm text-gray-400 mt-1">Este usuario no ha subido una foto</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Documentos de Verificación */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5" />
+                  <span>Documentos de Verificación</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Estado:</span>
+                  {getStatusBadge(userData.profile.verification_status)}
+                </div>
+                
+                {loadingVerificationPhotos ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-sm text-gray-600 mt-2">Cargando documentos...</p>
+                  </div>
+                ) : verificationPhotos.length > 0 ? (
+                  <>
+                    <div className="text-sm text-gray-600">
+                      {verificationPhotos.length} documento(s) disponible(s)
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {verificationPhotos.slice(0, 3).map((photo, index) => (
+                        <div key={index} className="relative aspect-square">
+                          <img
+                            src={photo.url}
+                            alt={`Documento ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg border border-gray-200 cursor-pointer hover:border-blue-500 transition-colors"
+                            onClick={() => setShowVerificationPhotosModal(true)}
+                            onLoad={() => console.log('Admin preview thumbnail loaded:', photo.url)}
+                            onError={(e) => {
+                              console.error('Error loading admin preview thumbnail:', photo.url);
+                              e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik00MS42NjY3IDMzLjMzMzNINTguMzMzM0M1OS4yNTM4IDMzLjMzMzMgNjAgMzQuMDc5NSA2MCAzNVY2NUM2MCA2NS45MjA1IDU5LjI1MzggNjYuNjY2NyA1OC4zMzMzIDY2LjY2NjdINDEuNjY2N0M0MC43NDYyIDY2LjY2NjcgNDAgNjUuOTIwNSA0MCA2NVYzNUM0MCAzNC4wNzk1IDQwLjc0NjIgMzMuMzMzMyA0MS42NjY3IDMzLjMzMzNaIiBzdHJva2U9IiM5Q0EzQUYiIHN0cm9rZS13aWR0aD0iMSIvPgo8cGF0aCBkPSJNNDYuNjY2NyA0NS4yMkw1My4zMzMzIDUxLjY2NjdMNjEuNjY2NyA0My4zMzMzIiBzdHJva2U9IiM5Q0EzQUYiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjx0ZXh0IHg9IjUwIiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjgiIGZpbGw9IiM2QjczODAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkVycm9yPC90ZXh0Pgo8L3N2Zz4=';
+                            }}
+                          />
+                          {verificationPhotos.length > 3 && index === 2 && (
+                            <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center text-white text-sm font-medium">
+                              +{verificationPhotos.length - 3}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowVerificationPhotosModal(true)}
+                      className="w-full"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Ver todos los documentos
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">Sin documentos de verificación</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
           <Card>
             <CardHeader>
               <CardTitle>Información del Perfil</CardTitle>
@@ -376,12 +584,12 @@ const AdminUserDetailsModal = ({ isOpen, onClose, userId, userName }: UserDetail
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <h4 className="font-medium">{booking.race?.name}</h4>
+                            <h4 className="font-medium">{booking.races?.name || 'Carrera no disponible'}</h4>
                             <p className="text-sm text-muted-foreground">
-                              Host: {booking.host?.first_name} {booking.host?.last_name}
+                              Fecha: {booking.races?.race_date ? new Date(booking.races.race_date).toLocaleDateString() : 'No disponible'}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Propiedad: {booking.property?.title} - {booking.property?.locality}
+                              Propiedad: {booking.properties?.title || 'No disponible'} - {booking.properties?.locality || ''}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {formatDistanceToNow(new Date(booking.created_at), { addSuffix: true, locale: es })}
@@ -409,12 +617,12 @@ const AdminUserDetailsModal = ({ isOpen, onClose, userId, userName }: UserDetail
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <h4 className="font-medium">{booking.race?.name}</h4>
+                            <h4 className="font-medium">{booking.races?.name || 'Carrera no disponible'}</h4>
                             <p className="text-sm text-muted-foreground">
-                              Guest: {booking.guest?.first_name} {booking.guest?.last_name}
+                              Fecha: {booking.races?.race_date ? new Date(booking.races.race_date).toLocaleDateString() : 'No disponible'}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Propiedad: {booking.property?.title} - {booking.property?.locality}
+                              Propiedad: {booking.properties?.title || 'No disponible'} - {booking.properties?.locality || ''}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {formatDistanceToNow(new Date(booking.created_at), { addSuffix: true, locale: es })}
@@ -435,6 +643,26 @@ const AdminUserDetailsModal = ({ isOpen, onClose, userId, userName }: UserDetail
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Profile Photo Modal */}
+    {userData?.profile?.profile_image_url && (
+      <ProfilePhotoModal
+        isOpen={showProfilePhotoModal}
+        onClose={() => setShowProfilePhotoModal(false)}
+        imageUrl={userData.profile.profile_image_url}
+        userName={userName}
+      />
+    )}
+
+    {/* Verification Photos Modal */}
+    <VerificationPhotosModal
+      isOpen={showVerificationPhotosModal}
+      onClose={() => setShowVerificationPhotosModal(false)}
+      photos={verificationPhotos}
+      userName={userName}
+      title="Documentos de Verificación"
+    />
+  </>
   );
 };
 

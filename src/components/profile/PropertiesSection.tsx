@@ -53,18 +53,30 @@ const PropertiesSection = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Home className="h-6 w-6 text-blue-600" />
-            Mi Propiedad
-          </div>
-          <UserAccessGuard showCreateRestriction={true}>
-          <Button onClick={() => setShowWizard(true)} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Agregar Propiedad
-          </Button>
-          </UserAccessGuard>
-        </CardTitle>
+        <div>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Home className="h-6 w-6 text-blue-600" />
+              Mi Propiedad
+            </div>
+            <UserAccessGuard showCreateRestriction={true}>
+            <Button 
+              onClick={() => setShowWizard(true)} 
+              className={properties.length > 0 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}
+              disabled={properties.length > 0}
+              title={properties.length > 0 ? "Solo puedes tener una propiedad registrada" : ""}
+            >
+            <Plus className="h-4 w-4 mr-2" />
+            {properties.length > 0 ? "Propiedad Agregada" : "Agregar Propiedad"}
+            </Button>
+            </UserAccessGuard>
+          </CardTitle>
+          {properties.length === 0 && (
+            <p className="text-sm text-gray-600 mt-2">
+              Puedes agregar una propiedad y ganar 30 puntos. Luego podrás editarla cuando quieras.
+            </p>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {properties.length === 0 ? (
@@ -74,10 +86,13 @@ const PropertiesSection = () => {
               No has registrado todavía tu propiedad
             </h3>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              Agrega tu propiedad para comenzar a recibir runners de todo el mundo. 
-              Comparte tu hogar y descubre nuevas culturas corriendo.
+              Agrega tu propiedad (solo puedes tener una) para comenzar a recibir runners de todo el mundo. 
+              Ganarás 30 puntos y podrás editarla cuando quieras.
             </p>
-            <Button onClick={() => setShowWizard(true)} className="bg-blue-600 hover:bg-blue-700">
+            <Button 
+              onClick={() => setShowWizard(true)} 
+              className="bg-blue-600 hover:bg-blue-700"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Agregar Propiedad
             </Button>

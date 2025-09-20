@@ -42,8 +42,22 @@ export class ReviewService {
     const { data, error } = await supabase
       .from('booking_reviews')
       .select(`
-        *,
-        reviewer:profiles!booking_reviews_reviewer_id_fkey(first_name, last_name, profile_image_url)
+        id,
+        booking_id,
+        reviewer_id,
+        reviewee_id,
+        rating,
+        title,
+        content,
+        review_type,
+        categories,
+        is_public,
+        created_at,
+        reviewer:profiles!booking_reviews_reviewer_id_fkey(
+          first_name,
+          last_name,
+          profile_image_url
+        )
       `)
       .eq('reviewee_id', userId)
       .order('created_at', { ascending: false });
@@ -60,8 +74,22 @@ export class ReviewService {
     const { data, error } = await supabase
       .from('booking_reviews')
       .select(`
-        *,
-        reviewee:profiles!booking_reviews_reviewee_id_fkey(first_name, last_name, profile_image_url)
+        id,
+        booking_id,
+        reviewer_id,
+        reviewee_id,
+        rating,
+        title,
+        content,
+        review_type,
+        categories,
+        is_public,
+        created_at,
+        reviewee:profiles!booking_reviews_reviewee_id_fkey(
+          first_name,
+          last_name,
+          profile_image_url
+        )
       `)
       .eq('reviewer_id', userId)
       .order('created_at', { ascending: false });
@@ -95,14 +123,14 @@ export class ReviewService {
     // Filter out bookings that already have reviews from this user
     const pendingReviews = [];
     for (const booking of completedBookings || []) {
-      const { data: existingReview } = await supabase
+      const { data: existingReview, error: reviewCheckError } = await supabase
         .from('booking_reviews')
         .select('id')
         .eq('booking_id', booking.id)
         .eq('reviewer_id', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle to avoid errors when no row found
 
-      if (!existingReview) {
+      if (!existingReview && !reviewCheckError) {
         pendingReviews.push(booking);
       }
     }
@@ -146,11 +174,11 @@ export class ReviewService {
       .select('id')
       .eq('reviewer_id', userId)
       .eq('booking_id', bookingId)
-      .single();
+      .maybeSingle(); // Use maybeSingle to avoid errors
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('Error checking existing review:', error);
-      throw error;
+      return false; // Return false on error rather than throwing
     }
 
     return !!data;

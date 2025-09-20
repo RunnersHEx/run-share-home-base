@@ -145,13 +145,15 @@ export const RaceWizard = ({ onClose, onSuccess, editingRace, isEditMode = false
         return;
       }
 
-      // Validate race date is in the future
+      // Validate race date is at least 2 months in the future
       const raceDate = new Date(formData.race_date);
       const today = new Date();
-      today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+      const twoMonthsFromNow = new Date();
+      twoMonthsFromNow.setMonth(twoMonthsFromNow.getMonth() + 2);
+      twoMonthsFromNow.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
       
-      if (raceDate <= today) {
-        toast.error('La fecha de la carrera debe ser posterior a hoy');
+      if (raceDate < twoMonthsFromNow) {
+        toast.error('Recuerda que tu carrera debe estar programada al menos 2 meses por delante para poder crearla.');
         return;
       }
 
@@ -383,6 +385,11 @@ export const RaceWizard = ({ onClose, onSuccess, editingRace, isEditMode = false
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-2xl font-bold">{isEditMode ? 'Editar Carrera' : 'Crear Nueva Carrera'}</h2>
+                {!isEditMode && (
+                  <p className="text-red-600 font-medium mt-2">
+                    Recuerda que tu carrera debe estar programada al menos 2 meses por delante para poder crearla.
+                  </p>
+                )}
                 <p className="text-gray-600 mt-1">
                   Paso {currentStep} de {STEPS.length}: {STEPS[currentStep - 1].title}
                 </p>

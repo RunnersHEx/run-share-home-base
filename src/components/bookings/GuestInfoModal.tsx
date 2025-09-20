@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfilePhotoModal } from "@/components/common/ProfilePhotoModal";
 import { 
   User, 
   Star, 
@@ -71,6 +72,7 @@ export const GuestInfoModal = ({ isOpen, onClose, guestId }: GuestInfoModalProps
   const [guestReviews, setGuestReviews] = useState<GuestReview[]>([]);
   const [loading, setLoading] = useState(false);
   const [reviewStats, setReviewStats] = useState({ totalReviews: 0, averageRating: 0 });
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   useEffect(() => {
     if (isOpen && guestId) {
@@ -156,8 +158,7 @@ export const GuestInfoModal = ({ isOpen, onClose, guestId }: GuestInfoModalProps
   };
 
   const handleViewProfile = () => {
-    // Show toast indicating all information is displayed in this modal
-    toast.info('Esta ventana muestra toda la información disponible del runner.');
+    setShowPhotoModal(true);
   };
 
   if (loading && !guestInfo) {
@@ -192,6 +193,7 @@ export const GuestInfoModal = ({ isOpen, onClose, guestId }: GuestInfoModalProps
   }
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
@@ -206,7 +208,7 @@ export const GuestInfoModal = ({ isOpen, onClose, guestId }: GuestInfoModalProps
                 <Avatar 
                   className="w-16 h-16 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all duration-200" 
                   onClick={handleViewProfile}
-                  title="Hacer clic para ver el perfil completo"
+                  title="Hacer clic para ver la foto en tamaño completo"
                 >
                   <AvatarImage src={guestInfo.profile_image_url} />
                   <AvatarFallback className="text-lg">
@@ -424,5 +426,15 @@ export const GuestInfoModal = ({ isOpen, onClose, guestId }: GuestInfoModalProps
         </div>
       </DialogContent>
     </Dialog>
-  );
+
+    {guestInfo && (
+      <ProfilePhotoModal
+        isOpen={showPhotoModal}
+        onClose={() => setShowPhotoModal(false)}
+        imageUrl={guestInfo.profile_image_url || ''}
+        userName={`${guestInfo.first_name} ${guestInfo.last_name}`}
+      />
+    )}
+  </>
+);
 };

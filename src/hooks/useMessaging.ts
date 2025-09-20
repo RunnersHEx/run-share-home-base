@@ -354,6 +354,26 @@ class SimplifiedMessagingService {
       };
     }
 
+    // Check if messaging is blocked for this booking
+    try {
+      const { data: isBlocked, error: blockCheckError } = await supabase.rpc('is_messaging_blocked', {
+        p_booking_id: bookingId
+      });
+      
+      if (blockCheckError) {
+        console.error('Error checking messaging blocked status:', blockCheckError);
+      } else if (isBlocked) {
+        return {
+          error: {
+            type: 'permission',
+            message: 'Esta conversación ha sido bloqueada por motivos de seguridad. Ya no es posible enviar mensajes.'
+          }
+        };
+      }
+    } catch (error) {
+      console.error('Error in messaging blocked check:', error);
+    }
+
     try {
       // First, ensure conversation exists
       const { data: existingConversation } = await supabase
