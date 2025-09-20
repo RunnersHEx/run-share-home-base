@@ -28,20 +28,13 @@ export const RaceHostCard = ({ host, raceId, propertyId }: RaceHostCardProps) =>
 
   useEffect(() => {
     fetchHostRating();
-  }, [host.id, raceId, propertyId]);
+  }, [host.id]); // Only depend on host.id since we always fetch host data
 
   const fetchHostRating = async () => {
     try {
-      let stats;
+      // Always fetch stats for the host, regardless of context
+      const stats = await ReviewsService.getRatingStatsForHost(host.id);
       
-      if (raceId) {
-        stats = await ReviewsService.getRatingStatsForRace(raceId);
-      } else if (propertyId) {
-        stats = await ReviewsService.getRatingStatsForProperty(propertyId);
-      } else {
-        stats = await ReviewsService.getRatingStatsForHost(host.id);
-      }
-
       setDynamicRating(stats.averageRating);
       setReviewCount(stats.totalReviews);
     } catch (error) {

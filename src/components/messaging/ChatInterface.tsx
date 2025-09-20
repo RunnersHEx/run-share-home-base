@@ -156,6 +156,7 @@ export function ChatInterface({
   currentUserId, 
   onClose, 
   className = '',
+  isBlocked = false,
   otherParticipant: propOtherParticipant
 }: ChatInterfaceProps) {
   const [messageInput, setMessageInput] = useState('');
@@ -489,54 +490,70 @@ export function ChatInterface({
 
       {/* Message Input */}
       <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
-        <div className="flex items-end space-x-3">
-          <div className="flex-1 relative">
-            <div className={`relative rounded-2xl border transition-all duration-200 ${
-              isInputFocused 
-                ? 'border-blue-300 shadow-lg ring-4 ring-blue-50' 
-                : 'border-gray-200 hover:border-gray-300'
-            }`}>
-              <Input
-                ref={inputRef}
-                value={messageInput}
-                onChange={handleInputChange}
-                onKeyPress={handleKeyPress}
-                onFocus={() => setIsInputFocused(true)}
-                onBlur={() => setIsInputFocused(false)}
-                placeholder="Type a message..."
-                className="border-0 rounded-2xl py-3 pr-12 pl-4 text-sm bg-transparent focus:ring-0 focus:outline-none resize-none"
-                disabled={sending}
-                maxLength={2000}
-              />
+        {isBlocked ? (
+          // Show blocked message instead of input
+          <div className="flex items-center justify-center py-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3 max-w-md">
+              <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium text-red-800">Conversación bloqueada</p>
+                <p className="text-red-600">Esta conversación ha sido bloqueada por motivos de seguridad.</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Normal message input
+          <>
+            <div className="flex items-end space-x-3">
+              <div className="flex-1 relative">
+                <div className={`relative rounded-2xl border transition-all duration-200 ${
+                  isInputFocused 
+                    ? 'border-blue-300 shadow-lg ring-4 ring-blue-50' 
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}>
+                  <Input
+                    ref={inputRef}
+                    value={messageInput}
+                    onChange={handleInputChange}
+                    onKeyPress={handleKeyPress}
+                    onFocus={() => setIsInputFocused(true)}
+                    onBlur={() => setIsInputFocused(false)}
+                    placeholder="Type a message..."
+                    className="border-0 rounded-2xl py-3 pr-12 pl-4 text-sm bg-transparent focus:ring-0 focus:outline-none resize-none"
+                    disabled={sending}
+                    maxLength={2000}
+                  />
+                </div>
+                
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!messageInput.trim() || sending}
+                  size="sm"
+                  className={`absolute right-2 bottom-2 h-8 w-8 p-0 rounded-full transition-all duration-200 ${
+                    messageInput.trim() && !sending
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg scale-100' 
+                      : 'bg-gray-300 hover:bg-gray-400 scale-95'
+                  }`}
+                >
+                  {sending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
             
-            <Button
-              onClick={handleSendMessage}
-              disabled={!messageInput.trim() || sending}
-              size="sm"
-              className={`absolute right-2 bottom-2 h-8 w-8 p-0 rounded-full transition-all duration-200 ${
-                messageInput.trim() && !sending
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg scale-100' 
-                  : 'bg-gray-300 hover:bg-gray-400 scale-95'
-              }`}
-            >
-              {sending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        </div>
-        
-        <div className="flex justify-between items-center mt-2">
-          <p className="text-xs text-gray-400">
-            Press Enter to send • Shift + Enter for new line
-          </p>
-          <p className="text-xs text-gray-400">
-            {messageInput.length}/2000
-          </p>
-        </div>
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-xs text-gray-400">
+                Press Enter to send • Shift + Enter for new line
+              </p>
+              <p className="text-xs text-gray-400">
+                {messageInput.length}/2000
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

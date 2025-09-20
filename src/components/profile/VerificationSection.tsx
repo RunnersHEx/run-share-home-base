@@ -22,8 +22,29 @@ const VerificationSection = () => {
     const file = event.target.files?.[0];
     if (!file || !selectedDocType) return;
 
+    // Validate file format
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const allowedExtensions = ['.jpg', '.jpeg', '.png'];
+    const fileName = file.name.toLowerCase();
+    const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+    
+    if (!allowedTypes.includes(file.type) && !hasValidExtension) {
+      toast.error('Solo se permiten archivos JPG, JPEG o PNG');
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      setSelectedDocType('');
+      return;
+    }
+
     if (file.size > 10 * 1024 * 1024) {
       toast.error('El archivo debe ser menor a 10MB');
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      setSelectedDocType('');
       return;
     }
 
@@ -262,6 +283,9 @@ const VerificationSection = () => {
                       <p className="text-sm text-gray-600">
                         DNI, pasaporte o carnet de conducir oficial
                       </p>
+                      <p className="text-xs text-blue-600 font-medium mt-1">
+                        Solo se permiten archivos JPG, JPEG o PNG
+                      </p>
                     </div>
                   </div>
                   <Button
@@ -291,6 +315,9 @@ const VerificationSection = () => {
                       <p className="font-medium">Selfie con tu rostro bien visible y Documento de Identidad</p>
                       <p className="text-sm text-gray-600">
                         Con buena iluminación. Puedes ocultar información no esencial como el número de serie o tu firma
+                      </p>
+                      <p className="text-xs text-blue-600 font-medium mt-1">
+                        Solo se permiten archivos JPG, JPEG o PNG
                       </p>
                     </div>
                   </div>
@@ -371,9 +398,10 @@ const VerificationSection = () => {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*,.pdf"
+          accept=".jpg,.jpeg,.png,image/jpeg,image/png"
           onChange={handleDocumentUpload}
           className="hidden"
+          title="Solo se permiten archivos JPG, JPEG o PNG"
         />
       </CardContent>
     </Card>

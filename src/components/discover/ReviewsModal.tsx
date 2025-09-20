@@ -22,23 +22,16 @@ export const ReviewsModal = ({ isOpen, onClose, raceId, propertyId, hostId, host
   const [stats, setStats] = useState<BookingReviewStats>({ totalReviews: 0, averageRating: 0 });
 
   useEffect(() => {
-    if (isOpen && (raceId || propertyId || hostId)) {
+    if (isOpen && hostId) {
       fetchReviews();
     }
-  }, [isOpen, raceId, propertyId, hostId]);
+  }, [isOpen, hostId]); // Only depend on hostId since we always fetch host data
 
   const fetchReviews = async () => {
     setLoading(true);
     try {
-      let result;
-      
-      if (raceId) {
-        result = await ReviewsService.getReviewsForRace(raceId);
-      } else if (propertyId) {
-        result = await ReviewsService.getReviewsForProperty(propertyId);
-      } else {
-        result = await ReviewsService.getReviewsForHost(hostId);
-      }
+      // Always fetch reviews for the host, regardless of context
+      const result = await ReviewsService.getReviewsForHost(hostId);
       
       setReviews(result.reviews);
       setStats(result.stats);
@@ -142,7 +135,11 @@ export const ReviewsModal = ({ isOpen, onClose, raceId, propertyId, hostId, host
                             {review.reviewer.first_name} {review.reviewer.last_name}
                           </h4>
                           <p className="text-xs text-gray-500">
-                            {review.booking.race.name} - {formatDate(review.booking.race.race_date)}
+                            {review.booking?.race?.name ? (
+                              `${review.booking.race.name} - ${formatDate(review.booking.race.race_date)}`
+                            ) : (
+                              'Experiencia completada'
+                            )}
                           </p>
                         </div>
                         <div className="text-right">

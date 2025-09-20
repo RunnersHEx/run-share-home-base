@@ -106,7 +106,7 @@ const RacesSection = () => {
     try {
       console.log('RacesSection: Starting fetchMyRaces');
       const { data, error } = await supabase
-        .from('races')
+        .from('active_races')
         .select(`
           *,
           images:race_images(

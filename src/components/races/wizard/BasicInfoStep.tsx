@@ -43,15 +43,16 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
   const handleRaceDateChange = (newRaceDate: string) => {
     const updates: Partial<RaceFormData> = { race_date: newRaceDate };
     
-    // Validate the date is in the future
+    // Validate the date is at least 2 months in the future
     if (newRaceDate) {
       const raceDate = new Date(newRaceDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const twoMonthsFromNow = new Date();
+      twoMonthsFromNow.setMonth(twoMonthsFromNow.getMonth() + 2);
+      twoMonthsFromNow.setHours(0, 0, 0, 0);
       
-      if (raceDate <= today) {
-        // Don't update if date is not in the future
-        toast.error('La fecha de la carrera debe ser posterior a hoy');
+      if (raceDate < twoMonthsFromNow) {
+        // Don't update if date is less than 2 months ahead
+        toast.error('Recuerda que tu carrera debe estar programada al menos 2 meses por delante para poder crearla.');
         return;
       }
     }
@@ -69,7 +70,14 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
     onUpdate(updates);
   };
 
-  // Get tomorrow's date in YYYY-MM-DD format for min attribute
+  // Get date 2 months from now in YYYY-MM-DD format for min attribute
+  const getTwoMonthsFromNowDate = () => {
+    const twoMonthsFromNow = new Date();
+    twoMonthsFromNow.setMonth(twoMonthsFromNow.getMonth() + 2);
+    return twoMonthsFromNow.toISOString().split('T')[0];
+  };
+
+  // Get tomorrow's date in YYYY-MM-DD format for registration deadline min attribute
   const getTomorrowDate = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -149,10 +157,10 @@ const BasicInfoStep = ({ formData, onUpdate, onNext, onPrev }: BasicInfoStepProp
                 value={formData.race_date || ""}
                 onChange={(e) => handleRaceDateChange(e.target.value)}
                 placeholder="dd/mm/yyyy"
-                min={getTomorrowDate()}
+                min={getTwoMonthsFromNowDate()}
               />
-              <p className="text-sm text-gray-600 mt-1">
-                La fecha debe ser posterior a hoy
+              <p className="text-sm text-red-600 mt-1 font-medium">
+                La fecha debe ser al menos 2 meses por delante
               </p>
             </div>
 

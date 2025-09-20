@@ -304,6 +304,9 @@ export class BookingService {
       await this.markRaceAsAvailable(booking.race_id);
     }
 
+    // Block messaging for safety
+    await this.blockConversationMessaging(bookingId, `Booking cancelled by ${cancelledBy}`);
+
     // Send cancellation notifications
     try {
       await NotificationService.notifyBookingCancelled(booking, cancelledBy, 0);
@@ -575,6 +578,52 @@ export class BookingService {
       }
     } catch (error) {
       console.error('Error in markRaceAsUnavailable:', error);
+    }
+  }
+
+  /**
+   * Blocks messaging for a conversation when booking is cancelled
+   */
+  static async blockConversationMessaging(bookingId: string, reason?: string): Promise<void> {
+    try {
+      console.log('Blocking messaging for booking:', bookingId);
+      
+      // Block messaging using the database function
+      const { error } = await supabase.rpc('block_conversation_messaging', {
+        p_booking_id: bookingId,
+        p_reason: reason || 'Booking cancelled - messaging blocked for safety'
+      });
+      
+      if (error) {
+        console.error('Error blocking conversation messaging:', error);
+        // Don't throw error - this is a safety feature but shouldn't break the cancellation
+      } else {
+        console.log('Successfully blocked messaging for booking:', bookingId);
+      }
+    } catch (error) {
+      console.error('Error in blockConversationMessaging:', error);
+      // Don't throw error - this is a safety feature but shouldn't break the cancellation
+    }
+  }
+
+  /**
+   * Checks if messaging is blocked for a booking
+   */
+  static async isMessagingBlocked(bookingId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('is_messaging_blocked', {
+        p_booking_id: bookingId
+      });
+      
+      if (error) {
+        console.error('Error checking if messaging is blocked:', error);
+        return false; // Default to not blocked if there's an error
+      }
+      
+      return data || false;
+    } catch (error) {
+      console.error('Error in isMessagingBlocked:', error);
+      return false;
     }
   }
 

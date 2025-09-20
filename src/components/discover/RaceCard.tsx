@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MapPin, Calendar, Star, Clock, Trophy, Heart, CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ReviewsService } from "@/services/reviews/properReviewsService";
+import { ReviewsModal } from "./ReviewsModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -81,6 +82,7 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails, onAuthModal }: 
   const [dynamicRating, setDynamicRating] = useState(race.host.rating);
   const [reviewCount, setReviewCount] = useState(0);
   const [loadingRating, setLoadingRating] = useState(true);
+  const [showReviews, setShowReviews] = useState(false);
 
   useEffect(() => {
     fetchHostRating();
@@ -112,7 +114,8 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails, onAuthModal }: 
     onViewDetails();
   };
   return (
-    <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden">
+    <>
+      <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden">
       <div className="relative">
         <img 
           src={race.imageUrl} 
@@ -211,7 +214,10 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails, onAuthModal }: 
                 </div>
                 <div className="flex items-center">
                   <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                  <span className="text-xs ml-1 text-gray-500">
+                  <button
+                    onClick={() => setShowReviews(true)}
+                    className="text-xs ml-1 text-gray-500 hover:text-blue-600 hover:underline cursor-pointer transition-colors"
+                  >
                     {loadingRating ? (
                       <span className="animate-pulse">...</span>
                     ) : reviewCount > 0 ? (
@@ -219,7 +225,7 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails, onAuthModal }: 
                     ) : (
                       'Sin reseñas'
                     )}
-                  </span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -255,5 +261,13 @@ export const RaceCard = ({ race, isSaved, onSave, onViewDetails, onAuthModal }: 
         </div>
       </CardContent>
     </Card>
+    
+    <ReviewsModal
+      isOpen={showReviews}
+      onClose={() => setShowReviews(false)}
+      hostId={race.host.id}
+      hostName={race.host.name}
+    />
+    </>
   );
 };

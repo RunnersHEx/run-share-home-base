@@ -16,7 +16,6 @@ import {
   Plus,
   Star,
   X,
-  Shield,
   CreditCard,
   RefreshCw,
   MapPin,
@@ -72,7 +71,7 @@ const PointsSystemSection = () => {
       icon: Trophy,
       title: "Agregar carreras",
       description: "Por cada carrera agregada",
-      points: "+ 40 puntos",
+      points: "+ 20 puntos",
       color: "text-yellow-600"
     },
     {
@@ -81,13 +80,6 @@ const PointsSystemSection = () => {
       description: "Por cada reseña valorada con 5 estrellas que recibas",
       points: "+ 15 puntos",
       color: "text-orange-600"
-    },
-    {
-      icon: Shield,
-      title: "Verificación de identidad",
-      description: "Adjunta los documentos requeridos y espera a ser verificado correctamente",
-      points: "+ 25 puntos",
-      color: "text-indigo-600"
     },
     {
       icon: CreditCard,

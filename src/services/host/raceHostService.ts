@@ -65,7 +65,7 @@ export class RaceHostService {
       console.log('RaceHostService: Fetching races for host:', hostId);
       
       let query = supabase
-        .from('races')
+        .from('active_races')
         .select(`
           *,
           property_info:properties!races_property_id_properties_fkey(
@@ -75,7 +75,6 @@ export class RaceHostService {
           )
         `)
         .eq('host_id', hostId)
-        .eq('is_active', true)
         .order('race_date', { ascending: true });
 
       // Apply filters if provided
@@ -98,11 +97,11 @@ export class RaceHostService {
         throw error;
       }
 
-      console.log('RaceHostService: Retrieved races:', data);
+      console.log('RaceHostService: Retrieved races (excluding expired):', data);
       
       // Convert database races to typed races
       const typedRaces = (data || []).map(race => RaceHostService.convertDatabaseRaceToTyped(race));
-      console.log('RaceHostService: Converted races:', typedRaces);
+      console.log('RaceHostService: Converted races (excluding expired):', typedRaces);
       return typedRaces;
     } catch (error) {
       console.error('RaceHostService: Error in fetchHostRaces:', error);

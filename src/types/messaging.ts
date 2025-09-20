@@ -100,6 +100,7 @@ export interface ChatInterfaceProps {
   currentUserId: string;
   onClose?: () => void;
   className?: string;
+  isBlocked?: boolean;
   otherParticipant?: {
     id: string;
     first_name: string;

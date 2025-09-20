@@ -115,13 +115,23 @@ export const useDiscoverRaces = () => {
       const racesWithImages = await Promise.all(raceImagesPromises);
       
       // Transformar los datos para que coincidan con la interfaz DiscoverRace
-      const transformedRaces: DiscoverRace[] = racesWithImages.map(race => {
-        console.log('Processing race:', race.name, 'Location:', race.start_location, 'Modalities:', race.modalities, 'Distances:', race.distances);
-        
-        // Calcular días hasta la carrera
-        const raceDate = new Date(race.race_date);
-        const today = new Date();
-        const daysUntil = Math.ceil((raceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      const transformedRaces: DiscoverRace[] = racesWithImages
+        .map(race => {
+          console.log('Processing race:', race.name, 'Location:', race.start_location, 'Date:', race.race_date);
+          
+          // Calcular días hasta la carrera
+          const raceDate = new Date(race.race_date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0); // Reset time to start of day
+          raceDate.setHours(0, 0, 0, 0); // Reset time to start of day
+          
+          const daysUntil = Math.ceil((raceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          
+          // Safety check: Skip expired races (in case database filter didn't catch them)
+          if (daysUntil < 0) {
+            console.log('⏰ Skipping expired race:', race.name, 'Days until:', daysUntil);
+            return null;
+          }
         
         const isAvailable = race.is_active && (race.is_available_for_booking !== false);
         
@@ -151,9 +161,10 @@ export const useDiscoverRaces = () => {
           maxGuests: race.property_info?.max_guests || race.max_guests || 1,
           property_info: race.property_info
         };
-      });
+      })
+      .filter(race => race !== null); // Remove null entries (expired races)
       
-      console.log('Transformed races for discovery:', transformedRaces.length, 'races');
+      console.log('Transformed races for discovery (excluding expired):', transformedRaces.length, 'races');
       if (transformedRaces.length > 0) {
         console.log('Sample transformed race:', transformedRaces[0]);
       }

@@ -43,8 +43,18 @@ const ReviewsSection = () => {
       const { data: receivedReviews, error: reviewsError } = await supabase
         .from('booking_reviews')
         .select(`
-          *,
-          reviewer:profiles!booking_reviews_reviewer_id_fkey(first_name, last_name, profile_image_url)
+          id,
+          rating,
+          title,
+          content,
+          created_at,
+          review_type,
+          categories,
+          reviewer:profiles!booking_reviews_reviewer_id_fkey(
+            first_name,
+            last_name,
+            profile_image_url
+          )
         `)
         .eq('reviewee_id', user.id)
         .order('created_at', { ascending: false });
@@ -93,14 +103,14 @@ const ReviewsSection = () => {
       // Filter bookings that don't have reviews yet
       const bookingsWithoutReviews = [];
       for (const booking of completedBookings || []) {
-        const { data: existingReview } = await supabase
+        const { data: existingReview, error: reviewCheckError } = await supabase
           .from('booking_reviews')
           .select('id')
           .eq('booking_id', booking.id)
           .eq('reviewer_id', user.id)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no row found
 
-        if (!existingReview) {
+        if (!existingReview && !reviewCheckError) {
           bookingsWithoutReviews.push(booking);
         }
       }
@@ -123,7 +133,21 @@ const ReviewsSection = () => {
           reviewer_id: user?.id
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error submitting review:', error);
+        
+        // Handle specific error cases
+        if (error.code === '23505') {
+          // Unique constraint violation
+          toast.error('Ya has valorado esta experiencia');
+        } else if (error.code === '23503') {
+          // Foreign key constraint violation
+          toast.error('Error: Reserva no encontrada');
+        } else {
+          toast.error('Error al enviar la valoración: ' + (error.message || 'Error desconocido'));
+        }
+        return;
+      }
 
       toast.success('Valoración enviada correctamente');
       setShowReviewForm(null);

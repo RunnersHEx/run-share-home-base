@@ -68,18 +68,18 @@ export class PointsManagementService {
   }
 
   /**
-   * Award points for adding a race (40 points)
+   * Award points for adding a race (20 points)
    */
   static async awardRacePoints(userId: string, raceName: string): Promise<void> {
     try {
       await this.addPointsTransaction({
         userId,
-        amount: 40,
+        amount: 20,
         type: 'subscription_bonus',
         description: `Added new race: ${raceName}`
       });
 
-      console.log(`Awarded 40 race points to user ${userId}`);
+      console.log(`Awarded 20 race points to user ${userId}`);
     } catch (error) {
       console.error('Error awarding race points:', error);
       throw error;
@@ -107,8 +107,10 @@ export class PointsManagementService {
   }
 
   /**
-   * Award points for identity verification (25 points)
+   * Award points for identity verification (DISABLED - NO LONGER AWARDS POINTS)
+   * This method has been disabled as identity verification no longer awards points
    */
+  /*
   static async awardVerificationPoints(userId: string): Promise<void> {
     try {
       await this.addPointsTransaction({
@@ -124,6 +126,7 @@ export class PointsManagementService {
       throw error;
     }
   }
+  */
 
   /**
    * Award points for new subscription (30 points)
